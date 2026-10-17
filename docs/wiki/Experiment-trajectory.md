@@ -1,8 +1,10 @@
 # Experiment trajectory
 
-Updated 10 October 2026. This is the index for the dated experiment record. Each page keeps the questions, settings, results, evidence links, and decisions together.
+Updated 17 October 2026. This is the index for the dated experiment record. Each page keeps the questions, settings, results, evidence links, and decisions together.
 
 ## Latest findings
+
+The [17 October record](Experiment-trajectory-2026-10-17) adds the first plasticity measurement. Plasticity means the ability to learn a new task, which is a separate question from forgetting. Notebook 26 supplies the baseline the study never had: a generator that has learned nothing, taught task 15 alone. On seed 0 that baseline reaches 37.6% with the chunk embeddings frozen, against 50.8% for the same task learned after the eight tasks of order 01. The difference of +13.2 points exceeds the 3-point noise floor and points away from plasticity loss: the generator learns a new task better after eight tasks than it did fresh. The protection term handicaps the eight-task arm rather than helping it, so the planned beta-zero control is not needed while the sign stays positive. This rests on one seed, one probe task and one order. The recorded seed spread for the comparison arm is 16.4 points, larger than the effect, so seeds 1 and 2 are required before this is a finding.
 
 The [10 October record](Experiment-trajectory-2026-10-10) and [completed selected-study report](../reports/Paired-study-2026-10-10-draft.md) now include all six verified comparisons across seeds 0, 1, and 2. Both forgotten tasks finish at 10% accuracy in every seed, with no recorded relapse above the 12% threshold during task-15 learning. The three-seed mean task-15 change is +5.40 points for U3/L15 and -0.20 points for U14/L15. The task-3 mean includes a large +13.0-point seed-2 effect; results vary substantially by seed. Mean retained-task changes are -1.29 and -1.02 points, and the largest individual losses range from 2.6 to 14.2 points. All 12 selected jobs and all 39 requests are complete. All six saved CPU-summary exports and eleven session logs are verified in R2. Recorded runner time totals 15 h 10 m 20 s. These results do not establish information erasure or recovery resistance. A [four-slide HTML presentation with an interactive experiment tree](../reports/Paired-study-2026-10-10-presentation.html) is available for presenting and inspecting the nine continuations. A concise [mentor-facing public summary](https://sumitasthana.github.io/CARK/paired-study.html) presents the scores, averages, and limits in tables and a labeled chart.
 
@@ -22,6 +24,7 @@ The [8 October setup record](Experiment-trajectory-2026-10-08) describes reserve
 
 | Reporting date or period | What is covered |
 | --- | --- |
+| [17 October 2026](Experiment-trajectory-2026-10-17) | First plasticity probe: the missing fresh-generator baseline for task 15, measured on seed 0. |
 | [10 October 2026](Experiment-trajectory-2026-10-10) | All selected training and CPU review complete; six verified comparisons, three-seed averages, and readable report. |
 | [9 October 2026](Experiment-trajectory-2026-10-09) | Live R2 progress check for paired generalization: two completed jobs, one resumable job, and 42 pending jobs. |
 | [8 October 2026](Experiment-trajectory-2026-10-08) | Recovery setup and seed-0 shared L0 completion; verified R2 cleanup; paired-study preparation, resume, and CPU review notebooks. |
