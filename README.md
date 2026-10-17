@@ -1,4 +1,4 @@
-# Does Unlearning Restore Plasticity? A Probe-Based Test in a Continual Hypernetwork
+# Plasticity After Task-unlearning in Hypernetworks (PATH)
 
 Working title. An independent reproduction of **UnCLe**, the method introduced
 in *An Unlearning Framework for Continual Learning* (Adhikari et al., 2025,

@@ -1,4 +1,4 @@
-# Does Unlearning Restore Plasticity?
+# Plasticity After Task-unlearning in Hypernetworks (PATH)
 
 A reimplementation of UnCLe, a continual-learning method where a hypernetwork
 generates a classifier for each task, and tasks can be forgotten on request.
