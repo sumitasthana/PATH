@@ -1,9 +1,22 @@
-# Component-level Attribution of Residual Knowledge after Task Unlearning (CARK)
+# Does Unlearning Restore Plasticity? A Probe-Based Test in a Continual Hypernetwork
 
 Working title. An independent reproduction of **UnCLe**, the method introduced
 in *An Unlearning Framework for Continual Learning* (Adhikari et al., 2025,
-[arXiv:2509.17530](https://arxiv.org/abs/2509.17530)), and a study of which
-parts of the model still hold a task after that task has been unlearned.
+[arXiv:2509.17530](https://arxiv.org/abs/2509.17530)), and a direct test of one
+claim that paper makes in writing: that unlearning a task restores the model's
+ability to learn new ones.
+
+Plasticity means the ability to learn a new task. It is a separate question
+from forgetting, and it has to be measured separately. The paper's evidence for
+its claim is final retained accuracy, which mixes the two. This repository
+measures plasticity directly, by training a copy of the model on a task it has
+never seen and then discarding that copy.
+
+The repository was earlier called CARK, for Component-level Attribution of
+Residual Knowledge after Task Unlearning. That name was chosen before the
+results were in, and the work went elsewhere: nothing here attributes residual
+knowledge to a component. The GitHub URL still says `CARK` and the old links
+still work.
 
 A note on names, since the two get conflated. *An Unlearning Framework for
 Continual Learning* is the paper. **UnCLe** is the method it introduces, and

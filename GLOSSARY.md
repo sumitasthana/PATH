@@ -1,9 +1,11 @@
-# CARK
+# Does Unlearning Restore Plasticity?
 
 A reimplementation of UnCLe, a continual-learning method where a hypernetwork
 generates a classifier for each task, and tasks can be forgotten on request.
-The open research question is whether a forgotten task's information is gone or
-merely hidden.
+The open research question is whether unlearning a task restores the model's
+ability to learn new ones, as the paper claims, and by what mechanism. A
+second, supporting question is whether a forgotten task's information is gone
+or merely hidden.
 
 ## Language
 
