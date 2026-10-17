@@ -53,6 +53,38 @@ The chunk effect is not usable as a number. It is 7.6 in one run and 4.8 in the 
 
 Notebook 26 was corrected so a seed may be listed more than once. Previously a repeated seed silently replaced the earlier run in the comparison table, which would have hidden exactly the variation seen here. The table now shows how many runs each seed had and their spread, and averages the repeats. The default is now two runs per seed across all three seeds.
 
+## Three seeds, two runs each: no plasticity change
+
+The user ran notebook 26 at its new default, twelve runs in total. This supersedes both single-seed readings above.
+
+| Seed | A0 fair, mean of 2 runs | Spread | A1 | A1 minus A0 |
+| ---: | ---: | ---: | ---: | ---: |
+| 0 | 44.5 | 3.0 | 50.8 | +6.3 |
+| 1 | 43.2 | 3.2 | 44.0 | +0.8 |
+| 2 | 39.0 | 3.6 | 34.4 | -4.6 |
+
+The three-seed mean is +0.8 points with a sample SD of 5.5. The mean is inside the 3-point noise floor and far smaller than its own spread across seeds.
+
+**Reading: no plasticity change at this probe.** The generator does not learn a new task worse after eight tasks, and it does not learn one better either. The seed-0 result recorded earlier was the most favourable of the three and did not survive the other two, which is what the caution on that section anticipated.
+
+Every one of the twelve runs used all ten classes and reported input sensitivity between 10.67 and 14.33, inside the band recorded for working models. No run was voided by the gate. Each took 0.9 minutes.
+
+## The noise floor is larger than 3 points
+
+Seed 0 with the chunk embeddings frozen has now been run four times across three sessions, with no settings changed: 37.6, 40.4, 43.0 and 46.0 percent. That is a range of 8.4 points.
+
+Within a single session the repeat spreads were smaller, at 3.0, 3.2 and 3.6 points. The wider range appears across sessions.
+
+The 3-point floor used in the decision rule was carried over from the replay work and is too optimistic for this measurement. Four samples are too few to replace it with a number, and no cause has been established for the session-to-session component. The practical effect here is one-directional: a larger floor makes the "no change" reading safer, not weaker. Any future result from this notebook that lands between 3 and 8 points should be treated as unresolved rather than as a finding.
+
+## The sequence makes new-task performance depend on the seed
+
+One pattern is worth recording, as an observation rather than a claim.
+
+The fresh baseline varies little across seeds: 44.5, 43.2 and 39.0 percent, a range of 5.5 points. The same task learned after eight tasks varies a great deal: 50.8, 44.0 and 34.4 percent, a range of 16.4 points.
+
+So the eight-task model's ability to learn task 15 depends heavily on which seed it was, while a fresh generator's does not. Learning the sequence appears to introduce seed dependence rather than a uniform change in learning ability. This rests on three seeds and one probe task, and no mechanism has been tested.
+
 ## The protection term works against this result, not for it
 
 When A1 learns task 15, a protection term holds the generator near its existing weights for the eight tasks already learned. Its strength is beta, set to 0.1. The baseline has no earlier task, so that term is absent there.
@@ -61,18 +93,22 @@ So A1 carried a handicap the baseline did not, and still scored higher. The plan
 
 ## Limits
 
-One seed, one probe task, one learning order. The result is provisional.
-
-The seed spread is the main concern, and it is larger than the effect. The three recorded A1 values are 50.8, 44.0 and 34.4 percent, a spread of 16.4 points. Seed 0 is the highest of the three. If the baseline stays near 37.6 while A1 falls to 34.4 at seed 2, the difference changes sign. Seeds 1 and 2 are required before this is stated as a finding.
+Three seeds, two runs each, one probe task, one learning order.
 
 Task 15 is one probe. A single task can be unusually easy or hard by accident. Tasks 2, 4 and 6 are also unseen in order 01 and would serve as further probes, but the comparison arms do not exist for them and would have to be run.
+
+Three seeds give a sample SD but not a narrow one. The seed-to-seed SD of 5.5 points is larger than the mean effect, so this rules out a large plasticity change rather than establishing that the change is exactly zero. A small effect in either direction would not be visible at this sample size.
 
 This result says nothing about erasure, recovery or privacy. It also says nothing about the paper's claim that unlearning restores plasticity: the relevant comparison there is the branch minus control difference, whose three-seed means are +5.40 points for U3/L15 and -0.20 for U14/L15, both at or inside the noise floor.
 
 ## Next
 
-Rerun notebook 26 at its new default, `SEEDS = [0, 0, 1, 1, 2, 2]`. That is twelve runs in total and about eleven minutes at the measured rate, which is cheap enough that there is no reason to run fewer. Each seed is compared against its own control.
+Experiment A is answered for this probe. Plasticity is not where the problem is, and the planned beta-zero control arm is not needed, because there is no plasticity loss for the protection term to explain.
 
-If all three seeds agree in direction, record it as a three-seed result with the repeat spread beside it. If they disagree, record the disagreement rather than the mean. Seed 2 is the one to watch: its control is 34.4 percent, the lowest of the three, and if the baseline stays near 40 the difference turns negative there.
+That removes a candidate rather than producing one. The main finding of the study is unchanged and remains the one in the conclusion report: the method reaches chance accuracy by making the model stop responding to its input, and the reported measurements do not separate that state from an untrained one.
+
+Two cheap checks remain from the local guide, each one run, each deciding whether a larger experiment is worth starting. Experiment C's code-only arm at one learned task asks whether a 32-number task code carries anything at all in a healthy model. Experiment B's baseline asks whether the 5-epoch budget allows a model to memorise random labels at all. Run either only if the question is still wanted; neither follows from this result.
+
+The seed-dependence observation above is the one new thread. It would need more seeds and a second probe task before it is worth pursuing.
 
 Do not start Experiment B or Experiment C until that is done. Each has a one-run check first, described in the local guide, that decides whether it is worth running at all.
