@@ -204,7 +204,7 @@ def build():
          f"{pair['unlearn_then_learn_final_accuracies'][t]-pair['learning_only_final_accuracies'][t]:+.1f}"] for t in [*pair['starting_accuracies'],'15']])
     spill=sum(abs(pair['after_unlearning_accuracies'][t]-pair['starting_accuracies'][t]) for t in retained)
     values['spill']=f'{spill:.1f}'
-    values['source_list']='<ul>'+''.join('<li><a href="https://github.com/sumitasthana/CARK/blob/main/docs/reports/trajectory/evidence/'+name+'">'+html.escape(label)+'</a></li>' for name,label in zip(names,[
+    values['source_list']='<ul>'+''.join('<li><a href="https://github.com/sumitasthana/PATH/blob/main/docs/reports/trajectory/evidence/'+name+'">'+html.escape(label)+'</a></li>' for name,label in zip(names,[
         'Five-value beta batch','Beta 0.1 repeat comparison','Learning sequence: tasks 1, 7, and 14',
         'Paired U3 and L15 comparison','Branch A: learning-only report','Branch B: unlearn-then-learn report']))+'</ul>'
     import statistics
@@ -226,7 +226,7 @@ def build():
       <p>We evaluate all previously learned tasks except the requested forgotten task. During forgetting, drops are measured against the model before forgetting. After learning task 15, retention is measured against the same seed's learning-only baseline. For forget 3, the retained tasks are 0, 9, 5, 17, 1, 7, and 14. For forget 14, they are 3, 0, 9, 5, 17, 1, and 7.</p>
       <p>Five of six forgetting branches have lower mean retained-task accuracy. Individual final losses range up to <strong>14.2 points</strong>. Accuracy is therefore not uniformly preserved, even when the requested task stays at chance.</p>
       <p class="small">12 jobs, six comparisons, and 39 requests complete. All recorded pairing checks pass. One source order, one incoming task, and three seeds limit generalization. Task identity and learning position change together. No erasure, privacy, or recovery claim is established. The new source models use uniform settings; the earlier pilot below is not included in these averages.</p>
-      <p><a href="paired-study.html">Concise report with charts, settings, and seed-level losses</a> ? <a href="paired-study-presentation.html">Four-slide presentation and interactive experiment tree</a> ? <a href="https://github.com/sumitasthana/CARK/blob/main/docs/reports/evidence/paired-study-2026-10-10.json">Verified evidence</a></p>
+      <p><a href="paired-study.html">Concise report with charts, settings, and seed-level losses</a> ? <a href="paired-study-presentation.html">Four-slide presentation and interactive experiment tree</a> ? <a href="https://github.com/sumitasthana/PATH/blob/main/docs/reports/evidence/paired-study-2026-10-10.json">Verified evidence</a></p>
     </section>'''
     template=Template((ROOT/'scripts/templates/experiment_report.html').read_text(encoding='utf-8'))
     assets['index.html']=template.substitute(values).encode()

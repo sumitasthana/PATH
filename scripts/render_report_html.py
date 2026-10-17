@@ -34,7 +34,7 @@ def render_report_html(source, output=None):
             return match.group(0)
         path = (source.parent / relative).resolve()
         repository_path = path.relative_to(root).as_posix()
-        return 'href="https://github.com/sumitasthana/CARK/blob/main/' + html.escape(repository_path, quote=True) + '"'
+        return 'href="https://github.com/sumitasthana/PATH/blob/main/' + html.escape(repository_path, quote=True) + '"'
 
     body = re.sub(r'href="([^"]+)"', link, body)
     headings = []

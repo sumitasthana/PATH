@@ -93,7 +93,7 @@ were not inspected for this archive. At 10% retained accuracy, our 10% forgotten
 accuracy does not show selective forgetting. Paper values come from its
 [implementation, Appendix C and Tables 1 and 2](https://arxiv.org/html/2509.17530).
 Our values come from the
-[transcribed run note](https://github.com/sumitasthana/CARK/blob/main/docs/experiments/sources/full_sequence_20260921.md).
+[transcribed run note](https://github.com/sumitasthana/PATH/blob/main/docs/experiments/sources/full_sequence_20260921.md).
 
 ### Definitions and evaluation criteria
 

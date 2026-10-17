@@ -196,7 +196,7 @@ The UnCLe paper does not specify these classifier and BatchNorm details or which
 
 ### CPU evidence
 
-[Saved check](https://github.com/sumitasthana/CARK/blob/main/docs/experiments/hyperfan_cpu_check_20261006.json): full Tiny ImageNet ResNet50 shapes, 200 chunks, hidden widths 128/256/512, seed 0, PyTorch 2.12.0+cpu. Original adaptive average pooling was used, matching the published pilot.
+[Saved check](https://github.com/sumitasthana/PATH/blob/main/docs/experiments/hyperfan_cpu_check_20261006.json): full Tiny ImageNet ResNet50 shapes, 200 chunks, hidden widths 128/256/512, seed 0, PyTorch 2.12.0+cpu. Original adaptive average pooling was used, matching the published pilot.
 
 - Generated classifier weight standard deviation: `0.0143448` (formula reference `0.015625`). The old recipe measured `0.0004483` for the same seed and architecture.
 - BatchNorm gamma was exactly one and beta exactly zero.
@@ -212,7 +212,7 @@ Synthetic images do not measure dataset accuracy. A single tensor's empirical sp
 
 Checkpoint files record the initialization option. Files predating this field are interpreted as `legacy`. Restoring a checkpoint into a model with a different initialization option is refused before loading model state. The offsets and scales are derived from that option.
 
-Notebook [13](https://github.com/sumitasthana/CARK/blob/main/notebooks/13_hyperfan_learning_pilot.ipynb) starts a new model and learns tasks 3, 0, and 9. Settings: seed 0, beta 0.01, learning rate 0.0001, five epochs per task, batch size 64, ResNet50, and the existing fixed class partition. No scheduler or deterministic-mode change is introduced. Learning rate and epoch count remain diagnostic settings, so this is not a complete paper reproduction.
+Notebook [13](https://github.com/sumitasthana/PATH/blob/main/notebooks/13_hyperfan_learning_pilot.ipynb) starts a new model and learns tasks 3, 0, and 9. Settings: seed 0, beta 0.01, learning rate 0.0001, five epochs per task, batch size 64, ResNet50, and the existing fixed class partition. No scheduler or deterministic-mode change is introduced. Learning rate and epoch count remain diagnostic settings, so this is not a complete paper reproduction.
 
 The notebook saves the code version, settings, class-partition hash, task scores, environment, and a checkpoint after each completed task. It can resume its own checkpoint after a disconnected session. It does not load E08 or any other historical starting model. Its final cell checks the files, flushes Drive, then releases the GPU.
 
@@ -264,7 +264,7 @@ The notebook test used its actual selection, training, and finishing cells with 
 
 ### What to run next
 
-Notebook [14](https://github.com/sumitasthana/CARK/blob/main/notebooks/14_learning_loss_diagnostic.ipynb) makes source selection explicit:
+Notebook [14](https://github.com/sumitasthana/PATH/blob/main/notebooks/14_learning_loss_diagnostic.ipynb) makes source selection explicit:
 
 1. Use a CPU session in SELECT mode. It lists saved model files on Drive. Select a file and inspect its actual saved tasks and scores.
 2. Prefer a source after L3, L0, L9, and L5, so the next lesson is L17. If that checkpoint no longer exists, use a retained source after L3, L0, and L9, then diagnose L5. Do not use the final model after L17 to recreate a model before L17.

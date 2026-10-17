@@ -26,18 +26,18 @@ at step 27 while retained drift was 3.6 points. Gradient directions and actual
 Adam updates were not measured in that run.** Later full-sequence and paired L9
 artifacts are on Drive and are not part of this earlier narrative log.
 
-Choose a current workflow from the [notebook guide](https://github.com/sumitasthana/CARK/blob/main/notebooks/README.md).
-The [gradient diagnostic](https://github.com/sumitasthana/CARK/blob/main/notebooks/04_gradient_diagnostics.ipynb) restores
+Choose a current workflow from the [notebook guide](https://github.com/sumitasthana/PATH/blob/main/notebooks/README.md).
+The [gradient diagnostic](https://github.com/sumitasthana/PATH/blob/main/notebooks/04_gradient_diagnostics.ipynb) restores
 the existing checkpoint when another forgetting run is needed.
 
 ### Reading this record
 
 Last updated: 2026-09-29. This is the narrative record of all results supplied
 in this conversation, not an archive of every original Colab output file.
-[Structured observations](https://github.com/sumitasthana/CARK/wiki/Experiment-trajectory#historical-run-notes-through-29-september) provide CSV traces for E08-E15 and the 30-step run,
+[Structured observations](https://github.com/sumitasthana/PATH/wiki/Experiment-trajectory#historical-run-notes-through-29-september) provide CSV traces for E08-E15 and the 30-step run,
 sampled E13 losses, E15 gradient and raw-output norms, and reported artifact paths.
-The [registry](https://github.com/sumitasthana/CARK/blob/main/docs/experiments/registry.json) also includes the earlier full-sequence
-run and numerical checks. The [wiki](https://github.com/sumitasthana/CARK/wiki)
+The [registry](https://github.com/sumitasthana/PATH/blob/main/docs/experiments/registry.json) also includes the earlier full-sequence
+run and numerical checks. The [wiki](https://github.com/sumitasthana/PATH/wiki)
 presents one structured page per record, generated from these files.
 Earlier learning results and request summaries appear below; missing
 measurements are not reconstructed.
@@ -539,9 +539,9 @@ Gradient norms alone do not establish cancellation, storage, or each term's
 contribution to Adam's update. Commit `4c08f54` changed the forgetting-noise
 stream, so E15 is not an exact replay of the first ten E14 steps.
 
-The [transcribed output](https://github.com/sumitasthana/CARK/blob/main/docs/experiments/e15_reported_output.txt) preserves the
+The [transcribed output](https://github.com/sumitasthana/PATH/blob/main/docs/experiments/e15_reported_output.txt) preserves the
 supplied values. Accuracy traces, raw norms, and the 16 supplied gradient rows
-are in the [structured files](https://github.com/sumitasthana/CARK/wiki/Experiment-trajectory#historical-run-notes-through-29-september). Full gradient vectors and
+are in the [structured files](https://github.com/sumitasthana/PATH/wiki/Experiment-trajectory#historical-run-notes-through-29-september). Full gradient vectors and
 unreported steps' gradient norms are not reconstructed.
 
 Reported artifact:
@@ -560,7 +560,7 @@ step 29. No step reached the 12% target threshold.
 The supplied late gradient norms show both forgetting and preservation terms
 active near step 27. They do not show whether the gradients oppose each other.
 The original runtime JSON was not opened from this workspace. The [transcribed
-output](https://github.com/sumitasthana/CARK/blob/main/docs/experiments/sources/forgetting_30step_20260929.txt) preserves all 31
+output](https://github.com/sumitasthana/PATH/blob/main/docs/experiments/sources/forgetting_30step_20260929.txt) preserves all 31
 accuracy observations, 30 raw-output norms, and the eight selected steps of
 gradient norms supplied by the user. Its descriptive archive ID is
 `forgetting-30step-20260929`; the user did not assign an E-number.
@@ -568,7 +568,7 @@ gradient norms supplied by the user. Its descriptive archive ID is
 Reported artifact:
 `/content/drive/MyDrive/uncle/E08_forgetting_trace/diagnostics/E15_gradients/forget_20260929_021642_430512_33bd5249.json`.
 
-The [research diagnostic](https://github.com/sumitasthana/CARK/blob/main/docs/RESEARCH_DIAGNOSTIC.md) now screens all nine tracked
+The [research diagnostic](https://github.com/sumitasthana/PATH/blob/main/docs/RESEARCH_DIAGNOSTIC.md) now screens all nine tracked
 checkpoint trajectories together and can inspect the original JSON when it is
 available. New code can audit component changes and gradient directions, but
 those measurements have not yet been reported from a GPU run.
@@ -659,7 +659,7 @@ preservation pairs are now in the CSV. Weighted noise falls from 1938.36 to
 do not establish relative gradient strength or explain the failure by themselves.
 The original report JSON remains on Drive and was not read from this machine.
 
-[Archived notebook outputs](https://github.com/sumitasthana/CARK/blob/main/docs/experiments/notebook_saved_outputs.txt) retain this
+[Archived notebook outputs](https://github.com/sumitasthana/PATH/blob/main/docs/experiments/notebook_saved_outputs.txt) retain this
 evidence with its source commit and cell indices. The notebook has historical
 E10 prose alongside E14 code and outputs; follow the current status here.
 

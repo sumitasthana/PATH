@@ -25,7 +25,7 @@ def bootstrap(revision):
         if IN_COLAB:
             REPO = Path("/content/cark-paired-study")
             if not REPO.exists():
-                subprocess.run(["git", "clone", "https://github.com/sumitasthana/CARK.git", str(REPO)], check=True)
+                subprocess.run(["git", "clone", "https://github.com/sumitasthana/PATH.git", str(REPO)], check=True)
             if subprocess.check_output(["git", "-C", str(REPO), "status", "--porcelain", "--untracked-files=no"], text=True).strip():
                 raise RuntimeError("Checkout has edits. Use a fresh runtime.")
             subprocess.run(["git", "-C", str(REPO), "fetch", "origin"], check=True)

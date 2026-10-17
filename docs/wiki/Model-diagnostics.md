@@ -38,7 +38,7 @@ any advantage is specific to X. Fisher scores help choose which weight groups
 to test first; they do not prove where information is stored. BatchNorm
 statistics need their own keep-versus-reset test because they are not weights.
 
-This is the method described in the [study plan](https://github.com/sumitasthana/CARK/blob/main/docs/PLAN.md). Its novelty still
+This is the method described in the [study plan](https://github.com/sumitasthana/PATH/blob/main/docs/PLAN.md). Its novelty still
 needs the literature review and experiments described there. We have not
 established the claim yet.
 
@@ -74,9 +74,9 @@ flowchart TD
    Repeat with selected parts frozen or replaced, and run the Y control.
 
 The code can do steps 1 to 4 as separate pieces. The
-[`04_gradient_diagnostics.ipynb`](https://github.com/sumitasthana/CARK/blob/main/notebooks/04_gradient_diagnostics.ipynb)
+[`04_gradient_diagnostics.ipynb`](https://github.com/sumitasthana/PATH/blob/main/notebooks/04_gradient_diagnostics.ipynb)
 notebook records gradients, Adam updates, and before/after changes during a
-forgetting run. The [inspection functions](https://github.com/sumitasthana/CARK/blob/main/uncle/research_diagnostic.py)
+forgetting run. The [inspection functions](https://github.com/sumitasthana/PATH/blob/main/uncle/research_diagnostic.py)
 read live weights and gradients and calculate diagonal Fisher. We still need
 one runner that loads the E08 checkpoint, chooses and records the Fisher
 examples, and performs the matched recovery tests in step 5. No E08 Fisher or

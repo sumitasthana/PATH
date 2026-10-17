@@ -7,7 +7,7 @@ import subprocess
 import sys
 
 
-REMOTE = "https://github.com/sumitasthana/CARK.git"
+REMOTE = "https://github.com/sumitasthana/PATH.git"
 DEFAULT_REPO = "/content/uncle-diagnostics"
 
 

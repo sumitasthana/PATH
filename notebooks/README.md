@@ -41,7 +41,7 @@ These remain readable for provenance. Do not run them as instructions for a new 
 
 ## Use and share results
 
-Notebooks 15 through 20 use R2. Earlier GPU experiment notebooks save to Drive before releasing the runtime. CPU notebooks read saved files in a fresh session; do not expect Python variables to survive a Colab disconnect. Record experiment results in the [Experiment trajectory](https://github.com/sumitasthana/CARK/wiki/Experiment-trajectory). Original experiment files are preferable when available.
+Notebooks 15 through 20 use R2. Earlier GPU experiment notebooks save to Drive before releasing the runtime. CPU notebooks read saved files in a fresh session; do not expect Python variables to survive a Colab disconnect. Record experiment results in the [Experiment trajectory](https://github.com/sumitasthana/PATH/wiki/Experiment-trajectory). Original experiment files are preferable when available.
 
 For experiment-06 generalization, open [18 in Colab](https://colab.research.google.com/github/sumitasthana/CARK/blob/main/notebooks/18_paired_study_prepare.ipynb), then [19](https://colab.research.google.com/github/sumitasthana/CARK/blob/main/notebooks/19_paired_study_run.ipynb) for bounded GPU sessions, and [20](https://colab.research.google.com/github/sumitasthana/CARK/blob/main/notebooks/20_paired_study_review.ipynb) for CPU review. Keep the same study ID and fixed settings to resume. Each notebook pins a committed implementation revision; use Colab or a clean checkout when the local repository has unrelated training edits. This all-images diagnostic matrix is separate from the reserved-image recovery study in 16 and 17.
 

@@ -30,7 +30,7 @@ li { margin: 8px 0; }
 <nav aria-label="Report sections"><a href="#main-findings">Main findings</a> <a href="#what-exactly-are-we-comparing">What exactly are we comparing?</a> <a href="#1-did-the-model-forget-the-requested-task">1. Did the model forget the requested task?</a> <a href="#2-could-the-model-still-learn-task-15">2. Could the model still learn task 15?</a> <a href="#3-what-happened-to-the-other-learned-tasks">3. What happened to the other learned tasks?</a> <a href="#three-seed-averages">Three-seed averages</a> <a href="#completion-and-saved-summaries">Completion and saved summaries</a> <a href="#what-can-this-experiment-support">What can this experiment support?</a> <a href="#technical-details-and-recorded-time">Technical details and recorded time</a> <a href="#detailed-evidence">Detailed evidence</a></nav>
 <h1>What happens when we forget a task and then learn task 15?</h1>
 <p><strong>Completed selected study, 10 October 2026. All three runs and all six comparisons have been reviewed.</strong> This report uses the saved results available at this snapshot. It does not include later training.</p>
-<p><a href="https://github.com/sumitasthana/CARK/blob/main/docs/reports/Paired-study-2026-10-10-presentation.html">Open the four-slide presentation and interactive experiment tree</a></p>
+<p><a href="https://github.com/sumitasthana/PATH/blob/main/docs/reports/Paired-study-2026-10-10-presentation.html">Open the four-slide presentation and interactive experiment tree</a></p>
 <h2 id="main-findings">Main findings</h2>
 <ul>
 <li><strong>Forgetting:</strong> task 3 and task 14 both reach 10% accuracy after forgetting. They stay at 10% after learning task 15 in all three runs.</li>
@@ -299,7 +299,7 @@ li { margin: 8px 0; }
 <p>The 11 verified saved session logs total <strong>15 h 10 m 20 s</strong>. This is elapsed time inside the study runner, including training, evaluation, and file transfers. It excludes earlier notebook setup and time between sessions. It is not a measurement of billed GPU time.</p>
 <p>Checkpoints save after learning epochs and at 20-step forgetting boundaries. A restart resumes from the last verified R2 save; work after that save may repeat. Completed jobs are skipped.</p>
 <h2 id="detailed-evidence">Detailed evidence</h2>
-<p>The six completed comparisons pass all recorded checks that the branches use matching starting models and task-15 training conditions. The <a href="https://github.com/sumitasthana/CARK/blob/main/docs/reports/evidence/paired-study-2026-10-10.json">saved evidence</a> contains the exact scores, pairing checks, study plan, and session logs. The <a href="https://github.com/sumitasthana/CARK/blob/main/docs/wiki/Experiment-trajectory-2026-10-10.md">dated experiment record</a> records the progress history.</p>
+<p>The six completed comparisons pass all recorded checks that the branches use matching starting models and task-15 training conditions. The <a href="https://github.com/sumitasthana/PATH/blob/main/docs/reports/evidence/paired-study-2026-10-10.json">saved evidence</a> contains the exact scores, pairing checks, study plan, and session logs. The <a href="https://github.com/sumitasthana/PATH/blob/main/docs/wiki/Experiment-trajectory-2026-10-10.md">dated experiment record</a> records the progress history.</p>
 <p>For readers checking individual tasks, this table shows branch accuracy minus baseline accuracy after learning task 15, in percentage points. A plus sign means higher accuracy; a minus sign means lower accuracy.</p>
 <div class="table-scroll"><table>
 <thead>

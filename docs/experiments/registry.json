@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "updated": "2026-09-29",
-  "repository": "https://github.com/sumitasthana/CARK",
+  "repository": "https://github.com/sumitasthana/PATH",
   "scope": "All completed experiment records and numerical checks located in the repository, local run notes, and the supplied conversation. Missing raw artifacts are not reconstructed.",
   "identifier_policy": "E02-E15 retain their existing labels. Descriptive IDs for other records, including the 2026-09-29 run, are archive labels rather than invented historical E-numbers.",
   "thresholds": {

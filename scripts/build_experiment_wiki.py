@@ -119,7 +119,13 @@ def render(registry, traces, gradients, norms):
         ("Model diagnostics", "Model-diagnostics", "inspect weights, gradients, and Fisher scores"),
         ("Anchor paper", "An-Unlearning-Framework-for-Continual-Learning", "the paper we are reproducing"),
     ]
-    pages["Home.md"] = "# CARK wiki\n\n" + "\n".join(
+    pages["Home.md"] = (
+        "# Plasticity After Task-unlearning in Hypernetworks (PATH)\n\n"
+        "Wiki for the study. It asks whether unlearning a task restores the model's\n"
+        "ability to learn new ones, as the UnCLe paper claims. The repository was\n"
+        "earlier called CARK and has been renamed, so links now use PATH. Old\n"
+        "repository links redirect; old `github.io/CARK` pages do not.\n\n"
+    ) + "\n".join(
         f"- {link(title, slug)}: {description}." for title, slug, description in entries) + "\n"
     pages["_Sidebar.md"] = "- " + link("Home", "Home") + "\n" + "\n".join(
         "- " + link(title, slug) for title, slug, _ in entries) + "\n"

@@ -33,7 +33,7 @@ The main result is a bounded observation: task-3 accuracy reached chance and sta
 
 **Decision today:** close the beta diagnostic, the learning-only sequence, and the first paired unlearning comparison. Preserve their evidence and checkpoints. Do not start another beta or gamma search. The next research question, when experiments resume, is whether task-3 information can be recovered under a small, fixed training budget with suitable controls. The recovery experiment is not yet specified or run.
 
-The requested illustrated write-up is complete and committed: [HTML report source](https://github.com/sumitasthana/CARK/blob/main/site/index.html). It includes six labeled charts, data tables, and measurement links. Chart values, desktop and mobile layouts, and printing were checked. A manual GitHub Pages deployment workflow is included. Pages was disabled at the last check; no live deployment is claimed. This report records existing results and adds no new training results.
+The requested illustrated write-up is complete and committed: [HTML report source](https://github.com/sumitasthana/PATH/blob/main/site/index.html). It includes six labeled charts, data tables, and measurement links. Chart values, desktop and mobile layouts, and printing were checked. A manual GitHub Pages deployment workflow is included. Pages was disabled at the last check; no live deployment is claimed. This report records existing results and adds no new training results.
 
 ## Current findings and paused experiments
 
@@ -141,7 +141,7 @@ Analysis: nonzero protection substantially reduced forgetting relative to beta 0
 
 The aggregate file reports completed trial results. Individual epoch reports and checkpoints have not been independently inspected in this workspace. The file alone does not confirm that Colab released the GPU afterwards.
 
-Evidence: [original batch comparison JSON](https://github.com/sumitasthana/CARK/blob/main/docs/reports/trajectory/evidence/20261007_beta_batch_comparison.json). R2 key: `uncle/learning_loss_diagnostic/20261007_beta_batch_01/beta_batch_comparison.json`.
+Evidence: [original batch comparison JSON](https://github.com/sumitasthana/PATH/blob/main/docs/reports/trajectory/evidence/20261007_beta_batch_comparison.json). R2 key: `uncle/learning_loss_diagnostic/20261007_beta_batch_01/beta_batch_comparison.json`.
 
 ## Beta 0.1 repeat read from R2
 
@@ -161,7 +161,7 @@ Both runs used seed 0, beta 0.1, five epochs, batch size 64, and learning rate 0
 
 Analysis: protection remains associated with much less forgetting than the beta-0 trial in the batch, but this repeat weakens the initial impression that beta 0.1 preserves every old task almost exactly. Two sessions with one saved source model do not establish a stable optimum, different-seed generalization, or longer-sequence retention. The comparison does not show a recorded setup mismatch that explains the differences. Final reports alone do not confirm that the GPU was released afterwards.
 
-Evidence: [repeat comparison](https://github.com/sumitasthana/CARK/blob/main/docs/reports/trajectory/evidence/20261007_beta01_repeat_comparison.json), [first trial report](https://github.com/sumitasthana/CARK/blob/main/docs/reports/trajectory/evidence/20261007_beta01_first_report.json), and [repeat report](https://github.com/sumitasthana/CARK/blob/main/docs/reports/trajectory/evidence/20261007_beta01_repeat_report.json). R2 comparison key: `uncle/learning_loss_diagnostic/20261007_beta01_repeat_01/repeat_comparison.json`.
+Evidence: [repeat comparison](https://github.com/sumitasthana/PATH/blob/main/docs/reports/trajectory/evidence/20261007_beta01_repeat_comparison.json), [first trial report](https://github.com/sumitasthana/PATH/blob/main/docs/reports/trajectory/evidence/20261007_beta01_first_report.json), and [repeat report](https://github.com/sumitasthana/PATH/blob/main/docs/reports/trajectory/evidence/20261007_beta01_repeat_report.json). R2 comparison key: `uncle/learning_loss_diagnostic/20261007_beta01_repeat_01/repeat_comparison.json`.
 
 ## Learning sequence 1, 7, 14 completed
 
@@ -185,7 +185,7 @@ Hypothesis findings:
 
 Decision: close this learning-only diagnostic. It supplies observed ordinary-forgetting measurements and a saved eight-task model for a subsequent paired unlearning test. Protection helps, but retention is not exact and no generalized result is established. The next test should compare a learning-only branch with an unlearning-plus-learning branch from the same checkpoint. The precise unlearning request and protection implementation need to be fixed before training; moving an unlearning request to this later checkpoint would be a diagnostic variant of the paper's sequence, not an exact reproduction.
 
-Evidence: [sequence comparison](https://github.com/sumitasthana/CARK/blob/main/docs/reports/trajectory/evidence/20261007_sequence_comparison.json), [task 1 report](https://github.com/sumitasthana/CARK/blob/main/docs/reports/trajectory/evidence/20261007_sequence_task_1_report.json), [task 7 report](https://github.com/sumitasthana/CARK/blob/main/docs/reports/trajectory/evidence/20261007_sequence_task_7_report.json), and [task 14 report](https://github.com/sumitasthana/CARK/blob/main/docs/reports/trajectory/evidence/20261007_sequence_task_14_report.json). R2 aggregate: `uncle/learning_loss_diagnostic/20261007_learning_sequence_beta01_01/sequence_comparison.json`. Final checkpoint: the same prefix followed by `/lesson_03_task_14/checkpoint.pt`.
+Evidence: [sequence comparison](https://github.com/sumitasthana/PATH/blob/main/docs/reports/trajectory/evidence/20261007_sequence_comparison.json), [task 1 report](https://github.com/sumitasthana/PATH/blob/main/docs/reports/trajectory/evidence/20261007_sequence_task_1_report.json), [task 7 report](https://github.com/sumitasthana/PATH/blob/main/docs/reports/trajectory/evidence/20261007_sequence_task_7_report.json), and [task 14 report](https://github.com/sumitasthana/PATH/blob/main/docs/reports/trajectory/evidence/20261007_sequence_task_14_report.json). R2 aggregate: `uncle/learning_loss_diagnostic/20261007_learning_sequence_beta01_01/sequence_comparison.json`. Final checkpoint: the same prefix followed by `/lesson_03_task_14/checkpoint.pt`.
 
 ## Paired U3 and L15 completed
 
@@ -211,12 +211,12 @@ For the same seven retained tasks, mean changes relative to the starting checkpo
 
 There was substantial temporary retained-task damage. The first unlearning update lowered task 17 from 50.0% to 28.2%, a 21.8-point drop. Much of the retained performance recovered during the remaining unlearning updates. The initial preservation penalty is zero at the starting snapshot; this observation does not establish the cause or prove that the noise term dominates all gradients. Its large scalar loss includes the high-dimensional Gaussian squared-distance contribution and cannot by itself quantify gradient dominance.
 
-Evidence: [paired comparison](https://github.com/sumitasthana/CARK/blob/main/docs/reports/trajectory/evidence/20261007_paired_comparison.json), [learning-only report](https://github.com/sumitasthana/CARK/blob/main/docs/reports/trajectory/evidence/20261007_pair_learning_only_report.json), and [unlearn-then-learn report](https://github.com/sumitasthana/CARK/blob/main/docs/reports/trajectory/evidence/20261007_pair_unlearn_then_learn_report.json).
+Evidence: [paired comparison](https://github.com/sumitasthana/PATH/blob/main/docs/reports/trajectory/evidence/20261007_paired_comparison.json), [learning-only report](https://github.com/sumitasthana/PATH/blob/main/docs/reports/trajectory/evidence/20261007_pair_learning_only_report.json), and [unlearn-then-learn report](https://github.com/sumitasthana/PATH/blob/main/docs/reports/trajectory/evidence/20261007_pair_unlearn_then_learn_report.json).
 
 ## Evidence and maintenance
 
 Original checkpoints and GPU report files remain at their reported Drive paths; they were not downloaded or independently inspected here. Screenshots and pasted outputs are labelled as user-reported results. Missing gradients, environment details, timings, and fingerprints are not reconstructed.
 
-The tracked measurements are in [registry.json](https://github.com/sumitasthana/CARK/blob/main/docs/experiments/registry.json), [manifest.json](https://github.com/sumitasthana/CARK/blob/main/docs/experiments/manifest.json), and the CSV and text evidence under [docs/experiments](https://github.com/sumitasthana/CARK/tree/main/docs/experiments). Figures retain their dated source data. The registry covers the older archived runs; the newly reported results above have not been added to that structured registry.
+The tracked measurements are in [registry.json](https://github.com/sumitasthana/PATH/blob/main/docs/experiments/registry.json), [manifest.json](https://github.com/sumitasthana/PATH/blob/main/docs/experiments/manifest.json), and the CSV and text evidence under [docs/experiments](https://github.com/sumitasthana/PATH/tree/main/docs/experiments). Figures retain their dated source data. The registry covers the older archived runs; the newly reported results above have not been added to that structured registry.
 
 Record subsequent experiments on the page for their reporting date and update the main index. Keep the question, starting model, actual settings, observed results, limitations, and next decision together. Keep measurements in their evidence files and link them here. Git history retains previous versions of the page.

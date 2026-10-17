@@ -15,8 +15,10 @@ never seen and then discarding that copy.
 The repository was earlier called CARK, for Component-level Attribution of
 Residual Knowledge after Task Unlearning. That name was chosen before the
 results were in, and the work went elsewhere: nothing here attributes residual
-knowledge to a component. The GitHub URL still says `CARK` and the old links
-still work.
+knowledge to a component. The repository has been renamed, so links now use
+`PATH`. Old `github.com/sumitasthana/CARK` links still redirect, but old
+`sumitasthana.github.io/CARK` pages do not: GitHub Pages does not follow a
+repository rename.
 
 A note on names, since the two get conflated. *An Unlearning Framework for
 Continual Learning* is the paper. **UnCLe** is the method it introduces, and
@@ -52,9 +54,9 @@ unlearning methods. Neither shows up in accuracy at the end of a run.
 
 - **HTML research write-up:** [What our unlearning experiments show so far](site/index.html),
   with six figures, plain-English explanations, and links to the saved evidence.
-- **Results so far:** the [experiment trajectory](https://github.com/sumitasthana/CARK/wiki/Experiment-trajectory),
+- **Results so far:** the [experiment trajectory](https://github.com/sumitasthana/PATH/wiki/Experiment-trajectory),
   a short findings index with dated records and figures.
-- **Background:** the [concepts FAQ](https://github.com/sumitasthana/CARK/wiki/Concepts-and-processes)
+- **Background:** the [concepts FAQ](https://github.com/sumitasthana/PATH/wiki/Concepts-and-processes)
   explains the method and how to read its results.
 - **Inspecting a trained model:** the [model diagnostics guide](docs/MODEL_DIAGNOSTICS.md)
   covers weights, gradients, optimizer updates, and diagonal Fisher scores.
@@ -68,12 +70,12 @@ The proposed recovery measurements still need an experiment runner.
 
 The static report is in `site/`. It opens locally without a server. GitHub Pages
 currently publishes the root of `main`, so pushing report updates to that branch
-updates [the live report](https://sumitasthana.github.io/CARK/site/index.html)
+updates [the live report](https://sumitasthana.github.io/PATH/site/index.html)
 after the Pages build finishes.
 
 The optional **Publish experiment report** workflow publishes only `site/` and
 requires the Pages source to be set to **GitHub Actions**. That deployment mode
-would serve the report at `https://sumitasthana.github.io/CARK/`.
+would serve the report at `https://sumitasthana.github.io/PATH/`.
 
 To rebuild the report from the saved measurements, run
 `python scripts/build_experiment_site.py` with Matplotlib and NumPy installed.

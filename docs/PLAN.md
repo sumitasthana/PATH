@@ -8,7 +8,7 @@ below records its requirements for readers of the tracked repository.
 
 Last updated: 2026-10-05.
 
-[Experiment trajectory](https://github.com/sumitasthana/CARK/wiki/Experiment-trajectory) records the reported GPU experiments
+[Experiment trajectory](https://github.com/sumitasthana/PATH/wiki/Experiment-trajectory) records the reported GPU experiments
 through E15, the 2026-09-29 30-step run, and the checkpoint-based diagnostics. No reported
 trajectory has passed both the short-run forgetting and retention criteria.
 These are existing observations, not measurements made during this plan update.
@@ -71,7 +71,7 @@ setting, test it across multiple seeds to assess how consistently it works.
 from the same saved post-U3 checkpoint in two fresh Colab GPU sessions, and
 use the evidence to narrow the cause.
 
-[Stage 6 of the trajectory](https://github.com/sumitasthana/CARK/wiki/Experiment-trajectory#stage-6-paired-task-9-comparison-and-replay-variance)
+[Stage 6 of the trajectory](https://github.com/sumitasthana/PATH/wiki/Experiment-trajectory#stage-6-paired-task-9-comparison-and-replay-variance)
 reports an 11-percentage-point spread in final task 0 accuracy across sessions,
 versus 0.4 points within one session. The paired effect remains inconclusive.
 Earlier resumes overwrote some environment records. These were historical

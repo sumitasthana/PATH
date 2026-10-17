@@ -63,7 +63,7 @@ class ArchiveTests(unittest.TestCase):
         for name, text in pages.items():
             self.assertEqual((ROOT / "docs" / "wiki" / name).read_text(encoding="utf-8"), text, name)
             self.assertNotIn("\u2014", text, name)
-            for slug in re.findall(r"https://github.com/sumitasthana/CARK/wiki/([^#)\s]+)", text):
+            for slug in re.findall(r"https://github.com/sumitasthana/PATH/wiki/([^#)\s]+)", text):
                 self.assertIn(slug + ".md", pages, (name, slug))
             for slug in re.findall(r"\]\((Experiment-trajectory[^#)\s]*)(?:#[^)]+)?\)", text):
                 self.assertIn(slug + '.md', pages, (name, slug))

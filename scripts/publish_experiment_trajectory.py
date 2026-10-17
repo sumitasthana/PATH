@@ -14,8 +14,8 @@ import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-REPOSITORY = 'https://github.com/sumitasthana/CARK.git'
-WIKI = 'https://github.com/sumitasthana/CARK.wiki.git'
+REPOSITORY = 'https://github.com/sumitasthana/PATH.git'
+WIKI = 'https://github.com/sumitasthana/PATH.wiki.git'
 PAGE = Path('docs/wiki/Experiment-trajectory.md')
 LOGS = ROOT / 'outputs/wiki_publication'
 
