@@ -85,6 +85,39 @@ The fresh baseline varies little across seeds: 44.5, 43.2 and 39.0 percent, a ra
 
 So the eight-task model's ability to learn task 15 depends heavily on which seed it was, while a fresh generator's does not. Learning the sequence appears to introduce seed dependence rather than a uniform change in learning ability. This rests on three seeds and one probe task, and no mechanism has been tested.
 
+## Shared measurement module, and a weight-change measurement beside the behaviour one
+
+Input sensitivity had been copied into notebooks 21, 22, 23, 24 and 26 as five versions that had drifted apart. `uncle/measure.py` now holds one copy, with ten tests. It also adds `relative_change`, the quantity the teammate's adapter plasticity study calls `rel_dW`:
+
+    rel_dW = || W_now - W_start || / || W_start ||
+
+pooled over every generated tensor and computed in float64, the same definition that study uses, so the two projects report comparable numbers.
+
+Notebook 27 runs both on one unlearning request. The user supplied its first run: order 01, seed 0, task 3 removed, 100 steps, 0.9 minutes.
+
+| Step | Accuracy | Classes used | Weight size | rel_dW | Input sensitivity |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 0 | 35.6% | 9 | 4706.2 | 0.0000 | 1.324e+01 |
+| 20 | 10.0% | 2 | 4007.7 | 0.1636 | 3.943e-01 |
+| 40 | 10.0% | 1 | 3542.3 | 0.2799 | 2.595e-02 |
+| 60 | 10.0% | 1 | 3191.9 | 0.3921 | 1.743e-03 |
+| 80 | 10.0% | 1 | 2921.1 | 0.5119 | 7.385e-05 |
+| 100 | 10.0% | 1 | 2690.3 | 0.6289 | 2.280e-06 |
+
+**This reproduces the conclusion report exactly**, which is what the run was for. Table 8 of that report gives a starting weight size of 4,706 falling to 2,690, which is 57%, and input sensitivity of 13.2 falling to 0.00000228. Its Table 4 gives the per-class counts: 494 images to class 3 at step 20, all 500 to class 3 at step 40, and all 500 to class 0 by step 100. Every one of those appears again here. The shared module produces what the five separate copies produced.
+
+The seven kept tasks moved from a mean of 40.4% to 40.0% across the same steps, with no task approaching chance. Unlearning stayed specific.
+
+Two numbers are new, because the earlier work never computed them. The relative weight change reaches 0.629. The tensor that moved furthest is `layer1.1.bn1.bias`, an early BatchNorm offset, which is generated like every other weight and so is not covered by the report's finding that BatchNorm running statistics are untouched.
+
+## A correction to how this contrast was being described
+
+The notebook's first version printed that the weights "moved a modest amount". The measurement contradicts that: rel_dW reaches 0.629, which is a large move. That line was wrong and has been replaced.
+
+The contrast still holds, but it is not the one that wording described. Both measurements register the unlearning. They differ in what they can express. A relative weight change is bounded in practice: weights driven toward zero give a value approaching 1, so 0.629 is a large reading on a scale with a ceiling. Input sensitivity fell by 6.8 factors of ten and has no such ceiling.
+
+So the accurate statement is narrower than "a weight measurement would show nothing". It is that no bounded weight measurement can distinguish a model that changed a great deal from one that stopped responding to its input, because both sit near the top of its range. The behavioural measurement separates them. This does not change the study's finding; it corrects how the finding was being explained.
+
 ## The protection term works against this result, not for it
 
 When A1 learns task 15, a protection term holds the generator near its existing weights for the eight tasks already learned. Its strength is beta, set to 0.1. The baseline has no earlier task, so that term is absent there.
