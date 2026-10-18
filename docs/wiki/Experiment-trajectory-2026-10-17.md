@@ -118,6 +118,61 @@ The contrast still holds, but it is not the one that wording described. Both mea
 
 So the accurate statement is narrower than "a weight measurement would show nothing". It is that no bounded weight measurement can distinguish a model that changed a great deal from one that stopped responding to its input, because both sit near the top of its range. The behavioural measurement separates them. This does not change the study's finding; it corrects how the finding was being explained.
 
+## Stream metrics, for comparison with the adapter plasticity study
+
+The teammate's adapter plasticity study reports four summary numbers and a curve, all taken from one accuracy matrix per run. None had been computed for this framework. They turn out to need no new runs: every source job already stores the accuracy of every seen task after every request, so the matrix was recoverable from records saved on 10 October.
+
+`uncle/stream_metrics.py` implements the five, with eighteen tests against a hand-worked three-task matrix. Notebook 28 computes them from R2 and needs no GPU.
+
+Results for order 01, all three seeds, eight tasks, task-incremental.
+
+| Metric | Mean | SD | 95% interval | Per seed |
+| --- | ---: | ---: | --- | --- |
+| Final accuracy, percent | 40.59 | 2.11 | [38.98, 42.98] | 39.83, 38.98, 42.98 |
+| Learning accuracy, percent | 48.53 | 0.99 | [47.50, 49.48] | 49.48, 47.50, 48.62 |
+| Forgetting, points | 9.47 | 2.49 | [6.60, 11.06] | 11.06, 10.74, 6.60 |
+| Backward transfer, points | -9.08 | 2.36 | [-11.03, -6.46] | -11.03, -9.74, -6.46 |
+| Curve slope, points per task | -0.79 | 0.71 | [-1.60, -0.26] | -0.26, -1.60, -0.51 |
+
+The new-task accuracy curve, meaning how well each task scored at the moment it was learned, averaged over the three seeds:
+
+| Position | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Task | 3 | 0 | 9 | 5 | 17 | 1 | 7 | 14 |
+| Mean accuracy | 46.9 | 50.9 | 49.4 | 52.7 | 49.5 | 54.3 | 42.9 | 41.6 |
+
+The curve is flat or rising for the first six positions and falls at the last two.
+
+## Why the falling curve is not a plasticity finding
+
+The slope is negative in all three seeds and the bootstrap interval excludes zero. That is the first of the two conditions the adapter study fixes before declaring plasticity loss. It is not the finding, for two reasons.
+
+**The second condition cannot be evaluated.** The rule also requires the mean change to exceed a noise floor estimated from repeated measurements at the first probe point. The stream runs were never repeated within a seed, so there is no repetition spread to estimate one from. One condition out of two is not the rule.
+
+**Task identity and position are confounded.** All three seeds run the same learning order, so position 7 is always task 7 and position 8 is always task 14. If those two tasks are simply harder than the others, the curve falls for that reason and plasticity has nothing to do with it. The adapter study avoids this by probing the same held-out tasks at every point; an in-stream diagonal cannot, because every point is a different task.
+
+The study plan already contains two further orders that would separate the two. Position 8 holds task 14 in order 01, task 5 in order 02 and task 3 in order 03. Running those would show whether the dip follows the position or the task. This is the same confound the conclusion report records as an open limitation, now with a specific measurement that depends on it.
+
+## What of the adapter study's measurement set is still missing here
+
+| Metric | Status in this framework |
+| --- | --- |
+| Final accuracy, learning accuracy, forgetting, backward transfer, curve slope | Done, above |
+| E1, random-label training loss | Not run |
+| E2, three unrelated probe tasks at several probe points | Approximated only. Notebook 26 uses one probe task from the same dataset family and two probe points |
+| Head-only control and R(t) | Not run, and may not transfer. See below |
+| Feature effective rank | Not run |
+| Joint upper bound | Not run |
+| Noise floor from repeated probes at t = 0 | Not run, so the decision rule cannot be applied to anything |
+| rel_dW | Measured once during unlearning, not after each task across the stream |
+| Adapter geometry: rotation angles, conditioning of B | Not applicable, there is no adapter |
+
+Two differences make some of these not directly comparable, and both should be stated wherever these numbers appear beside the adapter study's.
+
+**Only the task-incremental form exists here.** That study reports every metric twice because its model has one head over all classes. This framework has no such head: a task code generates a ten-output classifier and the code must be supplied to get any prediction. The adapter study calls the task-incremental form the cleaner read, so this is the comparable one, but it was not a choice.
+
+**R(t) may not transfer.** The adapter study's head-only control is a linear probe on frozen pretrained features, which gives a meaningful floor. This framework has no pretrained backbone, so its equivalent is a frozen random generator plus a fresh 32-number code, which sits near chance. The denominator of R(t) would then be close to zero and the ratio would not mean what it means there.
+
 ## The protection term works against this result, not for it
 
 When A1 learns task 15, a protection term holds the generator near its existing weights for the eight tasks already learned. Its strength is beta, set to 0.1. The baseline has no earlier task, so that term is absent there.
