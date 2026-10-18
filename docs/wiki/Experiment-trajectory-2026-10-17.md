@@ -173,6 +173,35 @@ Two differences make some of these not directly comparable, and both should be s
 
 **R(t) may not transfer.** The adapter study's head-only control is a linear probe on frozen pretrained features, which gives a meaningful floor. This framework has no pretrained backbone, so its equivalent is a frozen random generator plus a fresh 32-number code, which sits near chance. The denominator of R(t) would then be close to zero and the ratio would not mean what it means there.
 
+## The adapter study's plasticity probe, ported and run
+
+Notebook 29 runs that study's probe protocol properly, replacing the approximation in notebook 26. It takes a copy of the model, trains a fresh 32-number task code on a task the stream never saw, measures, then restores the model and checks it is unchanged. The generator plays the part that study gives the adapter, and the fresh code the part it gives the head, so its head-only control becomes a code-only arm.
+
+Against notebook 26 it adds three probe tasks instead of one, a three-point learning-rate grid, five repetitions at the first probe point so the noise floor is measured rather than borrowed, feature effective rank, and the fork-and-discard protocol. It also removes notebook 26's chunk-embedding confound: the probe never trains the chunk embeddings, so both probe points are on equal footing.
+
+An integration run on a small model caught a defect before any GPU time was spent. `add_task` draws a task code from a stream keyed by the run's seed and the task name, so every repetition began from the same code and differed only in batch order. The five repetitions came out identical, the noise floor computed as exactly zero, and every comparison would then have read as significant. The probe now redraws the code from the probe seed, which carries the repetition.
+
+The user supplied the first full run: seed 0, order 01, 168 probe runs, 118 minutes.
+
+| Endpoint | Arm | t = 0 | t = 8 | Change | Noise floor | Verdict |
+| --- | --- | ---: | ---: | ---: | ---: | --- |
+| E2 | full | 52.45 | 59.07 | +6.62 | 4.85 | No loss, change is the other way |
+| E1 | full | 2.26 | 2.24 | -0.03 | 0.04 | Void, see below |
+| E2 | code-only | 10.35 | 10.00 | | | |
+| E1 | code-only | 2.72 | 2.66 | | | |
+
+E2 is test accuracy on tasks 2, 4 and 6, averaged, in percent. E1 is the final training loss on randomly labelled images.
+
+**E2 shows no plasticity loss.** After eight tasks the generator learns an unseen task 6.62 points better than a generator that has learned nothing, and that exceeds the noise floor measured from the five repetitions. The direction and size agree with notebook 26's seed-0 reading of +6.3 points, which used a different probe task and a different protocol.
+
+**E1 is void.** Chance loss for ten classes is ln(10) = 2.303. The full arm ends at 2.26 and 2.24, which is at chance, and the code-only arm ends at 2.72 and 2.66, which is worse than guessing. The probe never memorised anything, so its "no finding" says the budget was too small and says nothing about the model. The dose was 5,000 images for 400 steps, about 5 passes. The adapter study hit this same problem and fixed it with 2,000 images for 600 steps, about 19 passes, which is now the default here. The notebook also now refuses to issue an E1 verdict while the loss sits near chance.
+
+**The code-only arm sits at chance at both points**, 10.35 and 10.00 percent against a chance level of 10. A frozen generator with a fresh 32-number code cannot learn a task at all. This confirms directly what section 5.2 of the conclusion report argued from the unlearned case: 32 numbers cannot hold a task.
+
+That has a consequence for R(t), and it is the opposite of what was expected. The worry recorded earlier was that the denominator would be near zero. It is not: the generator's contribution is the full arm minus the code-only arm, which is 42.11 at t = 0 and 49.07 at t = 8, giving R(8) = 1.17. The ratio is computable. But because the control is pinned at chance at every point, R(t) carries no information beyond E2 itself, which it tracks. It should be reported as a number and described as not independent.
+
+Feature effective rank read 467.9 at t = 0 and 396.6 at t = 8, but with a standard deviation near 275 in both, because the first version averaged over every learning rate rather than only the runs the grid selected. That is corrected; the figure should be read again from the next run.
+
 ## The protection term works against this result, not for it
 
 When A1 learns task 15, a protection term holds the generator near its existing weights for the eight tasks already learned. Its strength is beta, set to 0.1. The baseline has no earlier task, so that term is absent there.
