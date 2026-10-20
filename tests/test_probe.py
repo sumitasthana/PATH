@@ -150,6 +150,23 @@ class ProbeTests(unittest.TestCase):
         for old, new in zip(before, after):
             self.assertTrue(torch.equal(old, new))
 
+    def test_generator_only_leaves_the_task_code_alone(self):
+        # The mirror of the code-only arm: the generator trains and the code
+        # stays at the random value it was drawn with. If the code moved, the
+        # arm would not be measuring what training the code is worth.
+        result = self.probe(train_code=False, steps=8)
+        self.assertEqual(result["arm"], "generator_only")
+        before = [p.detach().clone() for p in self.hypernet.generator_parameters()]
+        self.probe(train_code=False, steps=8)
+        after = self.hypernet.generator_parameters()
+        # The probe restores the model, so the generator is unchanged here too.
+        for old, new in zip(before, after):
+            self.assertTrue(torch.equal(old, new))
+
+    def test_an_arm_that_trains_nothing_is_refused(self):
+        with self.assertRaises(ValueError):
+            self.probe(code_only=True, train_code=False, steps=8)
+
     def test_reports_readings_and_effective_rank(self):
         result = self.probe(checkpoints=2, feature_images=8)
         self.assertEqual([r["step"] for r in result["readings"]], [2, 4])

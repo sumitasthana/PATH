@@ -184,7 +184,7 @@ def _evaluate(hypernet, target, trainer, task, dataset, batch_size, feature_imag
 
 def probe_once(hypernet, target, trainer, *, task, train_set, test_set=None,
                steps, learning_rate, batch_size=64, code_only=False,
-               seed=12345, feature_images=0, checkpoints=4):
+               train_code=True, seed=12345, feature_images=0, checkpoints=4):
     """Train a discarded copy on one task and report how well it learned.
 
     task            a task name the model has never learned. A fresh code is
@@ -197,6 +197,9 @@ def probe_once(hypernet, target, trainer, *, task, train_set, test_set=None,
     code_only       freeze the generator, so only the 32-number code trains.
                     This is the control that separates the generator's own
                     contribution from the code's.
+    train_code      False freezes the code at its random starting value, so
+                    only the generator trains. The mirror image of code_only:
+                    it says whether training the code buys anything.
     seed            fixes both the batch order and the fresh code's starting
                     values. It must depend on the probe task and the
                     repetition, and never on the probe point, so that two
@@ -217,6 +220,8 @@ def probe_once(hypernet, target, trainer, *, task, train_set, test_set=None,
         raise ValueError(f"Task {task} is already learned. A probe needs an unseen task.")
     if steps < checkpoints:
         raise ValueError("steps must be at least the number of checkpoints")
+    if code_only and not train_code:
+        raise ValueError("code_only with train_code False leaves nothing to train.")
 
     state = snapshot(hypernet, trainer)
     try:
@@ -233,7 +238,9 @@ def probe_once(hypernet, target, trainer, *, task, train_set, test_set=None,
                                    device=code.device, dtype=code.dtype))
         trainer.task_buffers[task] = {name: value.clone()
                                       for name, value in trainer.buffer_template.items()}
-        trainable = [code] if code_only else [*hypernet.generator_parameters(), code]
+        trainable = [] if code_only else [*hypernet.generator_parameters()]
+        if train_code:
+            trainable.append(code)
         hypernet.requires_grad_(False)
         for parameter in trainable:
             parameter.requires_grad_(True)
@@ -282,7 +289,9 @@ def probe_once(hypernet, target, trainer, *, task, train_set, test_set=None,
                                 feature_images=feature_images)
         result = {
             "task": task, "steps": steps, "learning_rate": learning_rate,
-            "code_only": code_only, "seed": seed,
+            "code_only": code_only, "train_code": train_code,
+            "arm": "code_only" if code_only else "full" if train_code else "generator_only",
+            "seed": seed,
             "final_train_loss": final_train["loss"],
             "final_train_accuracy": final_train["accuracy"],
             "readings": readings,
