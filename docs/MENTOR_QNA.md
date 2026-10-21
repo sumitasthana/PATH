@@ -3,6 +3,24 @@
 
 Questions from mentors, quoted as asked, with our answers. Newest first. Answers cite measurements recorded in the [experiment trajectory](Experiment-trajectory).
 
+## Words used on this page
+
+Every term here is defined once, in one line.
+
+| Term | What it means |
+| --- | --- |
+| Hypernetwork, or generator | The part that produces the weights of a classifier, instead of being the classifier. |
+| Task code | 32 numbers belonging to one task. They tell the generator which classifier to produce. |
+| Backbone | The large model that does the main work of reading an image. |
+| Frozen | None of that part's weights are allowed to change during training. |
+| Adapter | A small set of trainable weights added beside a frozen backbone. The backbone stays fixed and the adapter changes what it computes. |
+| Hypernetwork-generated adapters | The generator produces the adapter weights from a task code, instead of the adapter being trained directly. |
+| Matas's setup | Plain continual learning: train the model on one task after another, with no hypernetwork. |
+| Plasticity | The ability to learn a **new** task. Not the same as forgetting, which is old tasks getting worse. |
+| Fork-and-discard probe | Copy the model, teach the copy a task it has never seen, measure, then throw the copy away. |
+| Input sensitivity | The widest spread any single output score shows across the test set. A dead model reads near zero. |
+| Chance | The score a model gets by guessing. With 10 classes it is 10 percent. |
+
 ---
 
 ## Q1. Is the hypernetwork needed?
@@ -39,17 +57,12 @@ The remaining gap is unexplained. Two recent measurements narrow down where it i
 
 So this is not a plasticity problem. It is a weaker learner from the start.
 
-**Which option to take.**
+**On the two options, we have no data.** We have not run either one. What we can say is only this:
 
-| Option | Keeps the unlearning mechanism | Fixes learning quality | Merges the two papers |
-| --- | --- | --- | --- |
-| Plain continual learning, Matas's setup | No | Yes | Yes |
-| Hypernetwork-generated adapters, frozen model | Yes | Yes | Yes |
-| Current setup | Yes | No | No |
+- Matas's setup has no task code. So the unlearning method as written cannot be applied to it.
+- Hypernetwork-generated adapters keep a task code, so the method could in principle be applied. Whether unlearning still drives a task to chance there is untested. An adapter is a much smaller target than a full ResNet50.
 
-The second option is the one to take.
-
-**Open before we commit.** We have not tested whether unlearning still drives a task to chance when only adapters are generated and the backbone is frozen. An adapter is a much smaller target than a full ResNet50.
+Testing the second option on one task is a short run. That would tell us more than any argument here.
 
 ---
 
