@@ -2,36 +2,55 @@
 
 [Back to the experiment index](Experiment-trajectory)
 
-The plasticity probe was run to completion on three seeds. This page records the probe's final form, the result, one defect found during the run, and what follows.
+The plasticity probe finished. It ran on three seeds. This page gives the result, one defect found during the run, and what comes next.
 
 ## On this page
 
-- [Result: no plasticity loss, a small gain instead](#result-no-plasticity-loss-a-small-gain-instead)
+- [What we asked](#what-we-asked)
+- [Result: the generator does not get worse at learning](#result-the-generator-does-not-get-worse-at-learning)
 - [Second result: training the task code buys nothing](#second-result-training-the-task-code-buys-nothing)
-- [Third result: the task code alone holds nothing, on three seeds](#third-result-the-task-code-alone-holds-nothing-on-three-seeds)
-- [Readings that produced no finding](#readings-that-produced-no-finding)
-- [Changes made to the probe before this run](#changes-made-to-the-probe-before-this-run)
-- [Defect: the resume check skipped only one of three arms](#defect-the-resume-check-skipped-only-one-of-three-arms)
-- [What this settles and what it does not](#what-this-settles-and-what-it-does-not)
+- [Third result: the task code alone holds nothing](#third-result-the-task-code-alone-holds-nothing)
+- [Two readings that showed nothing](#two-readings-that-showed-nothing)
+- [What we changed before this run](#what-we-changed-before-this-run)
+- [Defect: the probe repeated work it had already done](#defect-the-probe-repeated-work-it-had-already-done)
+- [What this settles](#what-this-settles)
 - [Limits](#limits)
 - [Next](#next)
 
-## Result: no plasticity loss, a small gain instead
+## What we asked
 
-Plasticity means the ability to learn a new task. Loss of plasticity means that ability gets worse as more tasks are learned. It is a separate question from forgetting, which is about old tasks getting worse.
+Plasticity means the ability to learn a new task. Loss of plasticity means that ability gets worse as the model learns more tasks.
 
-The generator does not lose that ability. After learning the eight tasks of order 01 it learns an unseen task slightly better than a generator that has learned nothing. Two measurements agree, using different kinds of evidence.
+This is not the same as forgetting. Forgetting means old tasks get worse. Plasticity is about new tasks. A model can forget everything and still learn new things well.
 
-| Measurement | What it measures | Mean change | Spread across seeds |
-| --- | --- | ---: | ---: |
-| Useful learning | Test accuracy on tasks 2, 4 and 6, averaged | +4.74 points | 1.68 |
-| Capacity to change | Final training loss on randomly labelled images | -0.70 | 0.06 |
+We asked one question. After the generator learns eight tasks, is it worse at learning a ninth?
 
-Higher accuracy is better and lower loss is better, so both changes are in the direction of better learning.
+The word **generator** means the hypernetwork. It is the part that produces the weights of a classifier. It is the only part that carries anything from one task to the next. So it is the only part whose plasticity can change.
 
-Per seed, against each seed's own measured noise floor. The floor comes from the spread of five repetitions of the probe on the same unchanged model, so it is this measurement's own wobble rather than a number borrowed from the replay work.
+## Result: the generator does not get worse at learning
 
-| Measurement | Seed | Before | After 8 tasks | Change | Noise floor | Exceeds the floor |
+It gets slightly better.
+
+We measured this in two ways. Both say the same thing.
+
+The first way is **useful learning**. We teach the model three tasks it has never seen. We record the test accuracy. Higher is better.
+
+The second way is **capacity to change**. We give images random wrong labels. A dog might be labelled "truck". No pattern is left to find. The only way to fit the data is to memorise each image one by one. We record the final training loss. Lower is better.
+
+| Measurement | Mean change over 3 seeds | Spread between seeds |
+| --- | ---: | ---: |
+| Useful learning | +4.74 points | 1.68 |
+| Capacity to change | -0.70 | 0.06 |
+
+Accuracy went up. Loss went down. Both mean better learning.
+
+### The numbers for each seed
+
+A **seed** is one random starting point for training. We ran three.
+
+A change only counts when it is bigger than the measurement's own wobble. We call that wobble the **noise floor**. We measure it by running the probe five times on the same unchanged model and looking at how much those five differ.
+
+| Measurement | Seed | Before | After 8 tasks | Change | Noise floor | Bigger than the floor |
 | --- | ---: | ---: | ---: | ---: | ---: | --- |
 | Useful learning | 0 | 51.87 | 58.23 | +6.37 | 5.53 | Yes |
 | Useful learning | 1 | 53.09 | 56.10 | +3.01 | 3.23 | No |
@@ -40,88 +59,114 @@ Per seed, against each seed's own measured noise floor. The floor comes from the
 | Capacity to change | 1 | 1.54 | 0.78 | -0.76 | 0.42 | Yes |
 | Capacity to change | 2 | 1.31 | 0.67 | -0.64 | 0.18 | Yes |
 
-Five of six readings pass the decision rule, which was fixed before the runs. Seed 1's accuracy reading falls just inside its floor, 3.01 against 3.23, and is recorded as no finding rather than as a gain. It points the same way as the other two.
+Five of the six readings pass. Seed 1's accuracy reading is 3.01 against a floor of 3.23. That is just inside the floor. So we record it as no finding. It still points the same way as the other two.
 
-The capacity measurement is the stronger evidence here. All three seeds pass, and the three values differ from each other by 0.06. The random-label probe also worked this time: the full arm ends at 1.37 and 0.67, well below the chance loss of ln(10) = 2.303, so nothing is void. The 17 October run of this same probe was void on this endpoint because its budget was too small.
+The second measurement is the stronger one. All three seeds pass. And the three values are 0.70, 0.76 and 0.64. They differ from each other by only 0.06. That is very consistent.
 
-This supersedes the 17 October reading of +0.8 points from notebook 26. That used one probe task, one learning rate, and a borrowed noise floor. The present numbers use three probe tasks, a three-rate grid with the best kept, and a floor measured per seed.
+This measurement also worked for the first time. On 17 October it was void. The model never memorised anything, so the number measured the budget and not the model. We then made the probe use fewer images and more passes over them. This run shows it worked: the loss ends at 1.37 and 0.67, well below the chance level of 2.303.
+
+These numbers replace the 17 October reading of +0.8 points. That reading used one new task, one learning rate, and a noise floor borrowed from other work. This run uses three new tasks, three learning rates with the best kept, and a floor measured for each seed.
 
 ## Second result: training the task code buys nothing
 
-Each task has its own task code: 32 numbers that select which classifier the generator produces. Normally the code and the generator train together. A new arm holds the code at its random starting value and trains only the generator.
+Each task has its own **task code**: 32 numbers that tell the generator which classifier to make. Normally these 32 numbers are trained together with the generator.
 
-| Seed | Code trained | Code frozen | Difference | Noise floor |
+We added a new arm that leaves them at their random starting value. An **arm** means one setting of which parts are allowed to train. Only the generator trains in this arm.
+
+| Seed | Code trained | Code left random | Difference | Noise floor |
 | ---: | ---: | ---: | ---: | ---: |
 | 0 | 51.87 | 53.35 | -1.48 | 5.53 |
 | 1 | 53.09 | 52.08 | +1.01 | 3.23 |
 | 2 | 52.51 | 51.24 | +1.27 | 2.28 |
 
-Test accuracy in percent, before any task. The difference changes sign between seeds and is far smaller than the floor in every case. The same holds after eight tasks, and on the capacity measurement, where the differences are 0.16, 0.07 and -0.19 against floors of 0.29, 0.42 and 0.18.
+These are test accuracies in percent, before any task is learned.
 
-No measurable effect in either direction. In this setup the generator reaches the same result whether its task code is trained or left random.
+The difference is negative for one seed and positive for two. So it has no consistent direction. It is also much smaller than the noise floor every time.
 
-## Third result: the task code alone holds nothing, on three seeds
+The same holds after eight tasks. It also holds for the second measurement, where the differences are 0.16, 0.07 and -0.19 against floors of 0.29, 0.42 and 0.18.
 
-A frozen generator with a fresh task code reads 10.84, 10.25 and 10.91 percent before any task, and 10.07, 10.00 and 10.60 after eight tasks. Chance accuracy for ten classes is 10 percent. This was known from one seed and now holds on three, at both measurement points.
+So training the 32 numbers makes no measurable difference here. The generator reaches the same result either way.
 
-The generator's own contribution, measured as the full arm minus the frozen-generator arm, is 41.03, 42.84 and 41.60 points before any task, rising to 48.17, 46.10 and 46.77 after eight tasks.
+## Third result: the task code alone holds nothing
 
-## Readings that produced no finding
+Here we do the opposite. We freeze the generator and train only the 32 numbers.
 
-Feature effective rank says how many independent directions the features really use. It reads 591.0, 616.7 and 628.7 before any task, and 606.3, 612.1 and 604.9 after eight tasks, with a spread of 38 to 70 within each reading. The spread is larger than any change, so there is no finding. The 17 October values of 467.9 and 396.6 are superseded: they averaged over every learning rate rather than only the selected runs, which is now corrected.
+The result is 10.84, 10.25 and 10.91 percent before any task. It is 10.07, 10.00 and 10.60 after eight tasks. Chance accuracy for ten classes is 10 percent.
 
-The relative contribution ratio R(8) is 1.174, 1.076 and 1.124. It is computable but carries no information beyond the accuracy result, because its control arm sits at chance at every point, so the ratio tracks accuracy. It is reported as a number and is not independent evidence.
+So 32 numbers cannot hold a task. We knew this from one seed. Now it holds on three seeds, at both measurement points.
 
-## Changes made to the probe before this run
+This also tells us how much the generator itself contributes. We subtract the frozen-generator result from the full result. The answer is 41.03, 42.84 and 41.60 points before any task. It rises to 48.17, 46.10 and 46.77 after eight tasks.
 
-Three changes were committed between 20 and 21 October. None of them changes the protocol the probe follows.
+## Two readings that showed nothing
 
-- **A third arm**, committed as `c9f87d5`. The probe already ran a full arm and a frozen-generator arm. The new arm freezes the task code instead and trains only the generator, which answers the second result above. It uses the same grid and budget and costs half again as much time.
-- **All seeds in one pass, with resume**, committed as `b2136a3`. Three seeds with three arms is about 10 hours, longer than one session on the available hardware. The notebook now works through a list of seeds and appends each finished probe run to a file in R2. Starting the run again reads that file, skips what is done, and continues.
-- **One spelling per arm**, committed as `2f13b55`. See the defect below.
+**Feature effective rank** says how many independent directions the model's internal features use. A fall is a known warning sign of plasticity loss.
 
-The random-label budget was already corrected on 17 October to 2,000 images for about 19 passes, matching the adapter study's own correction. This run is the first to use it, and it is why the capacity endpoint is valid for the first time.
+It reads 591.0, 616.7 and 628.7 before any task. It reads 606.3, 612.1 and 604.9 after eight tasks. But the spread inside each reading is 38 to 70. That is larger than any of the changes. So there is no finding.
 
-## Defect: the resume check skipped only one of three arms
+This replaces the 17 October values of 467.9 and 396.6. Those averaged over every learning rate instead of only the chosen ones, which we have now fixed.
 
-The resume check compared the arm's name as written in the notebook's settings against the name written into each saved result. Two arms were spelled with a hyphen in one place and an underscore in the other, so they never matched and were run again in every session. Only the arm whose name was spelled identically in both places was skipped correctly.
+**The relative contribution ratio** is 1.174, 1.076 and 1.124. We can now compute it. But it tells us nothing new. Its control arm sits at chance at every point, so the ratio just follows the accuracy. We report it as a number and do not treat it as separate evidence.
 
-The finished file held 1,032 lines for 756 distinct runs. The 276 repeats are about 3.6 hours of wasted computation. They fall entirely in the two affected arms, so the best-of-grid selection would have chosen from more samples for those arms than for the first, which biases them. The main accuracy and capacity verdicts use the first arm only and were not affected.
+## What we changed before this run
 
-The fix uses one spelling per arm. The loading step also drops repeats already saved, so the existing file stayed usable and no run had to be repeated. A test compares the two sources of the name and fails if they differ again.
+Three changes went in between 20 and 21 October. None of them changes the method the probe follows.
 
-The repeats are themselves an accidental measurement: 186 identical configurations run twice or three times on the same model, of which 174 disagree, by up to 24.4 points. That is larger than the 8 to 11 points previously recorded for session-to-session variation. It is accidental evidence rather than a designed measurement, and it has not been analysed.
+**A third arm**, commit `c9f87d5`. The probe already had a full arm and a frozen-generator arm. The new arm freezes the task code instead. This is what gives the second result above. It uses the same grid and the same budget. It costs half again as much time.
 
-## What this settles and what it does not
+**All seeds in one pass, with resume**, commit `b2136a3`. Three seeds with three arms takes about 10 hours. That is longer than one session on our hardware. The notebook now works through a list of seeds. It writes each finished run to a file in R2. When you start it again, it reads that file, skips what is done, and continues.
 
-The paper states that unlearning restores the hypernetwork's plasticity. These measurements say there is no plasticity loss for unlearning to restore. The separate branch-minus-control comparison recorded on 10 October gave +5.40 and -0.20 points across three seeds, both at or inside the noise floor, so unlearning showed no effect on later learning either. The claim remains unsupported in this framework.
+**One spelling per arm**, commit `2f13b55`. See the defect below.
 
-The planned beta-zero control arm is not needed. It would remove a handicap that only the eight-task model carries, and that model already scored higher while carrying it. It stays available if a later seed reverses the sign.
+The random-label budget was already fixed on 17 October. It now uses 2,000 images and about 19 passes over them. This is the first run to use it.
 
-The adapter study reaches the same conclusion on a different architecture over twenty tasks: no plasticity loss at the settings that give the best accuracy. The two projects now agree.
+## Defect: the probe repeated work it had already done
 
-This result says nothing about erasure, recovery or privacy. None of those has been measured.
+The resume check compares two names. One is the arm's name in the notebook settings. The other is the name saved inside each result.
+
+Two arms were spelled with a hyphen in one place and an underscore in the other. So those two names never matched. Those two arms were never skipped. They ran again in every session. Only the third arm, spelled the same in both places, was skipped correctly.
+
+The finished file had 1,032 lines for 756 real runs. The 276 extra runs are about 3.6 hours of wasted computation.
+
+The extra runs all fall in the two affected arms. This matters, because the probe keeps the best result out of several learning rates. Two arms would have had more results to choose from than the third. That makes those two look better than they are. The main result uses the third arm only, so it was not affected.
+
+The fix uses one spelling per arm. The loading step also drops the repeats, so we did not have to run anything again. A test now compares the two names and fails if they differ.
+
+The repeats are themselves an accidental measurement. They are 186 identical settings run two or three times on the same model. Of those, 174 disagree. The largest disagreement is 24.4 points. That is bigger than the 8 to 11 points we recorded before for session-to-session variation. It is accidental evidence, not a planned measurement, and we have not analysed it.
+
+## What this settles
+
+The paper says that unlearning restores the hypernetwork's plasticity. Our measurements say there is no plasticity loss to restore.
+
+We also measured unlearning directly, on 10 October. We compared learning a new task with and without unlearning first. The difference was +5.40 and -0.20 points across three seeds. Both are at or inside the noise floor. So unlearning showed no effect on later learning either.
+
+The paper's claim is not supported in this framework.
+
+We also planned a control arm with the protection term switched off. The **protection term** is the part of the loss that holds the generator near its current weights, so old tasks are not damaged. That arm only handicaps the eight-task model, because a fresh model has nothing to protect. The eight-task model already scored higher while carrying that handicap. Removing it would widen the gap, not explain it. So that arm is no longer needed. We keep it available if a later seed reverses the sign.
+
+A separate study reaches the same conclusion on a different architecture. It trains small parts called adapters on a frozen vision transformer, over twenty tasks. It also finds no plasticity loss at the settings that give the best accuracy. The two projects agree.
+
+This result says nothing about erasure, recovery or privacy. We have not measured any of those.
 
 ## Limits
 
-Three seeds, two probe points, one learning order, four probe tasks from one dataset family.
+**Three seeds is thin.** The spread between seeds on the accuracy measurement is 1.68. The mean change is 4.74. So the spread is about a third of the effect. Three seeds give us a range, but not a narrow one. These numbers are provisional. Always say how many seeds they rest on.
 
-The spread between seeds on the accuracy measurement is 1.68, about a third of the mean change. Three seeds give an interval but not a narrow one. These numbers are provisional and the seed count should be stated wherever they appear.
+**One task order.** All three seeds learn the tasks in the same order. So we cannot separate "after eight tasks" from "after these particular eight tasks". Orders 02 and 03 are in the study plan and would separate them.
 
-All three seeds use order 01, so "after eight tasks" and "after these particular eight tasks" cannot be separated. Orders 02 and 03 exist in the study plan and would separate them.
+**Two measurement points only.** We measure before the stream and after all eight tasks. Nothing in between, because we kept no mid-stream checkpoints. A change that appeared and then went away would be invisible to us.
 
-The probe runs before the stream and after all eight tasks, with nothing in between, because no mid-stream checkpoints were kept. A change that appeared and then reversed would not be visible.
+**The new tasks come from the same dataset.** Tasks 2, 4, 6 and 8 are Tiny ImageNet groups, like the tasks the model already learned. A generator that suits this one dataset would look healthy here and could still fail on a different kind of image. The adapter study avoids this by using unrelated datasets. We cannot copy that: three of its four probe tasks need more than ten classes, and our generator produces exactly ten.
 
-Probe tasks 2, 4, 6 and 8 are Tiny ImageNet groups, like the tasks the model already learned. A generator suited to this one dataset family would appear healthy here and could still fail on a different kind of image. The adapter study avoids this with unrelated datasets; three of its four probe tasks cannot be used here, because the generator's output is fixed at ten classes.
-
-The measurements show the direction of change. They do not explain why learning eight tasks makes the generator better at a ninth. Transfer between similar classes is one possible cause and has not been separated from the rest.
+**We do not know why it got better.** The measurements show the direction. They do not give a cause. Transfer between similar classes is one possible reason. We have not separated it from the others.
 
 ## Next
 
-Experiment A is closed. Plasticity is not where the difficulty lies, on this probe, at this sample size.
+This experiment is closed. Plasticity is not where our problem lies, on this probe, at this sample size.
 
-Two measurements from the local guide remain unrun and neither follows from this result: the mid-stream probe points, and orders 02 and 03. Both need the stream trained again with probing inline, so they are one job rather than two. Running them would also settle the task-and-position confound that the 17 October record left open for the in-stream curve.
+Two measurements are still unrun. Neither follows from this result.
 
-The largest open question in the study is unchanged and untouched by this work: whether a removed task can be recovered under a fixed training budget with suitable controls. It has still not been specified.
+The first is the mid-stream probe points. The second is orders 02 and 03. Both need the stream trained again with the probe called during it. So they are one job, not two. Doing them would also settle the task-and-position question that the 17 October record left open.
 
-A full write-up of these findings is at `ops-docs/guides/plasticity-findings-2026-10-21.html`, which stays local because `ops-docs` is not committed.
+The largest open question in the study is untouched by this work. It is whether a removed task can be brought back under a fixed training budget with proper controls. It is still not specified.
+
+A longer write-up is at `ops-docs/guides/plasticity-findings-2026-10-21.html`. It stays local, because `ops-docs` is not committed.
