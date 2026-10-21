@@ -1,4 +1,8 @@
+<img width="694" height="875" alt="image" src="https://github.com/user-attachments/assets/22094d91-32d1-435b-bfae-e8635c432fcb" />
 # Andrii's Questions - 18/Oct/2026
+
+![Uploading image.png…]()
+
 
 Questions from mentors, quoted as asked, with our answers. Newest first. Answers cite measurements recorded in the [experiment trajectory](Experiment-trajectory).
 
