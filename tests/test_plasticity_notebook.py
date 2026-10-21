@@ -76,6 +76,26 @@ class ResumeTests(unittest.TestCase):
         left = [r for r in every_run([0]) if self.identity(r) not in done]
         self.assertEqual(len(left), len(list(every_run([0]))) - 40)
 
+    def test_arm_names_match_what_the_probe_records(self):
+        # The resume check compares the arm name in ARMS against the one the
+        # probe writes into each result. When those were spelled differently,
+        # two of the three arms were never skipped and were run again every
+        # session: silent, and hours of wasted GPU time.
+        from uncle.probe import probe_once           # noqa: F401, import check only
+        settings = "".join(
+            "".join(cell["source"])
+            for cell in json.loads(NOTEBOOK.read_text(encoding="utf-8"))["cells"]
+            if cell["cell_type"] == "code" and "ARMS = [" in "".join(cell["source"])
+        )
+        namespace = {}
+        exec(settings[settings.index("ARMS = ["):].split("]")[0] + "]", namespace)
+        for name, code_only, train_code in namespace["ARMS"]:
+            recorded = ("code_only" if code_only
+                        else "full" if train_code else "generator_only")
+            self.assertEqual(name, recorded,
+                             f"arm {name!r} is recorded as {recorded!r}, so resume "
+                             f"will never skip it")
+
     def test_the_notebook_still_lists_the_seeds_this_file_assumes(self):
         settings = "".join(
             "".join(cell["source"])
