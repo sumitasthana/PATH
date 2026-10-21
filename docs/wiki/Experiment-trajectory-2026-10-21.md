@@ -11,6 +11,7 @@ The plasticity probe finished. It ran on three seeds. This page gives the result
 - [Second result: training the task code buys nothing](#second-result-training-the-task-code-buys-nothing)
 - [Third result: the task code alone holds nothing](#third-result-the-task-code-alone-holds-nothing)
 - [Two readings that showed nothing](#two-readings-that-showed-nothing)
+- [Two observations from comparing the three seeds](#two-observations-from-comparing-the-three-seeds)
 - [What we changed before this run](#what-we-changed-before-this-run)
 - [Defect: the probe repeated work it had already done](#defect-the-probe-repeated-work-it-had-already-done)
 - [What this settles](#what-this-settles)
@@ -132,6 +133,36 @@ The extra runs all fall in the two affected arms. This matters, because the prob
 The fix uses one spelling per arm. The loading step also drops the repeats, so we did not have to run anything again. A test now compares the two names and fails if they differ.
 
 The repeats are themselves an accidental measurement. They are 186 identical settings run two or three times on the same model. Of those, 174 disagree. The largest disagreement is 24.4 points. That is bigger than the 8 to 11 points we recorded before for session-to-session variation. It is accidental evidence, not a planned measurement, and we have not analysed it.
+
+## Two observations from comparing the three seeds
+
+These came from putting the plasticity numbers beside the paired-study numbers from 10 October. Both rest on three data points. They are observations, not claims. Each says what would be needed to turn it into a claim.
+
+### One task is far noisier than three tasks averaged
+
+Task 15 after the eight tasks reads 50.8, 44.0 and 34.4 percent across the three seeds. That is a range of 16.4 points.
+
+The plasticity probe averages three tasks. It reads 58.23, 56.10 and 57.37. That is a range of 2.13 points.
+
+The same gap appears before any task is learned. Task 15 alone gives 44.5, 43.2 and 39.0, a range of 5.5. The three averaged tasks give 51.87, 53.09 and 52.51, a range of 1.22.
+
+So most of the disagreement between seeds came from using one task, not from the seeds. This explains why the 17 October reading had a spread of 5.5 and this run has 1.68. It also means a single-task measurement should not be trusted at this sample size.
+
+**To make this a claim:** repeat the probe with a different set of three tasks and check that the range stays small.
+
+### The seed with the weakest control gained the most from unlearning
+
+The task-15 controls are 50.8, 44.0 and 34.4. The gains from unlearning task 3 are 0.0, +3.2 and +13.0. The order matches exactly. The lower the control, the larger the gain.
+
+This matters because the three-seed mean for unlearning task 3 is +5.40, and seed 2 supplies most of it.
+
+Seed 2's control of 34.4 is also below its own fresh-model baseline of 39.0. The other two seeds sit above theirs. So the control looks low rather than the branch looking high.
+
+Seed 2 is not unusual on the probe. Its change there is +4.86, between seed 0's +6.37 and seed 1's +3.01. Its memorising change is -0.64, close to the other two. So "seed 2 is a weak seed" is not supported by the evidence. It gave one unusual reading on one single-task measurement, which the first observation explains.
+
+**To make this a claim:** rerun the seed-2 control. If it returns near 44, the pattern is a low reading rather than an effect of unlearning.
+
+A fuller version of this comparison, with the full sequence and all four measurements per seed, is at `ops-docs/guides/seeds-and-sequence.html`. It stays local, because `ops-docs` is not committed.
 
 ## What this settles
 

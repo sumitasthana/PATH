@@ -14,6 +14,8 @@ That second measurement worked for the first time. On 17 October it was void, be
 
 Two further results. Training a task's 32 numbers buys nothing. Leave them random and train only the generator. The differences are then -1.48, +1.01 and +1.27 points, against floors of 5.53, 3.23 and 2.28. Separately, a frozen generator with a fresh task code sits at chance on all three seeds. That confirms on three seeds what one seed had shown.
 
+Comparing the three seeds gave two observations, each from three data points. First, one task is far noisier than three tasks averaged. Task 15 spans 16.4 points across the seeds, while the three averaged probe tasks span 2.13. That is why the 17 October spread was 5.5 and this one is 1.68. Second, the seed with the weakest control gained the most from unlearning: controls of 50.8, 44.0 and 34.4 pair with gains of 0.0, +3.2 and +13.0, in that order. Seed 2 supplies most of the +5.40 mean, and its control sits below its own fresh-model baseline. Rerunning that control would settle it.
+
 One defect is recorded. The resume check compared two spellings of the same arm name, so two of three arms were never skipped. They ran again every session. That cost about 3.6 hours and left 276 repeated runs, which are now dropped when the file is read. The main result uses the unaffected arm.
 
 The paper says unlearning restores plasticity. That claim is not supported here, because there is no plasticity loss to restore. The planned beta-zero control arm is no longer needed.
