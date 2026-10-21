@@ -100,6 +100,7 @@ def render(registry, traces, gradients, norms):
     link = lambda title, slug: f"[{title}]({base}/wiki/{slug})"
     pages = {
         "Experiment-trajectory.md": (ROOT / "docs/wiki/Experiment-trajectory.md").read_text(encoding="utf-8"),
+        "Mentor-QnA.md": (ROOT / "docs/MENTOR_QNA.md").read_text(encoding="utf-8"),
         "Concepts-and-processes.md": (ROOT / "docs/CONCEPTS.md").read_text(encoding="utf-8"),
         "An-Unlearning-Framework-for-Continual-Learning.md": (ROOT / "docs/ANCHOR_PAPER.md").read_text(encoding="utf-8"),
     }
@@ -115,6 +116,7 @@ def render(registry, traces, gradients, norms):
     )
     entries = [
         ("Experiment trajectory", "Experiment-trajectory", "latest findings and experiment records by date"),
+        ("Mentor QnA", "Mentor-QnA", "questions from mentors, quoted as asked, with our answers"),
         ("Concepts and processes", "Concepts-and-processes", "what the model does and how to read its results"),
         ("Model diagnostics", "Model-diagnostics", "inspect weights, gradients, and Fisher scores"),
         ("Anchor paper", "An-Unlearning-Framework-for-Continual-Learning", "the paper we are reproducing"),
