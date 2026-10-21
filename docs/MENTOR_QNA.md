@@ -1,4 +1,4 @@
-# Mentor QnA
+# Andrii's Questions - 18/Oct/2026
 
 Questions from mentors, quoted as asked, with our answers. Newest first. Answers cite measurements recorded in the [experiment trajectory](Experiment-trajectory).
 
