@@ -25,10 +25,14 @@ class PublicationTests(unittest.TestCase):
                 publication.remove_checkout(temporary_root, temporary_root)
 
     def write_extra_pages(self, source):
-        """The hand-written pages published beside the record, with valid content."""
-        for page, heading in publication.EXTRA_PAGES.items():
+        """The hand-written pages published beside the record, with valid content.
+
+        The heading text is deliberately not the page name. These pages get
+        retitled by hand, and a retitle must not stop the publication.
+        """
+        for page in publication.EXTRA_PAGES:
             (source / page).parent.mkdir(parents=True, exist_ok=True)
-            (source / page).write_text(heading + '\nAn answer.\n')
+            (source / page).write_text('# A title someone changed\n\nAn answer.\n')
 
     def test_publication_copies_only_record_and_svg_evidence(self):
         with tempfile.TemporaryDirectory() as directory:

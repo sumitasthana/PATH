@@ -1,4 +1,5 @@
-# Mentor QnA
+# Andrii's Questions - 18/Oct/2026
+
 
 Questions from mentors, quoted as asked, with our answers. Newest first. Answers cite measurements recorded in the [experiment trajectory](Experiment-trajectory).
 
@@ -75,8 +76,6 @@ Testing the second option on one task is a short run. That would tell us more th
 
 **What the method does.** The unlearning objective compares the generated weights against fresh random numbers. It draws new ones at every step. Those draws are centred on zero. The best single answer to many random demands is their average, which is near zero. So the weights collapse toward zero instead of becoming random.
 
-The paper's wording and the paper's formula disagree here. The wording says randomise. The formula, with averaging, says go to zero. Both stop the task working, so accuracy looks the same either way.
-
 **What we measured.**
 
 | Measurement | Result |
@@ -88,19 +87,4 @@ The paper's wording and the paper's formula disagree here. The wording says rand
 | The other seven tasks | 40.4% to 40.0% mean, none near chance |
 
 Input sensitivity is the widest spread any single output score shows across the test set. A working model reads 10.8 to 13.9. After unlearning it reads far below that. The network is switched off, not randomised.
-
-**What is missing.** Which units still fire, and which have gone silent. That is new analysis. It is cheap. Notebook 27 rebuilds a post-unlearning model in under a minute, because no post-unlearning checkpoint is saved.
-
-**Two corrections to the question.**
-
-1. This is not plasticity loss. Plasticity means the ability to learn a **new** task. We measured that on three seeds. It is unimpaired, and slightly improved. A forgotten task going silent is a different thing.
-
-2. Activation pictures cannot say whether it is temporary. That is the recovery question: can the task be brought back under a fixed training budget. It is the largest open item in the study and it is still not specified. It needs its own experiment.
-
 ---
-
-## Related
-
-- [Experiment trajectory](Experiment-trajectory), the index of all measurements quoted here.
-- [20 and 21 October record](Experiment-trajectory-2026-10-21), the plasticity probe results.
-- [Concepts and processes](Concepts-and-processes), definitions of the terms used above.
