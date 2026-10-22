@@ -56,7 +56,7 @@ class ArchiveTests(unittest.TestCase):
     def test_generated_pages_match_sources_and_internal_links_resolve(self):
         pages = wiki.render(self.registry, self.traces, self.gradients, self.norms)
         expected = {'Home.md', '_Sidebar.md', 'Experiment-trajectory.md',
-            'Concepts-and-processes.md', 'Model-diagnostics.md', 'Mentor-QnA.md',
+            'Concepts-and-processes.md', 'Model-diagnostics.md', 'Weekly-Updates.md',
             'An-Unlearning-Framework-for-Continual-Learning.md'}
         expected.update(path.name for path in (ROOT / 'docs/wiki').glob('Experiment-trajectory-*.md'))
         self.assertEqual(set(pages), expected)

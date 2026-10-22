@@ -1,6 +1,6 @@
 - [Home](https://github.com/sumitasthana/PATH/wiki/Home)
 - [Experiment trajectory](https://github.com/sumitasthana/PATH/wiki/Experiment-trajectory)
-- [Mentor QnA](https://github.com/sumitasthana/PATH/wiki/Mentor-QnA)
+- [Weekly updates](https://github.com/sumitasthana/PATH/wiki/Weekly-Updates)
 - [Concepts and processes](https://github.com/sumitasthana/PATH/wiki/Concepts-and-processes)
 - [Model diagnostics](https://github.com/sumitasthana/PATH/wiki/Model-diagnostics)
 - [Anchor paper](https://github.com/sumitasthana/PATH/wiki/An-Unlearning-Framework-for-Continual-Learning)

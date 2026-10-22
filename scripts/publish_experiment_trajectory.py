@@ -20,7 +20,7 @@ PAGE = Path('docs/wiki/Experiment-trajectory.md')
 # Other hand-written pages to publish beside the record. Each must start with a
 # markdown heading, which is what stops an unrelated file being pushed over a
 # wiki page. The heading text itself is free: these pages get retitled.
-EXTRA_PAGES = [Path('docs/wiki/Mentor-QnA.md')]
+EXTRA_PAGES = [Path('docs/wiki/Weekly-Updates.md')]
 LOGS = ROOT / 'outputs/wiki_publication'
 
 

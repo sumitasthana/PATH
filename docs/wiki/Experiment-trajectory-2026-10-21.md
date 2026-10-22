@@ -226,6 +226,16 @@ Two measurements are still unrun. Neither follows from this result.
 
 The first is the mid-stream probe points. The second is orders 02 and 03. Both need the stream trained again with the probe called during it. So they are one job, not two. Doing them would also settle the task-and-position question that the 17 October record left open.
 
-The largest open question in the study is untouched by this work. It is whether a removed task can be brought back under a fixed training budget with proper controls. It is still not specified.
+The largest open question in the study is still whether a removed task can be brought back. The neuron measurements changed what we think the right first step is, so the plan is now written down.
+
+Each generated weight is a raw number times a scale, plus an offset. Unlearning pushes the raw number toward zero, so each weight moves toward its offset, not toward zero. Convolution and classifier weights have an offset of 0.0, BatchNorm scale has 1.0, and BatchNorm shift has 0.0. A convolution whose weights approach zero outputs near zero for every image. The BatchNorm layer then subtracts a running average and divides by a running spread, and unlearning touches neither. The result is close to a fixed number per channel, which would explain both the 59 percent silent and the 41 percent responding weakly.
+
+Three steps, cheapest first. Step 1 decides whether the others are worth doing.
+
+1. **Check whether the surviving channels carry anything.** Record how much each channel varies from image to image, not only its mean and peak. A channel giving nearly the same number for every image carries no information about the input. One extra line in the measurement already written.
+2. **Examine the BatchNorm running statistics.** `trainer.forget` changes generated parameters only, so the running average and spread for the forgotten task are still those computed from its own data. After unlearning they may be the only part of the model still holding anything from that task. That is both a route to recovery and a gap in any privacy claim.
+3. **Undo the measured weakening.** Multiply the generated weights back up by the per-stage factors, 0.29, 0.14, 0.13, 0.16 and 0.19, and measure accuracy with no training. Above chance means the structure survived and only the scale was removed. Still 10 percent means the weights are gone.
+
+None of these is a recovery experiment. A proper one needs a fixed training budget and a control that separates transfer from the retained tasks from information specific to the removed task.
 
 A longer write-up is at `ops-docs/guides/plasticity-findings-2026-10-21.html`. It stays local, because `ops-docs` is not committed.

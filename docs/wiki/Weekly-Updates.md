@@ -1,7 +1,13 @@
-# Andrii's Questions - 18/Oct/2026
+# Weekly updates
 
+Updates for Andrii, newest first. Each entry says what we measured, what it means, and
+what we plan next. The full records, including runs that failed, are in the
+[experiment trajectory](Experiment-trajectory).
 
-Questions from mentors, quoted as asked, with our answers. Newest first. Answers cite measurements recorded in the [experiment trajectory](Experiment-trajectory).
+| Date | What it covers |
+| --- | --- |
+| 21 October 2026 | Plasticity measured on three seeds. Which neurons still fire after unlearning. The plan for testing recovery. |
+| 18 October 2026 | Andrii's two questions, with answers. |
 
 ## Words used on this page
 
@@ -23,7 +29,124 @@ Every term here is defined once, in one line.
 
 ---
 
-## Q1. Is the hypernetwork needed?
+## 21 October 2026
+
+### Plasticity: measured on three seeds, no loss found
+
+We asked whether the generator gets worse at learning new tasks after it has learned
+eight. It does not. It is slightly better.
+
+We measured this two ways, and both agree.
+
+| Measurement | What it is | Mean change | Spread between seeds |
+| --- | --- | ---: | ---: |
+| Learning a new task | Test accuracy on three tasks the model never saw | +4.74 points | 1.68 |
+| Raw ability to change | Training loss on images with random wrong labels | -0.70 | 0.06 |
+
+Accuracy going up and loss going down both mean better learning.
+
+Each seed, against its own measured noise floor. The noise floor is how much the
+measurement wobbles when we repeat it on an unchanged model. A result only counts when
+it is larger than that.
+
+| Measurement | Seed | Before | After 8 tasks | Change | Floor | Counts |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| Learning a new task | 0 | 51.87 | 58.23 | +6.37 | 5.53 | Yes |
+| Learning a new task | 1 | 53.09 | 56.10 | +3.01 | 3.23 | No |
+| Learning a new task | 2 | 52.51 | 57.37 | +4.86 | 2.28 | Yes |
+| Raw ability to change | 0 | 1.37 | 0.67 | -0.70 | 0.29 | Yes |
+| Raw ability to change | 1 | 1.54 | 0.78 | -0.76 | 0.42 | Yes |
+| Raw ability to change | 2 | 1.31 | 0.67 | -0.64 | 0.18 | Yes |
+
+Five of six readings count. Seed 1's accuracy reading is 3.01 against a floor of 3.23,
+so it is just inside and we record it as no finding. It points the same way as the other
+two. The second measurement is the stronger one: all three seeds count, and the three
+values differ from each other by only 0.06.
+
+**Two further results from the same runs.**
+
+Training a task's 32 numbers buys nothing. We left them at their random starting value
+and trained only the generator. The differences were -1.48, +1.01 and +1.27 points
+against floors of 5.53, 3.23 and 2.28. No consistent direction, and far inside the floor.
+
+The task code alone holds nothing. Freeze the generator, train only the 32 numbers, and
+the result is 10.0 to 10.9 percent against a chance level of 10. We knew this from one
+seed. It now holds on three.
+
+**What it means.**
+
+- The paper says unlearning restores plasticity. There is no plasticity loss for it to
+  restore, so that claim is not supported here. Measuring unlearning directly agreed:
+  +5.40 and -0.20 points across three seeds, both inside the noise floor.
+- The control arm we planned, with the protection term switched off, is no longer
+  needed. It only handicaps the eight-task model, and that model already scored higher
+  while carrying the handicap.
+- This agrees with the adapter study, which finds no plasticity loss on a different
+  architecture over twenty tasks.
+- We measured feature effective rank and found no change. Matt has since shown that
+  metric is confounded by the learning rate, so we do not rely on it either way.
+
+**Limits.** Three seeds, and the spread between them is about a third of the effect. One
+task order, so "after eight tasks" and "after these particular eight tasks" cannot be
+separated. Two measurement points only, with nothing in between. The new tasks come from
+the same dataset as the stream. We do not know why it got better.
+
+### Which neurons still fire after unlearning
+
+Covered in the 18 October entry under Q2, because it answers that question. One run,
+seed 0, task 3 removed.
+
+### Plan for next: can a removed task be recovered?
+
+This is the largest open question in the study and we have not run it. The neuron
+measurements changed what we think the right experiment is.
+
+**What we now believe happens.** Each generated weight is a raw number times a scale,
+plus an offset. Unlearning pushes the raw number toward zero, so each weight moves
+toward its offset rather than toward zero. The offsets differ by layer type.
+
+| Parameter | Offset | Where unlearning sends it |
+| --- | ---: | --- |
+| Convolution and classifier weights | 0.0 | toward zero |
+| BatchNorm scale | 1.0 | toward one |
+| BatchNorm shift | 0.0 | toward zero |
+
+If a convolution's weights approach zero, its output approaches zero for every picture.
+The BatchNorm layer then subtracts a running average and divides by a running spread,
+and neither of those was touched by unlearning. The result is close to a fixed number
+per channel. Positive ones pass through, negative ones become zero. That would explain
+both measurements: 59 percent silent, and 41 percent responding weakly.
+
+**Three steps, cheapest first.**
+
+1. **Check whether the surviving neurons are saying anything.** Record how much each
+   channel varies from picture to picture, not just its average. If a channel gives
+   nearly the same number for every picture, it carries no information about the input.
+   This is one extra line in the measurement we already run.
+
+2. **Look at the BatchNorm running statistics.** Our forgetting step changes generated
+   parameters only. The running average and spread for the forgotten task were computed
+   from that task's own pictures and are still stored, untouched. After unlearning they
+   may be the only part of the model that still holds anything from that task. That is
+   both a route to recovery and a gap in any privacy claim.
+
+3. **Undo the weakening and see what returns.** We measured how much each part of the
+   network was turned down: 0.29, 0.14, 0.13, 0.16 and 0.19. Multiply the generated
+   weights back up by those amounts and measure accuracy, with no training at all. If
+   accuracy rises above chance, the structure survived and only the scale was removed.
+   If it stays at 10 percent, the weights are genuinely gone.
+
+Step 1 decides whether steps 2 and 3 are worth doing, so it goes first. None of this is
+a recovery experiment yet. A proper one needs a fixed training budget and a control that
+separates transfer from other tasks from information specific to the removed task.
+
+---
+
+## 18 October 2026
+
+Andrii's questions from that meeting, quoted as asked.
+
+### Q1. Is the hypernetwork needed?
 
 > Get back to Andrii on whether the hypernetwork is needed to cause forgetting and learning
 >
@@ -66,7 +189,7 @@ Testing the second option on one task is a short run. That would tell us more th
 
 ---
 
-## Q2. Why does the forgotten task stop responding?
+### Q2. Why does the forgotten task stop responding?
 
 > Explain why the forgotten task stops responding, with activation visualizations
 >
@@ -88,7 +211,9 @@ Testing the second option on one task is a short run. That would tell us more th
 
 Input sensitivity is the widest spread any single output score shows across the test set. A working model reads 10.8 to 13.9. After unlearning it reads far below that. The network is switched off, not randomised.
 
-### Which neurons still fire
+#### Which neurons still fire
+
+A **neuron** is one small unit inside the network. It takes numbers in and sends one number out. A large number out means it reacted strongly to the picture. Zero means it did not react at all.
 
 We measured every neuron twice. Once before we asked the model to forget task 3, and once after. Both times we showed it the same 256 pictures.
 
