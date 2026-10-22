@@ -190,6 +190,34 @@ This result says nothing about erasure, recovery or privacy. We have not measure
 
 **We do not know why it got better.** The measurements show the direction. They do not give a cause. Transfer between similar classes is one possible reason. We have not separated it from the others.
 
+## Which neurons still fire after unlearning
+
+Notebook 27 now reads every ReLU in the generated ResNet50, before the unlearning request and after it, on the same images. It reads a kept task through the same hooks as a control. The user supplied one run: order 01, seed 0, task 3 removed.
+
+The table gives each ResNet stage's mean response after the request, as a share of its response before.
+
+| ResNet stage | Forgotten task 3 | Kept task 0 |
+| --- | ---: | ---: |
+| stem | 29% | 100% |
+| layer1 | 14% | 99% |
+| layer2 | 13% | 98% |
+| layer3 | 16% | 97% |
+| layer4 | 19% | 97% |
+
+A channel counts as silent when its strongest response falls below 1 percent of its own earlier peak. For task 3, 58.9 percent of the 22,720 channels went silent. For task 0, 0.0 percent did.
+
+Three readings.
+
+**The damage is specific.** The kept task lost nothing measurable. No channel went silent and every stage holds within 3 percent of where it was. This rules out damage to the generator itself, at least for this request.
+
+**There is no single point of failure.** Every stage falls by a similar amount. The whole generated network is turned down at once. One layer blocking the signal would have shown as a single stage collapsing while earlier ones stayed normal.
+
+**It is not fully dead.** About 41 percent of channels still respond, at roughly a sixth of their earlier strength. That fits the weights collapsing toward zero rather than being randomised, which is what the objective's averaging does.
+
+The stem falls least, keeping 29 percent against 13 to 19 elsewhere. One candidate cause is already in the code comments: the unlearning objective compares raw generator outputs, before the per-layer scale factors, while the protection term compares scaled weights, and gamma does not remove that difference in layer weighting. This is a candidate, not a tested explanation.
+
+Limits. One seed, one forget task, one control task, one batch of 256 images. The reading says what the network does after the request. It does not say whether the task can be recovered.
+
 ## Next
 
 This experiment is closed. Plasticity is not where our problem lies, on this probe, at this sample size.
