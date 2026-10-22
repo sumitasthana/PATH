@@ -213,8 +213,6 @@ Input sensitivity is the widest spread any single output score shows across the 
 
 #### Which neurons still fire
 
-A **neuron** is one small unit inside the network. It takes numbers in and sends one number out. A large number out means it reacted strongly to the picture. Zero means it did not react at all.
-
 We measured every neuron twice. Once before we asked the model to forget task 3, and once after. Both times we showed it the same 256 pictures.
 
 We did the same for task 0, which we kept. That is our **control**: something we leave alone, so we can see whether our change hit only what we aimed at.
