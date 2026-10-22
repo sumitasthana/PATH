@@ -88,9 +88,17 @@ Testing the second option on one task is a short run. That would tell us more th
 
 Input sensitivity is the widest spread any single output score shows across the test set. A working model reads 10.8 to 13.9. After unlearning it reads far below that. The network is switched off, not randomised.
 
-**Which neurons still fire.** We read every ReLU in the generated ResNet50, before the request and after it, on the same images. We read a kept task through the same hooks as a control.
+### Which neurons still fire
 
-| ResNet stage | Forgotten task, share of its earlier response | Kept task, same |
+A **neuron** is one small unit inside the network. It takes numbers in and sends one number out. A large number out means it reacted strongly to the picture. Zero means it did not react at all.
+
+We measured every neuron twice. Once before we asked the model to forget task 3, and once after. Both times we showed it the same 256 pictures.
+
+We did the same for task 0, which we kept. That is our **control**: something we leave alone, so we can see whether our change hit only what we aimed at.
+
+**How strongly the neurons still react.** A ResNet reads a picture through five parts, one after another. The stem comes first, then layer1, layer2, layer3, layer4.
+
+| Part of the network | Forgotten task 3 | Kept task 0 |
 | --- | ---: | ---: |
 | stem | 29% | 100% |
 | layer1 | 14% | 99% |
@@ -98,18 +106,22 @@ Input sensitivity is the widest spread any single output score shows across the 
 | layer3 | 16% | 97% |
 | layer4 | 19% | 97% |
 
-| Channels that went silent | Share of 22,720 channels |
+Read each number as the share of the reaction that is left. 14% means the neurons there still react, but only about one seventh as strongly as before. 100% means nothing changed.
+
+**How many neurons stopped reacting.** We call a neuron **silent** when its strongest reaction drops below one hundredth of what it used to be.
+
+| | Silent neurons, out of 22,720 |
 | --- | ---: |
 | Forgotten task 3 | 58.9% |
 | Kept task 0 | 0.0% |
 
-A channel counts as silent when its strongest response falls below 1 percent of its own earlier peak.
+**What these two tables tell us.**
 
-Three readings follow.
+- **We hit only what we aimed at.** The kept task lost nothing. Not one of its neurons went silent, and every part of its network reacts within 3 percent of before.
+- **The forgotten task does not break in one place.** Every part got weaker by a similar amount. If one layer were blocking the signal, that layer would read near zero and the parts before it would read normal. They do not.
+- **It is weakened, not erased.** About 41 percent of neurons still react, at roughly one sixth of their old strength. This is what we expect: our forgetting method pushes the task's weights toward zero, and small weights give small reactions.
 
-- **The damage is specific.** The kept task lost nothing. No channel of it went silent, and every stage holds within 3 percent of where it was.
-- **There is no single point of failure.** Every stage falls by a similar amount. The whole network is turned down at once, rather than one layer blocking the signal.
-- **It is not fully dead.** About 41 percent of channels still respond, at roughly a sixth of their earlier strength. That fits weights collapsing toward zero rather than being randomised.
+**One thing we noticed and cannot yet explain.** The stem lost less than the rest, 29 percent against 13 to 19 percent. There is a possible reason in our code. The forgetting step and the protecting step compare numbers measured on different scales, and those scales differ from one part of the network to the next. So the forgetting may press harder on some parts. We have not tested this, so treat it as a guess with a reason behind it, not a result.
 
-The stem falls least, at 29 percent against 13 to 19 elsewhere. One possible cause: the unlearning objective compares raw generator outputs, before the per-layer scale factors, while the protection term compares scaled weights. Gamma does not remove that difference in layer weighting. We have not tested this.
+**What this does not tell us.** Whether task 3 can be brought back. These measurements describe the network as it is now. Recovery is a separate experiment that we have not yet designed.
 ---
