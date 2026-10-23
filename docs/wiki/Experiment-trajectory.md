@@ -1,14 +1,16 @@
 # Experiment trajectory
 
-Updated 22 October 2026. This is the index for the dated experiment record. Each page keeps the questions, settings, results, evidence links, and decisions together.
+Updated 23 October 2026. This is the index for the dated experiment record. Each page keeps the questions, settings, results, evidence links, and decisions together.
 
 ## Latest findings
 
-The [22 October plan](Experiment-trajectory-2026-10-22) adds an external EuroSAT RGB probe to test whether the Tiny ImageNet learning result extends to satellite images. It specifies paired fresh and eight-task models, validation-based learning-rate selection, a pilot, and a 90-run primary grid. This is planned work, with no EuroSAT result yet.
+The [23 October review](Experiment-trajectory-2026-10-23) checked our plasticity work against the adapter study in `reference/adapter-plasticity-study` and found a fault in the reference model.
 
-The [20 and 21 October record](Experiment-trajectory-2026-10-21) finishes the plasticity probe on three seeds and closes the question.
+**Our plasticity numbers compare against an untrained generator, so they cannot answer a plasticity question.** The measurements are correct; the reading placed on them is not. Fixing this needs the stream trained again with a checkpoint saved after every task, which is the same job as the mid-stream probe points and orders 02 and 03. The [22 October EuroSAT plan](Experiment-trajectory-2026-10-22) inherits the same fault and is deferred, with its sound parts kept. The next piece of work is a per-task geometry logger, which needs no GPU and no retraining.
 
-**The generator does not get worse at learning new tasks.** It gets slightly better. After eight tasks it learns an unseen task better than a generator that has learned nothing.
+The [20 and 21 October record](Experiment-trajectory-2026-10-21) finishes the plasticity probe on three seeds. Read its conclusion together with the 23 October review.
+
+**The generator learns an unseen task better after eight tasks than before any task.** The 23 October review restates this as a starting-point advantage rather than preserved plasticity, because the reference generator had learned nothing.
 
 Two measurements agree. Test accuracy on three unseen tasks rises by 6.37, 3.01 and 4.86 points, a mean of +4.74. Two of the three are bigger than their own noise floor; the third is just inside it. Training loss on randomly labelled images falls by 0.70, 0.76 and 0.64, against floors of 0.29, 0.42 and 0.18, so all three pass. Those three values differ from each other by only 0.06, which is very consistent.
 
@@ -44,7 +46,8 @@ The [8 October setup record](Experiment-trajectory-2026-10-08) describes reserve
 
 | Reporting date or period | What is covered |
 | --- | --- |
-| [22 October 2026](Experiment-trajectory-2026-10-22) | EuroSAT external-probe plan, rationale, controls, measurements, and compute budget. Not yet run. |
+| [23 October 2026](Experiment-trajectory-2026-10-23) | Review against the adapter study: untrained reference model, what does not port, and the geometry logger as the next step. No runs. |
+| [22 October 2026](Experiment-trajectory-2026-10-22) | EuroSAT external-probe plan, rationale, controls, measurements, and compute budget. Deferred on 23 October; baseline fault marked. |
 | [20 and 21 October 2026](Experiment-trajectory-2026-10-21) | Plasticity probe completed on three seeds: no loss, a small gain, and the task code shown to add nothing. |
 | [17 October 2026](Experiment-trajectory-2026-10-17) | Plasticity probe: the missing fresh-generator baseline for task 15, three seeds, no plasticity change found. |
 | [10 October 2026](Experiment-trajectory-2026-10-10) | All selected training and CPU review complete; six verified comparisons, three-seed averages, and readable report. |
