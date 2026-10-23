@@ -355,13 +355,21 @@ def relative_contribution(full, control, full_at_zero, control_at_zero, *, endpo
     1 means the generator helps as much as it did at the start, 0 means it adds
     nothing beyond training a fresh code.
 
-    WARNING. This does not port cleanly from the adapter study and should be
-    read with care, or left out. There the control is a linear probe on frozen
-    pretrained features, which scores well, so G_0 is a solid number. Here the
-    control at t = 0 is a frozen random generator with a 32-number code, which
-    sits near chance. G_0 is then close to zero, the ratio is dividing by almost
-    nothing, and R(t) comes out small whatever the generator's real state. Use
-    a later point as the baseline, or report G_t on its own and say why.
+    WARNING. This does not port cleanly from the adapter study, but not for the
+    reason an earlier version of this note gave. That note claimed G_0 is close
+    to zero here, so the ratio divides by almost nothing. That is wrong. G_0 is
+    the gap between the two arms, not the control's own score. On 21 October the
+    full probe scored 51.87, 53.09 and 52.51 at t = 0 while the code-only
+    control sat at 10.84, 10.25 and 10.91, so G_0 was about 41 points and the
+    ratio computed without trouble: 1.174, 1.076 and 1.124.
+
+    The real limitation is different. There the control is a linear probe on
+    frozen pretrained features, which scores well and moves as the features
+    change, so R(t) carries information the raw accuracy does not. Here the
+    control is pinned near chance at every point, because a frozen random
+    generator cannot be rescued by 32 numbers. G_t then tracks the full probe's
+    accuracy almost exactly, and R(t) repeats it in different units. Report it
+    if you like, but do not treat it as separate evidence.
     """
     if endpoint == "E2":
         now, start = full - control, full_at_zero - control_at_zero
