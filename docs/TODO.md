@@ -59,7 +59,7 @@ Run these only after batch 1, because batch 1 decides whether either is worth th
 
 ## Batch 3: more than one seed
 
-**Notebook 30 with `SEEDS = [0, 1, 2]` and `INTERVAL = 5`. About one hour on CPU.**
+**Notebook 30, as it stands. About one hour on CPU.**
 
 The readings are weight-only and nearly free, so the finer interval costs almost nothing and
 the extra seeds are the only real cost.
