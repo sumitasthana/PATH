@@ -1,8 +1,10 @@
 # Experiment trajectory
 
-Updated 21 October 2026. This is the index for the dated experiment record. Each page keeps the questions, settings, results, evidence links, and decisions together.
+Updated 22 October 2026. This is the index for the dated experiment record. Each page keeps the questions, settings, results, evidence links, and decisions together.
 
 ## Latest findings
+
+The [22 October plan](Experiment-trajectory-2026-10-22) adds an external EuroSAT RGB probe to test whether the Tiny ImageNet learning result extends to satellite images. It specifies paired fresh and eight-task models, validation-based learning-rate selection, a pilot, and a 90-run primary grid. This is planned work, with no EuroSAT result yet.
 
 The [20 and 21 October record](Experiment-trajectory-2026-10-21) finishes the plasticity probe on three seeds and closes the question.
 
@@ -42,6 +44,7 @@ The [8 October setup record](Experiment-trajectory-2026-10-08) describes reserve
 
 | Reporting date or period | What is covered |
 | --- | --- |
+| [22 October 2026](Experiment-trajectory-2026-10-22) | EuroSAT external-probe plan, rationale, controls, measurements, and compute budget. Not yet run. |
 | [20 and 21 October 2026](Experiment-trajectory-2026-10-21) | Plasticity probe completed on three seeds: no loss, a small gain, and the task code shown to add nothing. |
 | [17 October 2026](Experiment-trajectory-2026-10-17) | Plasticity probe: the missing fresh-generator baseline for task 15, three seeds, no plasticity change found. |
 | [10 October 2026](Experiment-trajectory-2026-10-10) | All selected training and CPU review complete; six verified comparisons, three-seed averages, and readable report. |
