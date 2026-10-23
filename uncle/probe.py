@@ -124,15 +124,22 @@ def effective_rank(features):
     return float(torch.exp(-(weights * weights.log()).sum()).item())
 
 
-def _features_and_logits(hypernet, target, trainer, task, images):
+def _features_and_logits(hypernet, target, trainer, task, images,
+                         weights=None, buffers=None):
     """Run one batch, returning the classifier's input as well as its output.
 
     The features are what the network has built by the time it reaches its last
     layer. They are captured with a hook on that layer rather than by editing
     the network, so the generated weights still load with strict=True.
+
+    `weights` and `buffers` default to what the model would use on its own. A
+    caller passes them in to read the features of a model it changed on purpose,
+    which is how the recovery arms stay comparable with the untouched model.
     """
-    weights = hypernet.weights_for(task)
-    buffers = {name: value.clone() for name, value in trainer.task_buffers[task].items()}
+    if weights is None:
+        weights = hypernet.weights_for(task)
+    source = trainer.task_buffers[task] if buffers is None else buffers
+    buffers = {name: value.clone() for name, value in source.items()}
     captured = {}
 
     def hook(_module, inputs, _output):

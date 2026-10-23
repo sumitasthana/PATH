@@ -36,7 +36,7 @@ import torch
 
 
 def probe(hypernet, target, trainer, dataset, *, code_task, data_task=None,
-          classes=10, batch_size=256):
+          classes=10, batch_size=256, weights=None, buffers=None):
     """Score one task's generated weights and say whether the model is alive.
 
     hypernet, target, trainer   the model being measured, as the study builds it
@@ -48,6 +48,12 @@ def probe(hypernet, target, trainer, dataset, *, code_task, data_task=None,
                                 must still be judged on those images.
     classes                     how many classes the task has
     batch_size                  evaluation batch size. Affects speed only.
+    weights                     use these generated weights instead of the ones the
+                                task code produces now. For scoring a deliberately
+                                changed model, such as weights rescaled after unlearning.
+    buffers                     use these running statistics instead of the task's own.
+                                `trainer.buffer_template` gives the neutral set a fresh
+                                task would start from.
 
     Returns accuracy as a percentage, the per-class prediction counts, how many
     classes the model ever chooses, which class it chooses most, and the input
@@ -65,10 +71,15 @@ def probe(hypernet, target, trainer, dataset, *, code_task, data_task=None,
     hypernet.eval()
     target.eval()
 
-    weights = hypernet.weights_for(code_task)
+    # Both default to what the model would use on its own. A caller passes them in to
+    # score a model it has changed on purpose, such as weights multiplied back up after
+    # unlearning, or the task's running statistics replaced with neutral ones. Scoring
+    # those through this same function is what keeps the arms comparable.
+    if weights is None:
+        weights = hypernet.weights_for(code_task)
     # The task's own running statistics. Copied so evaluation cannot change them.
-    buffers = {name: value.clone()
-               for name, value in trainer.task_buffers[code_task].items()}
+    source = trainer.task_buffers[code_task] if buffers is None else buffers
+    buffers = {name: value.clone() for name, value in source.items()}
 
     picked, correct, total = [], 0, 0
     lowest = highest = None
