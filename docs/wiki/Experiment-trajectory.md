@@ -4,7 +4,9 @@ Updated 23 October 2026. This is the index for the dated experiment record. Each
 
 ## Latest findings
 
-The [23 October record](Experiment-trajectory-2026-10-23) reviewed our plasticity work against the adapter study in `reference/adapter-plasticity-study`, and then corrected itself. The review's main claim, that comparing against an untrained generator cannot answer a plasticity question, was wrong: at t = 0 the full probe already reaches about 52 percent on ten-class tasks against 10 percent chance. The [22 October EuroSAT plan](Experiment-trajectory-2026-10-22) is planned again, not deferred.
+**Unlearning turns the weights, it does not only shrink them.** Over 100 steps the generated weights for the forgotten task lose 43 percent of their size and turn 49 degrees. Rescaling cannot undo a rotation, so recovery by multiplying the weights back up will be partial at best. The turning is late and accelerating: at step 20 the weights have shrunk by a fifth and turned by only 7 degrees, which makes the unlearning length a variable worth testing rather than a fixed setting. No channel lost its weights, so the 58.9 percent of channels that went silent on 21 October went silent in activations while keeping their weights. One seed, CPU, 19 minutes, notebook 30. Details in the [23 October record](Experiment-trajectory-2026-10-23).
+
+That same record reviewed our plasticity work against the adapter study in `reference/adapter-plasticity-study`, and then corrected itself. The review's main claim, that comparing against an untrained generator cannot answer a plasticity question, was wrong: at t = 0 the full probe already reaches about 52 percent on ten-class tasks against 10 percent chance. The [22 October EuroSAT plan](Experiment-trajectory-2026-10-22) is planned again, not deferred.
 
 **What the t = 0 comparison measures is learnability relative to initialization.** It does not separate transfer from plasticity changes, and it does not rule out deterioration relative to an earlier trained checkpoint. The fix is to add trained reference points at t = 1, 2, 4 and 6 when the sequence is next trained, saving the generator after each task, rather than to replace t = 0. A `relative_contribution` docstring that misdescribed its own denominator has been corrected.
 
@@ -46,7 +48,7 @@ The [8 October setup record](Experiment-trajectory-2026-10-08) describes reserve
 
 | Reporting date or period | What is covered |
 | --- | --- |
-| [23 October 2026](Experiment-trajectory-2026-10-23) | Review against the adapter study, and the correction withdrawing its main claim. What the t = 0 comparison measures, what does not port, diagnostics worth adding. No runs. |
+| [23 October 2026](Experiment-trajectory-2026-10-23) | First direction measurement: unlearning turns the weights 49 degrees as well as shrinking them, seed 0 on CPU. Also the review against the adapter study and the correction withdrawing its main claim. |
 | [22 October 2026](Experiment-trajectory-2026-10-22) | EuroSAT external-probe plan, rationale, controls, measurements, and compute budget. Not yet run. |
 | [20 and 21 October 2026](Experiment-trajectory-2026-10-21) | Plasticity probe completed on three seeds: no loss, a small gain, and the task code shown to add nothing. |
 | [17 October 2026](Experiment-trajectory-2026-10-17) | Plasticity probe: the missing fresh-generator baseline for task 15, three seeds, no plasticity change found. |

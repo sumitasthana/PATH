@@ -84,6 +84,96 @@ Add intermediate measurement points when the sequence is next trained, saving th
 
 Correct the `relative_contribution` docstring. Done.
 
+## First direction measurement: unlearning is not a pure scaling
+
+Run: notebook 30, seed 0, order 01, forgetting task 3, control task 0, 100 unlearning steps.
+Colab CPU, 11.3 seconds per step, 18.9 minutes. No GPU and no images: the unlearning
+objective is a noise term plus a weight-space preservation term, so it never reads a dataset.
+One seed. This is an observation, not a result.
+
+The post-unlearning models from the paired study were not kept, for any of the three seeds.
+The notebook therefore loads the source model and applies one unlearning request in the
+session, as notebook 27 does.
+
+### The trajectory
+
+| Step | Forgotten direction | Forgotten size change | Forgotten raw size | Control direction | Control size change |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 0 | 1.0000 | 0.0000 | 4699.98 | 1.0000 | 0.0000 |
+| 20 | 0.9919 | 0.1977 | 4003.17 | 0.9998 | 0.0222 |
+| 40 | 0.9673 | 0.3383 | 3537.74 | 0.9998 | 0.0212 |
+| 60 | 0.9059 | 0.4741 | 3187.64 | 0.9998 | 0.0227 |
+| 80 | 0.7915 | 0.6188 | 2917.46 | 0.9997 | 0.0237 |
+| 100 | 0.6542 | 0.7601 | 2687.07 | 0.9997 | 0.0243 |
+
+Direction is cosine similarity against the weights before unlearning, with each tensor's
+offset removed. 1.0 means the weights point the same way and only their size changed.
+
+### Three checks pass
+
+The step 0 row reads 1.0000 and 0.0000, so the reference state was captured before anything
+changed it. The notebook asserts this rather than printing it.
+
+The raw size falls from 4699.98 to 2687.07, a loss of 42.8 percent. Notebook 27 recorded
+about 43 percent over the same 100 steps. The two runs are doing the same thing.
+
+The three numbers agree with each other. For two vectors, the relative change is fixed by
+the size ratio and the angle between them. With a size ratio of 0.5717 and a cosine of
+0.6542, the relative change should be 0.7608. The measurement says 0.7601. Nothing in the
+calculation is wrong.
+
+### What it says
+
+**Unlearning is not a pure scaling.** By step 100 the weights have turned 49 degrees. A
+rescaling cannot undo a rotation, so multiplying the weights back up will not restore the
+task on its own. The rescaling experiment in step 3 of the 21 October plan should expect a
+partial result at best.
+
+**The turning is late, and it accelerates.** The size change grows almost linearly, by about
+0.14 every 20 steps. The direction does not. It loses 7.3 degrees in the first 20 steps and
+11.4 degrees in the last 20. At step 20 the weights have shrunk by a fifth and turned by 7
+degrees. At step 40 they have shrunk by a third and turned by 15 degrees.
+
+So early unlearning is close to a pure scaling and late unlearning is not. The two effects
+are separable in time, which the endpoint alone would have hidden.
+
+**That makes the unlearning length a variable, not a setting.** `burn_in` is 100 by choice.
+If the removed task reaches chance accuracy well before step 100, the steps after that point
+are not buying forgetting; they are buying irreversibility. Notebook 27 recorded the removed
+task's accuracy at the same 20-step intervals, so this can be checked against saved numbers
+without a new run.
+
+**No channel died in weight space.** The died column is 0 for all 54 weight tensors. Every
+channel still has weights. Median size ratios sit between 0.45 and 0.63, and median
+per-channel cosines between 0.88 and 0.96.
+
+This does not contradict the 21 October finding that 58.9 percent of channels went silent.
+The two measure different things. Silent was defined on activations, with images passing
+through the network. Died here is defined on weights. A channel can keep its weights and
+still produce no response, which is what the 21 October record proposed: the weights shrink,
+the pre-activation shrinks with them, and the BatchNorm layer then divides by a running
+spread computed from the forgotten task's own data, which unlearning never touches.
+
+The weight measurement supports that explanation. It does not prove it, and the BatchNorm
+statistics have still not been examined.
+
+**The damage stays where it was aimed.** The control task turned by 0.02 degrees and its
+weights moved by 2.4 percent, against 49 degrees and 76 percent for the forgotten task. The
+preservation term is doing its job. The control is not perfectly still, and its small
+movement appears by step 20 and then holds, which is worth one line in any writeup rather
+than being rounded away.
+
+### Next, in order
+
+Read notebook 27's saved readings for the same seed and task, and place the removed task's
+accuracy beside the direction at each step. This needs no run. It decides whether a shorter
+unlearning both forgets and stays recoverable, which is the privacy question.
+
+Run seeds 1 and 2. About 38 minutes on CPU, so RunPod is not needed for this.
+
+Only then decide whether the rescaling experiment is worth its GPU time, and if so, whether
+to run it on the step 40 state rather than the step 100 state.
+
 ### Open question, not yet decided
 
 Whether plasticity remains the headline of the work, or becomes a supporting measurement while the unlearning results take the main line.
