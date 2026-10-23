@@ -152,6 +152,69 @@ def relative_change(current, reference, *, per_tensor=False):
     return (pooled, parts) if per_tensor else pooled
 
 
+def direction_change(current, reference, *, per_tensor=False):
+    """How far the weights turned, ignoring how much they grew or shrank.
+
+    current, reference   two weight dictionaries with the same keys, as
+                         `hypernet.weights_for(task)` returns. `reference` is
+                         the earlier state.
+    per_tensor           also return the same number separately for each
+                         tensor, which says where the turning happened
+
+    This is the companion to `relative_change`. That one says how far the
+    weights moved. This one says whether they still point the same way:
+
+        1.0   the same direction. Only the size changed.
+        0.0   unrelated directions.
+       -1.0   the opposite direction.
+
+    The two answer different questions, and unlearning is the case where they
+    come apart. An unlearning step that only shrinks the weights gives a large
+    relative change and a direction of 1.0. One that scrambles them gives a
+    large relative change and a direction near 0. Size alone cannot tell those
+    apart, and whether a rescaling can undo the unlearning depends on which
+    one happened.
+
+    Pooling works the way `relative_change` pools: every tensor is treated as
+    part of one long vector, so the result is the cosine of the two full
+    weight sets and not an average of per-tensor cosines. Large tensors
+    therefore count for more.
+
+    A tensor of all zeros points nowhere, so its per-tensor entry is NaN
+    rather than an invented number. The pooled value raises instead, because a
+    reference of all zeros means the comparison itself is meaningless.
+
+    The arithmetic runs in float64. The sums run over millions of entries and
+    float32 loses accuracy on a sum that long.
+    """
+    if set(current) != set(reference):
+        raise ValueError("Weight dictionaries have different keys.")
+
+    dot = reference_square = current_square = 0.0
+    parts = {}
+    for name, before in reference.items():
+        after = current[name]
+        if after.shape != before.shape:
+            raise ValueError(f"Shape changed for {name}: {before.shape} to {after.shape}")
+        before = before.detach().double().reshape(-1)
+        after = after.detach().double().reshape(-1)
+        pair = (before * after).sum().item()
+        before_size = before.square().sum().item()
+        after_size = after.square().sum().item()
+        dot += pair
+        reference_square += before_size
+        current_square += after_size
+        if per_tensor:
+            scale = (before_size * after_size) ** 0.5
+            parts[name] = pair / scale if scale > 0 else float("nan")
+
+    if reference_square <= 0 or current_square <= 0:
+        raise ValueError("One side is all zeros, so a direction comparison has no meaning.")
+
+    pooled = dot / (reference_square * current_square) ** 0.5
+    return (pooled, parts) if per_tensor else pooled
+
+
 def weight_size(hypernet, task):
     """The size of one task's generated weights, before the per-layer scaling.
 
