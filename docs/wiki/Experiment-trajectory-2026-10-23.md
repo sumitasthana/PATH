@@ -163,16 +163,110 @@ preservation term is doing its job. The control is not perfectly still, and its 
 movement appears by step 20 and then holds, which is worth one line in any writeup rather
 than being rounded away.
 
+## Forgetting finishes at step 20; the other 80 steps only turn the weights
+
+Run: notebook 31, which joins notebook 27's saved accuracy readings to notebook 30's
+direction readings on the step number. No new training. Seed 0, order 01, task 3.
+
+The join was checked before it was used. Both notebooks record the raw weight size for the
+forgotten task. The two runs differ by 0.113 to 0.132 percent at every shared step, and the
+gap does not grow, so this is one event measured twice and not two different runs.
+
+| Step | Removed task accuracy | Classes used | Input sensitivity | Direction | Turned | Length left |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 0 | 35.60% | 9 | 1.324e+01 | 1.0000 | 0.0 deg | 1.000 |
+| 20 | 10.00% | 2 | 3.943e-01 | 0.9919 | 7.3 deg | 0.852 |
+| 40 | 10.00% | 1 | 2.595e-02 | 0.9673 | 14.7 deg | 0.753 |
+| 60 | 10.00% | 1 | 1.743e-03 | 0.9059 | 25.1 deg | 0.678 |
+| 80 | 10.00% | 1 | 7.385e-05 | 0.7915 | 37.7 deg | 0.621 |
+| 100 | 10.00% | 1 | 2.280e-06 | 0.6542 | 49.1 deg | 0.572 |
+
+### The task is gone while the weights are still almost unchanged
+
+Accuracy reaches chance at step 20 and never moves again. At that step the weights are 99.19
+percent aligned with where they started, a turn of 7.3 degrees, and they have kept 85 percent
+of their length.
+
+The remaining 80 steps remove no further accuracy. They take the direction from 0.9919 to
+0.6542, which is the part a rescaling cannot undo.
+
+That is the hypothesis from the direction measurement, confirmed on this seed: the unlearning
+length past step 20 buys irreversibility, not forgetting.
+
+### Accuracy is the wrong measure after step 20, and it says so itself
+
+The classes-used column is what shows this. From step 40 the model answers the same single
+class for every test image. A balanced ten-class test set gives exactly 10.00 percent for
+that behaviour, which is also the chance score. The two are indistinguishable by accuracy
+alone.
+
+So a model at chance accuracy is not evidence that a task was removed. A model that has
+stopped responding at all scores the same. Any claim of unlearning that rests on a
+chance-level accuracy needs a second measurement beside it. This matters beyond our own work,
+because accuracy at chance is the usual evidence offered.
+
+Input sensitivity is the measurement that keeps working. It is the widest range any single
+output score covers across the test set, so it says whether the model still reacts to what it
+is shown. It falls by a factor of about 5.8 million from start to end, and by a factor of 15
+to 34 in every 20-step window, including the windows where accuracy is flat.
+
+### A 15 percent shrink and a 7 degree turn are enough to collapse the function
+
+Between step 0 and step 20 the weights lose 15 percent of their length and turn 7.3 degrees.
+Over the same 20 steps, accuracy falls from 35.60 percent to chance and input sensitivity
+falls by a factor of 34.
+
+A small change in the weights produces a very large change in the behaviour. That is what the
+BatchNorm explanation in the 21 October record predicts: the signal entering each BatchNorm
+layer shrinks, the layer divides by a spread computed from the forgotten task's own data,
+unlearning never updates that spread, and the mismatch compounds through the network.
+
+The weight measurement is consistent with that explanation. It is not a test of it. The
+BatchNorm statistics have still not been examined.
+
+### What limits this reading
+
+The removed task started at 35.60 percent, not at the 99 percent it would reach when freshly
+learned. Task 3 is first in order 01, so it had already lost most of its accuracy to ordinary
+forgetting across the following seven tasks. The unlearning only had to remove 25.6 points
+above chance. A task unlearned from full accuracy may behave differently, and the first task
+in the order is the easiest case.
+
+Readings are 20 steps apart, so the crossing to chance happened somewhere in steps 1 to 20
+and is not located. A run with a smaller interval would find it, and would cost about four
+minutes on CPU.
+
+One seed.
+
+### The experiment this points to
+
+Unlearn to step 20 only. Multiply the generated weights by 1.174, the factor that restores
+their original length. Measure accuracy with no training.
+
+At step 20 the direction is 0.9919, so after rescaling the weights sit within 7.3 degrees of
+the originals. If accuracy returns, the model forgot the task in a way that a multiplication
+undoes, and the privacy claim for this unlearning fails at its own stopping point rather
+than at some artificial early step. If accuracy does not return, the 7.3 degree turn or the
+BatchNorm statistics are carrying the removal, and the next question is which.
+
+Rescaling the step 100 state is the weaker version of the same test, since 49 degrees cannot
+be undone by any multiplier. Run the step 20 version first.
+
 ### Next, in order
 
-Read notebook 27's saved readings for the same seed and task, and place the removed task's
-accuracy beside the direction at each step. This needs no run. It decides whether a shorter
-unlearning both forgets and stays recoverable, which is the privacy question.
+Done: the accuracy join, in the section above.
 
-Run seeds 1 and 2. About 38 minutes on CPU, so RunPod is not needed for this.
+Rescale the step 20 state and measure accuracy, as described above. This needs a forward
+pass over the test set, so it needs images, but one pass over 1,000 test images runs on CPU.
 
-Only then decide whether the rescaling experiment is worth its GPU time, and if so, whether
-to run it on the step 40 state rather than the step 100 state.
+Run seeds 1 and 2 of the direction measurement. About 38 minutes on CPU, so RunPod is not
+needed for this.
+
+Repeat the direction measurement with a smaller reading interval over the first 20 steps, to
+locate the point where accuracy reaches chance instead of bracketing it.
+
+Examine the BatchNorm running statistics. Still untouched, and still the largest open
+thread.
 
 ### Open question, not yet decided
 
