@@ -1,100 +1,85 @@
 # TODO
 
-Working backlog, sequenced. Last updated 23 October 2026.
+Working backlog, sequenced. Last updated 23 October 2026, after batch 1 ran.
 
 Experiment results live in [the experiment trajectory](wiki/Experiment-trajectory.md).
 The implementation plan lives in [PLAN.md](PLAN.md). This file is only what is next.
 
-## Goal
+## Status at a glance
 
-Show that this unlearning reaches chance accuracy without removing the task, and that the
-method's own stopping point leaves the task recoverable.
+| Item | Status |
+| --- | --- |
+| Batch 1, recovery arms, notebook 32 | Done. Nothing recovered |
+| Batch 2, harder cases, notebook 32 rerun | Partly superseded, see below |
+| Batch 3, three seeds, notebook 30 | Done |
+| Batch 4, tell the group | Note written, not sent. Notebook 33 not run |
+| Batch 5, plasticity infrastructure | Not started, still blocked |
+| Write batch 1 into the experiment record | **Pending, do this first** |
 
-Two measurements on 23 October are most of the argument already. Accuracy on the removed
-task reaches chance at step 20 of 100, where the weights are still 99.19 percent aligned
-with where they started. And chance accuracy turns out to be a model answering one class for
-every image, which accuracy alone cannot distinguish from a model that genuinely forgot.
+## The goal has changed
 
-Batches 1 to 3 serve this goal. Batch 4 serves the group. Batch 5 is the plasticity line and
-waits.
+The old goal was to show that the method's own stopping point leaves the task recoverable.
+Batch 1 falsified the recoverable half. The weights had barely moved at step 20, and the task
+was gone anyway, and no multiplication brought any of it back.
+
+The new goal, which is what the measurements actually support:
+
+**Show that the usual evidence for unlearning does not establish what it claims, and that
+this method does all its removing in the first 6 steps of 100.**
+
+Four results stand behind it, all from seed 0 unless noted:
+
+- The task reaches chance at step 6. The method runs 100 steps. So 94 steps remove nothing.
+- Chance accuracy is not evidence of removal. From step 12 the model answers two classes, and later one, which scores chance on a balanced set whatever the model knows.
+- Effective rank, the measure the adapter study uses, read 214.7 before and 225.2 after. It did not notice the task being destroyed.
+- The stored per-task running averages are load bearing and unlearning never touches them. Replacing them kills a healthy task outright.
 
 ## Already done
 
-- Direction measurement during unlearning, seed 0, task 3. Notebook 30. Weights turn 49 degrees and lose 43 percent of their length over 100 steps.
-- Accuracy joined to direction on the step number. Notebook 31. Join validated to 0.13 percent.
+- Direction measurement during unlearning, three seeds. Notebook 30. Weights turn 49 to 54 degrees and lose 43 to 54 percent of their length over 100 steps. Seed 0 is the mildest.
+- Accuracy joined to direction. Notebook 31. Join validated to 0.13 percent.
+- Recovery arms at step 20, seed 0. Notebook 32. Every arm sits at chance.
+- The accuracy trace during unlearning, every two steps. Crossing located at step 6.
 - `measure.direction_change` in the library, with tests.
+- Tiny ImageNet download falls back to a second host, after the Stanford one went down.
 
-All four batches below are built and ready to run. They are independent of each other and
-none needs a GPU. Run them in any order.
+## Do first: write batch 1 into the record
 
-## Batch 1: one unlearned state, every measurement
+The batch 1 result is not in `docs/wiki/` yet. It changes the headline, so it should go in
+before anything else runs. It needs to carry the failure of my own hypothesis, not only the
+numbers.
 
-**Notebook 32, as it stands. Roughly 25 minutes on CPU including the dataset download.**
+## Batch 1 follow-ups, in order
 
-Loads the source model, unlearns to step 20, stops, then scores the same model six ways with
-no training anywhere: before unlearning, unlearned, rescaled as a whole, rescaled per tensor,
-with neutral BatchNorm statistics, and rescaled with neutral statistics. Each arm reports
-accuracy, classes used, input sensitivity and effective rank. Every arm also runs on the
-kept task as a control.
+- **Recover at step 6, not step 20.** Notebook 32 with `STOP_AT = 6`. The task has just reached chance there and the weights have moved even less. About 7 minutes. If rescaling fails here too, the result is as strong as it can be made.
+- **Relearn instead of rescale.** The real recovery test. Give the unlearned model a few examples of task 3 and a fixed small budget, and compare against a model that never learned task 3. Faster relearning means the information is still present. Rescaling was the cheapest possible attempt and it failed; this is the one that decides the privacy question. Needs a new notebook.
+- **Fix or drop the neutral statistics arm.** As built it breaks healthy tasks, so it cannot isolate the forgotten one. The control arm caught this. Either compare against statistics from another task, or drop the arm and test the statistics separately.
 
-Answers: whether the task survives the method's own stopping point, and if it does, whether
-the route back is the weight scale, the running statistics, or neither.
+## Batch 2: harder cases
 
-Gate: if rescaling restores accuracy, the privacy result stands and batch 2 becomes
-confirmation. If it does not, the BatchNorm arm in the same run says whether the statistics
-are carrying the removal instead.
-
-Dropped from this batch: per-channel activation variance. It needs the hook machinery that
-notebook 27 already has, so it belongs there as a one-line addition rather than here.
-Effective rank covers the feature-level version of the same question.
-
-## Batch 2: repeat batch 1 where it is hardest
-
-**Notebook 32 with two settings changed. No new code.**
-
-- `FORGET_TASK = "14"`, learned last and still at high accuracy. Task 3 is first in the order and had already fallen to 35.6 percent.
-- `STOP_AT = 100`, the end of unlearning. Expected to fail, since 49 degrees cannot be rescaled away, and that failure is the contrast that makes step 20 meaningful.
-
-Run these only after batch 1, because batch 1 decides whether either is worth the time.
+- **Task 14 instead of task 3.** Still worth running. Task 3 started at 35.60 percent because it is first in the order. A task at high accuracy may not die in 6 steps. Notebook 32 with `FORGET_TASK = "14"`.
+- **Step 100 instead of step 20.** Downgraded. Rescaling already failed at a 7 degree turn, so it will certainly fail at 49. Run only if a reviewer asks for the contrast.
 
 ## Batch 3: more than one seed
 
-**Done, 23 October.** Notebook 30 ran all three seeds, 56 minutes on CPU.
-
-The direction trajectory holds on every seed. At step 20 the direction is 0.9833 to 0.9919.
-By step 100 it is 0.5864 to 0.6542. Seed 0 is the mildest of the three on every reading, so
-anything said from seed 0 alone understated the effect. No channel lost its weights on any
+Done, 23 October. The direction trajectory holds on all three seeds. At step 20 the direction
+is 0.9833 to 0.9919. By step 100 it is 0.5864 to 0.6542. No channel lost its weights on any
 seed, and the control held on all three.
 
-The locating half did not happen, because the run used the 20-step reading interval. It no
-longer needs a run of its own: notebook 32 now takes an accuracy reading every two steps
-while it unlearns, so batch 1 names the step where the task reaches chance.
-
-Still one seed on the accuracy side. Notebook 27 ran only seed 0, so the joined table rests
-on seed 0 alone. The weight measurement is three seeds, the accuracy measurement is one.
+Still one seed on the accuracy side. Notebook 27 and notebook 32 both ran seed 0 only, so
+every accuracy statement rests on seed 0 while the weight statements rest on three.
 
 The rescaling factor differs by seed: 1.174, 1.255 and 1.290 at step 20. Notebook 32 computes
-it per seed rather than reusing one number.
+it per seed, and measured 1.190 for seed 0 at step 20.
 
 ## Batch 4: tell the group
 
-**Notebook 33, which runs nothing. Seconds, no GPU, no images.**
-
-Notebook 29 already recorded effective rank beside the accuracy at every probe point, so
-this downloads that file and lays the two side by side. It says whether the literature's
-metric and direct measurement agree in our architecture, which is the control for Matas's
-head learning rate explanation.
-
-The one-page note for Andrii is written, at
-`ops-docs/andrii-hypernetwork-plasticity-note.md`. Send it this week regardless of the other
-batches. It carries two caveats that need settling before any shared table: our effective
-rank is measured on the model after it has adapted to the probe task, not on the stream
-model itself, and ours is an absolute count out of 768 while his 0.6 and 0.94 look
-normalised.
+- **Run notebook 33.** Not yet run. Seconds, reads only.
+- **Send the note.** Written at `ops-docs/andrii-hypernetwork-plasticity-note.md`, not sent. It needs one addition now: effective rank read 214.7 before unlearning and 225.2 after, while the task was destroyed. That is a second, independent case of the measure failing to report what it claims, from our architecture rather than theirs.
 
 ## Batch 5: plasticity infrastructure, blocked
 
-Every item here is blocked behind the first one, and every item is unblocked by it.
+Every item is blocked behind the first, and every item is unblocked by it.
 
 - Retrain the stream saving a checkpoint after every task. `checkpoint.save` already takes a path, so this needs a per-task path and nothing else.
 - Then: mid-stream probe points, orders 02 and 03, trained reference points for the probes, per-task weight geometry across the stream, and the EuroSAT external probe.
@@ -103,5 +88,6 @@ Do not start until the unlearning line is written up.
 
 ## Parked
 
-- Experiment B baseline and Experiment C code-only arm, from the 17 October record. Each is one run and each decides whether a larger experiment is worth starting.
-- Anything needing a GPU, until RunPod is ready. Nothing in batches 1 to 4 does.
+- Experiment B baseline and Experiment C code-only arm, from the 17 October record.
+- Put the Tiny ImageNet archive in R2, so the notebooks stop depending on outside hosts. About 240 MB against the 9 GB already there.
+- Anything needing a GPU, until RunPod is ready. Its token was rejected on 23 October and needs re-authenticating. Nothing in batches 1 to 4 needs it.
