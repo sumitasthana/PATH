@@ -8,7 +8,18 @@ from torchvision.datasets.utils import download_and_extract_archive
 
 
 DEFAULT_ROOT = Path(__file__).resolve().parents[1] / "data" / "tiny-imagenet-200"
-URL = "https://cs231n.stanford.edu/tiny-imagenet-200.zip"
+
+#: Where to fetch the dataset, tried in order. The Stanford course host was the only
+#: source until 23 October 2026, when it stopped accepting connections and every
+#: download failed with "Connection refused". The image-net.org copy is the same
+#: archive and answered while Stanford did not. More than one source is listed so a
+#: single host being down no longer stops every run.
+URLS = (
+    "https://cs231n.stanford.edu/tiny-imagenet-200.zip",
+    "https://image-net.org/data/tiny-imagenet-200.zip",
+)
+#: Kept so existing callers and notebooks that import URL still work.
+URL = URLS[0]
 
 
 #: What an extracted Tiny ImageNet has to contain to be usable.
@@ -33,17 +44,33 @@ def prepare_data(root=DEFAULT_ROOT, download=False):
     """
     root = Path(root).expanduser().resolve()
     missing = missing_parts(root)
+    failures = []
 
     if missing and download:
         if root.name != "tiny-imagenet-200":
             raise ValueError("For download, root must end in tiny-imagenet-200")
-        download_and_extract_archive(URL, str(root.parent))
-        missing = missing_parts(root)
+        for url in URLS:
+            try:
+                download_and_extract_archive(url, str(root.parent))
+            except Exception as problem:
+                # A host being unreachable is not a reason to stop: try the next one
+                # and report every failure together if none of them works.
+                failures.append(f"{url}: {type(problem).__name__}: {problem}")
+                continue
+            missing = missing_parts(root)
+            if not missing:
+                break
+        else:
+            missing = missing_parts(root)
 
     if missing:
         raise FileNotFoundError(
             f"{root} is missing {', '.join(missing)}. "
-            + ("The download ran and still did not produce them, so the "
+            + (("Every source failed:\n  " + "\n  ".join(failures)
+                + "\nIf all of them refused the connection, the hosts are down rather "
+                  "than the code being wrong: supply an extracted copy as `root`.")
+               if failures else
+               "The download ran and still did not produce them, so the "
                "extraction was interrupted: delete that directory and retry, "
                "and prefer local disk over a mounted drive."
                if download else

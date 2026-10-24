@@ -329,3 +329,23 @@ The argument for moving it is weaker than this page first claimed, since the pla
 The three steps at the end of the 21 October record belong to that thread, and the first is one extra line in a measurement already written.
 
 Recorded as a recommendation. No decision has been made.
+
+## Interrupted run: the dataset host went down
+
+Notebook 32 failed in its "Load the images and the model" section with
+`<urlopen error [Errno 111] Connection refused>`. No measurement was taken.
+
+The cause is outside the project. `uncle/tinyimagenet.py` fetched Tiny ImageNet from
+`https://cs231n.stanford.edu/tiny-imagenet-200.zip`, and that host stopped accepting
+connections. It refuses both https and http, from Colab and from a local machine, so it is
+down rather than blocked.
+
+`https://image-net.org/data/tiny-imagenet-200.zip` serves the same archive and answered
+normally, verified by its content type and the zip header on the first bytes.
+
+`prepare_data` now takes a list of sources and tries each in turn, reporting every failure
+together if none works. The Stanford address stays first, because it is the canonical one and
+a refused connection costs no time. Any notebook that downloads the dataset is affected, not
+only notebook 32.
+
+A local extracted copy is unaffected and was used to check the change.
