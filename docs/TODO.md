@@ -59,13 +59,22 @@ Run these only after batch 1, because batch 1 decides whether either is worth th
 
 ## Batch 3: more than one seed
 
-**Notebook 30, as it stands. About one hour on CPU.**
+**Done, 23 October.** Notebook 30 ran all three seeds, 56 minutes on CPU.
 
-The readings are weight-only and nearly free, so the finer interval costs almost nothing and
-the extra seeds are the only real cost.
+The direction trajectory holds on every seed. At step 20 the direction is 0.9833 to 0.9919.
+By step 100 it is 0.5864 to 0.6542. Seed 0 is the mildest of the three on every reading, so
+anything said from seed 0 alone understated the effect. No channel lost its weights on any
+seed, and the control held on all three.
 
-- Confirms the direction trajectory holds beyond seed 0.
-- Locates where accuracy reaches chance inside steps 1 to 20, instead of bracketing it.
+The locating half did not happen, because the run used the 20-step reading interval. It no
+longer needs a run of its own: notebook 32 now takes an accuracy reading every two steps
+while it unlearns, so batch 1 names the step where the task reaches chance.
+
+Still one seed on the accuracy side. Notebook 27 ran only seed 0, so the joined table rests
+on seed 0 alone. The weight measurement is three seeds, the accuracy measurement is one.
+
+The rescaling factor differs by seed: 1.174, 1.255 and 1.290 at step 20. Notebook 32 computes
+it per seed rather than reusing one number.
 
 ## Batch 4: tell the group
 

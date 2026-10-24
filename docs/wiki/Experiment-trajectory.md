@@ -4,6 +4,8 @@ Updated 23 October 2026. This is the index for the dated experiment record. Each
 
 ## Latest findings
 
+**The direction result holds on three seeds.** At step 20 the weights are 0.9833 to 0.9919 aligned with where they started, a turn of 7.3 to 10.5 degrees. By step 100 they have turned 49.1 to 54.1 degrees. Seed 0 is the mildest of the three, so statements made from it alone understated the effect. No channel lost its weights on any seed. The accuracy side is still one seed, because notebook 27 ran only seed 0.
+
 **The task is gone by step 20, and the other 80 unlearning steps only make it unrecoverable.** Accuracy on the removed task reaches chance at step 20 and never moves again. At that point the weights are 99.19 percent aligned with where they started, a turn of 7.3 degrees, having kept 85 percent of their length. By step 100 they have turned 49 degrees, which no rescaling can undo. So the unlearning length past step 20 buys irreversibility, not forgetting.
 
 **A model at chance accuracy is not evidence that a task was removed.** From step 40 the model answers the same single class for every test image, which scores exactly 10.00 percent on a balanced ten-class test set, the same as chance. Input sensitivity is the measurement that still works: it falls by a factor of 5.8 million across the run, including through the windows where accuracy is flat.

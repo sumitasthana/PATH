@@ -163,6 +163,58 @@ preservation term is doing its job. The control is not perfectly still, and its 
 movement appears by step 20 and then holds, which is worth one line in any writeup rather
 than being rounded away.
 
+## The direction result holds on three seeds
+
+Run: notebook 30, seeds 0, 1 and 2, order 01, forgetting task 3, 100 steps each. Colab CPU,
+about 11.2 seconds per step, 18.7 minutes per seed. The reading interval stayed at 20, so
+the finer trace over the first 20 steps was not taken and the crossing to chance is still
+bracketed rather than located.
+
+| Step | Seed 0 turned | Seed 0 length | Seed 1 turned | Seed 1 length | Seed 2 turned | Seed 2 length |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 20 | 7.3 deg | 0.852 | 10.0 deg | 0.797 | 10.5 deg | 0.775 |
+| 40 | 14.7 deg | 0.753 | 20.7 deg | 0.675 | 20.8 deg | 0.646 |
+| 60 | 25.1 deg | 0.678 | 33.5 deg | 0.593 | 32.8 deg | 0.563 |
+| 80 | 37.7 deg | 0.621 | 45.6 deg | 0.533 | 44.4 deg | 0.505 |
+| 100 | 49.1 deg | 0.572 | 54.1 deg | 0.482 | 53.0 deg | 0.457 |
+
+Every seed shows the same shape. The length falls steadily. The turning is small early and
+accelerates. At step 20 the direction is 0.9833 to 0.9919, a mean of 0.9866, which is a turn
+of 7.3 to 10.5 degrees. By step 100 it is 0.5864 to 0.6542, a turn of 49.1 to 54.1 degrees.
+
+Seed 0 is the mildest of the three on every reading. Any statement made from seed 0 alone
+therefore understated the effect rather than overstating it.
+
+No channel lost its weights on any seed. The died column is 0 for all 54 tensors across all
+three runs.
+
+The control task held on every seed: direction 0.9997 to 0.9999 throughout, with its weights
+moving 1.6 to 2.5 percent against 76 to 81 percent for the forgotten task.
+
+### What this does and does not extend
+
+It extends the weight measurement to three seeds. The direction trajectory is not a
+single-seed accident.
+
+It does not extend the accuracy side. Notebook 27 ran only seed 0, so the joined table that
+shows accuracy reaching chance at step 20 still rests on one seed. The claim that the task is
+gone at step 20 is one seed; the claim that the weights have barely turned at step 20 is
+three.
+
+### The rescaling factor differs by seed
+
+The factor that restores the original length at step 20 is 1.174 for seed 0, 1.255 for seed 1
+and 1.290 for seed 2. A recovery experiment has to compute this per seed rather than reuse
+seed 0's number.
+
+### Per-channel, seed 2 turned more in its early layers
+
+Seed 2's first convolution has a median channel cosine of 0.7712 and a lowest of 0.4938,
+against 0.9315 and 0.8526 for seed 0. Its early layer1 blocks are similar. Seeds 0 and 1 keep
+their early layers closer to where they started. This is one observation on one seed and may
+be noise, but if a recovery attempt works on seeds 0 and 1 and fails on seed 2, this is the
+first place to look.
+
 ## Forgetting finishes at step 20; the other 80 steps only turn the weights
 
 Run: notebook 31, which joins notebook 27's saved accuracy readings to notebook 30's
