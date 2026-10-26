@@ -1,8 +1,16 @@
 # Experiment trajectory
 
-Updated 23 October 2026. This is the index for the dated experiment record. Each page keeps the questions, settings, results, evidence links, and decisions together.
+Updated 26 October 2026. This is the index for the dated experiment record. Each page keeps the questions, settings, results, evidence links, and decisions together.
 
 ## Latest findings
+
+**The recovery probe ran, and found no recovery advantage.** A model holding task 3's own code and BatchNorm statistics never relearned the task faster than one starting from nothing. It was 7.3 points behind at the 6-step stopping point and 2.3 points behind at the 100-step one. Task 3 was also no easier than tasks the model had never seen, by 1.5 and 0.1 points, both inside the 3-point tie threshold. This is the second failed recovery attempt after rescaling, and neither establishes that the information was removed. One seed, notebook 24, details in the [26 October record](Experiment-trajectory-2026-10-26).
+
+**What unlearning destroys is the task's address, not the ability to serve it.** Every arm keeping task 3's own 32-number code spent 40 to 50 steps unable to respond to its input at all. Every arm with a new code started immediately, and so did all eighteen unseen-task runs. The split follows the code alone, across both stopping points and all three image budgets. The generator still learns task 3 from a fresh code as readily as it learns a task it never saw.
+
+**The collapse is confirmed directly, and it is complete by step 6.** Immediately after unlearning, at 6 steps and at 100 steps alike, the model used 1 of 10 classes and put 100 percent of its predictions in that class. A single-class answer scores exactly 10.00 percent on a balanced ten-class set, which is what forget-task accuracy reports as successful forgetting.
+
+**Two summary lines from that run were withdrawn after checking.** The notebook reported the BatchNorm statistics as worth +4.5 points, computed between two arms that both carry the dead code and driven almost entirely by one cell. The contrast that isolates the statistics gives +0.1 and +2.5 points, both inside the tie threshold, so no measurable recovery value is shown. The collapse table took a minimum that included the measurement before training, so it reported collapse everywhere. Both are fixed in the notebook and recomputable from the saved results.
 
 **The direction result holds on three seeds.** At step 20 the weights are 0.9833 to 0.9919 aligned with where they started, a turn of 7.3 to 10.5 degrees. By step 100 they have turned 49.1 to 54.1 degrees. Seed 0 is the mildest of the three, so statements made from it alone understated the effect. No channel lost its weights on any seed. The accuracy side is still one seed, because notebook 27 ran only seed 0.
 
@@ -54,6 +62,7 @@ The [8 October setup record](Experiment-trajectory-2026-10-08) describes reserve
 
 | Reporting date or period | What is covered |
 | --- | --- |
+| [26 October 2026](Experiment-trajectory-2026-10-26) | First recovery probe: no recovery advantage at either stopping point, the forgotten task's own code shown to cost 40 to 50 steps of dead time, and the single-class collapse confirmed directly. |
 | [23 October 2026](Experiment-trajectory-2026-10-23) | First direction measurement: unlearning turns the weights 49 degrees as well as shrinking them, seed 0 on CPU. Also the review against the adapter study and the correction withdrawing its main claim. |
 | [22 October 2026](Experiment-trajectory-2026-10-22) | EuroSAT external-probe plan, rationale, controls, measurements, and compute budget. Not yet run. |
 | [20 and 21 October 2026](Experiment-trajectory-2026-10-21) | Plasticity probe completed on three seeds: no loss, a small gain, and the task code shown to add nothing. |
