@@ -52,7 +52,7 @@ numbers.
 ## Batch 1 follow-ups, in order
 
 - **Recover at step 6, not step 20.** Notebook 32 with `STOP_AT = 6`. The task has just reached chance there and the weights have moved even less. About 7 minutes. If rescaling fails here too, the result is as strong as it can be made.
-- **Relearn instead of rescale.** The real recovery test. Give the unlearned model a few examples of task 3 and a fixed small budget, and compare against a model that never learned task 3. Faster relearning means the information is still present. Rescaling was the cheapest possible attempt and it failed; this is the one that decides the privacy question. Needs a new notebook.
+- **Relearn instead of rescale.** The real recovery test. Give the unlearned model a few examples of task 3 and a fixed small budget, and compare against a model that never learned task 3. Faster relearning means the information is still present. Rescaling was the cheapest possible attempt and it failed; this is the one that decides the privacy question. **Notebook 32 is not this test and notebook 26 is not either.** The notebook already exists: `24_recovery_probe.ipynb`, built 13 October, with four arms that separate task 3's code from its BatchNorm statistics. It now also runs both stopping points, 6 steps and 100, in one session. It has never been run. It needs an A100 for about thirty minutes and runs on Colab, so it is not blocked on RunPod. Do not build anything new first.
 - **Fix or drop the neutral statistics arm.** As built it breaks healthy tasks, so it cannot isolate the forgotten one. The control arm caught this. Either compare against statistics from another task, or drop the arm and test the statistics separately.
 
 ## Batch 2: harder cases
