@@ -1,10 +1,16 @@
 # Experiment trajectory
 
-Updated 26 October 2026. This is the index for the dated experiment record. Each page keeps the questions, settings, results, evidence links, and decisions together.
+Updated 27 October 2026. This is the index for the dated experiment record. Each page keeps the questions, settings, results, evidence links, and decisions together.
 
 ## Latest findings
 
 **The paper's own discard baseline says the task is not stored in its code.** Appendix F, Table 8 replaces the forgotten task's embedding with a random one and trains nothing. Forget-task accuracy stays at 80.91, 20.70, 61.79 and 15.54 percent on the four datasets, against 10 percent chance and 10.00 for UnCLe, at zero unlearning cost. A code the model never trained with still reaches the task through the shared generator. Read with our dead-code result, this says the forget operation breaks the task's address while the ability survives in the trunk. The paper also argues that zeroed weights give a uniform, maximum-entropy output and scores that as UNI = 100.0, while our run measures 100 percent of predictions in one class; both can describe the same collapsed model, and if so UNI is passed for free by a zero head. These are the paper's numbers, not reproduced here. Details and the next step in the [26 October record](Experiment-trajectory-2026-10-26).
+
+**The probe was repeated on a task that had room, and the answer held.** Task 3 was first in order 01 and had fallen to 35.60 percent before unlearning, so the probe could not have shown a gain. Task 14 is last in the order and stood at 42.60 percent, and a fresh code reaches only about 30 percent at the largest budget, so there were about 12 points of room. The attacker arm still finished in a tie with a fresh start, by 1.9 and 1.3 points. Task 14 was also harder than the tasks the model had never seen, by 5.0 and 5.6 points, rather than easier. This closes the strongest objection to the negative result. Details in the [27 October record](Experiment-trajectory-2026-10-27).
+
+**A strong task collapses just as fast as a weak one.** Task 14 stood at 42.60 percent and was at exactly 10.00 percent after 6 unlearning steps, using 1 of 10 classes with every prediction in that class. The step-6 finding had been measured only on a weak task until now.
+
+**The dead-code split replicated on a second task.** 38 steps of dead time for the arms keeping task 14's own code against 2 for the arms using a new one. Three runs, two tasks, the same split every time. A new observation came with it, not yet a claim: once the old-code arms wake, they reach halfway back in 20 steps against 40 to 60 for a new code, so the old code costs dead time and then pays much of it back.
 
 **The recovery probe ran twice, and found no recovery advantage either time.** A model holding task 3's own code and BatchNorm statistics never relearned the task faster than one starting from nothing. It was 7.3 and 6.5 points behind at the 6-step stopping point across the two runs, and 2.3 and 3.7 points behind at the 100-step one. Task 3 was also no easier than tasks the model had never seen, by +1.5, +1.3, +0.1 and -2.0 points, all inside the tie threshold. This is the second failed recovery attempt after rescaling, and neither establishes that the information was removed. One seed, notebook 24, details in the [26 October record](Experiment-trajectory-2026-10-26).
 
@@ -66,6 +72,7 @@ The [8 October setup record](Experiment-trajectory-2026-10-08) describes reserve
 
 | Reporting date or period | What is covered |
 | --- | --- |
+| [27 October 2026](Experiment-trajectory-2026-10-27) | The recovery probe repeated on task 14, which had room above the floor: still no recovery advantage, a strong task shown to collapse to one class by step 6, and the dead-code split replicated on a second task. |
 | [26 October 2026](Experiment-trajectory-2026-10-26) | First recovery probe: no recovery advantage at either stopping point, the forgotten task's own code shown to cost 40 to 50 steps of dead time, and the single-class collapse confirmed directly. Also a reading of the paper's discard-embedding baseline and its uniformity argument. |
 | [23 October 2026](Experiment-trajectory-2026-10-23) | First direction measurement: unlearning turns the weights 49 degrees as well as shrinking them, seed 0 on CPU. Also the review against the adapter study and the correction withdrawing its main claim. |
 | [22 October 2026](Experiment-trajectory-2026-10-22) | EuroSAT external-probe plan, rationale, controls, measurements, and compute budget. Not yet run. |
