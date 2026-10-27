@@ -119,6 +119,41 @@ The positive results from today are the collapse confirmation and the dead-code 
 
 Next decisions, in order:
 
-1. Repeat on a task that was strong when unlearned, for example task 14, so the probe has room above the floor.
-2. Repeat on seeds 1 and 2. Everything above is one seed.
-3. Treat the dead-code result as a candidate contribution in its own right and decide whether it is the paper's mechanism claim.
+1. Seed the recovery training end to end. The second run below shows the probe moving by up to 8.8 points between identical runs, so this comes before any further comparison.
+2. Repeat on a task that was strong when unlearned, for example task 14, so the probe has room above the floor.
+3. Repeat on seeds 1 and 2. Everything above is one seed.
+4. Treat the dead-code result as a candidate contribution in its own right and decide whether it is the paper's mechanism claim.
+
+## A second run of the same configuration, with the corrected reporting
+
+The notebook was rerun after the two reporting fixes above were applied. Same study, same seed, same forgotten task, same two stopping points, same three image budgets. The few-shot images are drawn with a fixed seed, so both runs trained on the same pictures. Nothing else in the recovery training is seeded: the batch order and the new task codes differ between runs. So the two runs are independent repeats of one configuration, and the differences between them measure this probe's own noise.
+
+### What replicated
+
+**No recovery advantage.** The attacker arm lost to a fresh start by 6.5 points at the 6-step stopping point and by 3.7 points at the 100-step one. The first run gave 7.3 and 2.3. Same sign, same size, both runs.
+
+**The dead code.** Average dead time was 42 steps for the arms keeping task 3's own code and 2 steps for the arms using a new code. The first run gave 43 and 2. Every individual wake step matched to within 10 steps, and all eighteen unseen-task runs woke at step 0 again.
+
+**The collapse after unlearning.** 1 of 10 classes, 100 percent of predictions in that class, at both stopping points.
+
+**Task 3 is not easier than an unseen task.** With a fresh code it was ahead by 1.3 points at 6 steps and behind by 2.0 points at 100. The first run gave +1.5 and +0.1. All four values are inside the tie threshold.
+
+**The BatchNorm statistics show no recovery value.** The isolating contrast gave +0.7 and +2.1 points, against +0.1 and +2.5 in the first run. Four values, all inside the tie threshold.
+
+### What did not replicate, and why that matters
+
+The withdrawn +4.5 BatchNorm figure rested almost entirely on one cell: the 100-step attacker arm at 20 images per class, which scored 34.0 against code only's 23.4, a gap of +10.6. In the second run the same cell reads 25.2 against 29.6, a gap of -4.4. The attacker value moved by 8.8 points between identical runs.
+
+That cell was the single largest source of run-to-run variation, and it was also the only evidence for the figure. The correction made by hand before this run is now confirmed by measurement.
+
+### The noise floor is wider than 3 points, and not evenly spread
+
+Across the 24 peak-accuracy cells the two runs differ by 2.0 points on average and by 8.8 at most. The 3-point tie threshold the notebook uses is too optimistic at the 20-image budget.
+
+The variation is not spread evenly across the arms. The two arms carrying task 3's dead code differ between runs by 3.0 points on average, while the two arms using a new code differ by 0.9. This fits the dead-code finding: those arms are measured near the step where they start responding at all, so small changes in training move their peak a long way.
+
+Two consequences. Any single-cell difference in a dead-code arm should not be reported. And the probe should be seeded end to end, so that a repeat tests the question rather than the randomness.
+
+### One line retracted
+
+The first run printed that stopping at 100 steps leaves more recoverable than stopping at 6. The second run reads the difference as -1.1 points, in the other direction, and the notebook now prints "no difference worth reporting". Both runs agree on the substance: the extra 94 unlearning steps change neither how much was removed nor how reachable it is.
