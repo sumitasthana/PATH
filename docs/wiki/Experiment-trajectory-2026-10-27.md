@@ -51,6 +51,8 @@ Mean dead time was 38 steps for the arms keeping task 14's own code and 2 steps 
 
 Three runs, two tasks, same split. The result does not depend on which task is forgotten.
 
+The paper's own discard-embedding baseline, recorded in the [26 October page](Experiment-trajectory-2026-10-26), points the same way from the other side. Replacing the forgotten task's embedding with a random one and training nothing leaves forget-task accuracy at 80.91, 20.70, 61.79 and 15.54 percent on their four datasets. A code the model never trained with still reaches the task through the shared generator. Our arms show the matching fact from inside: the task's own code is the part that stopped working.
+
 ## A new observation: the old code pays the dead time back
 
 The run records how many steps each arm needs to reach halfway back after it starts responding. On task 14 at the 20-image budget the pattern is consistent in all four cells.
