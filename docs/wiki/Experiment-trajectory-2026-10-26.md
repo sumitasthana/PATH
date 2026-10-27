@@ -157,3 +157,48 @@ Two consequences. Any single-cell difference in a dead-code arm should not be re
 ### One line retracted
 
 The first run printed that stopping at 100 steps leaves more recoverable than stopping at 6. The second run reads the difference as -1.1 points, in the other direction, and the notebook now prints "no difference worth reporting". Both runs agree on the substance: the extra 94 unlearning steps change neither how much was removed nor how reachable it is.
+
+## A reading of the paper's own discard baseline, and what it says about where the task lives
+
+This section records a check against the paper, not a new run. It came out of asking whether a cheaper unlearning operation exists: delete the forgotten task's code and train nothing. The paper already tested that, and the result changes how today's dead-code finding should be read.
+
+### The baseline exists and it fails
+
+Appendix F, Table 8 of the paper lists `Discard e_f`: the forget task's embedding is thrown away and replaced with a random one. Nothing else changes and no unlearning steps are run. Forget-task accuracy after that operation:
+
+| Dataset | Discard e_f | UnCLe | Chance |
+| --- | --- | --- | --- |
+| 5-Tasks | 80.91 | 10.04 | 10 |
+| CIFAR-100 | 20.70 | 10.00 | 10 |
+| Permuted-MNIST | 61.79 | 10.00 | 10 |
+| Tiny-ImageNet | 15.54 | 10.00 | 10 |
+
+Unlearning time is 0.00 in every row, so the operation is free. It is also not forgetting: the task still runs above chance on all four datasets, and at 80.91 percent on the 5-task set.
+
+### What that means for today's result
+
+The paper does not read this number as a finding. For this project it is one.
+
+It says the forgotten task is not stored in its code. A code the model was never trained with still reaches the task through the shared generator. The generator is therefore only loosely conditioned on which code it is given.
+
+That sits alongside today's dead-code result and points the same way. Our probe found that a new code starts learning task 3 immediately while task 3's own code costs 40 to 50 steps. The paper's number says a random code already serves a learned task above chance before any training at all. Both say the code is a weak address and the ability is held in the trunk.
+
+The combined reading is that UnCLe's forget operation breaks the address rather than the ability. Today's measurements show the address broken. The paper's own baseline shows the ability surviving an address change.
+
+Two limits on this reading. The numbers are the paper's, measured on its setup, not reproduced here. And the paper does not state whether the replacement random embedding is then frozen or adapted, which `docs/PLAN.md` line 140 already flags as an open question and which could change the figures.
+
+### A contradiction with the paper's uniformity argument
+
+The paper's appendix "Connecting MSE and L2" argues that minimising the MSE term drives the generated parameters toward zero, so the logits for the unlearned task become zero on every output node, so the output distribution is uniform and the model is maximally uncertain. The paper scores this with its UNI metric and reports UNI = 100.0 for UnCLe on all four datasets.
+
+Today's run measures the same state as 1 class of 10 used, with 100 percent of predictions in that class.
+
+A possible reconciliation, which has not been measured: near-zero logits are near-tied, so the softmax is close to uniform while the argmax falls on whichever output node keeps the largest leftover bias, and it falls there for every image. If that holds, both readings are correct and they describe the same collapsed model. It would also mean UNI, like forget-task accuracy at chance, is a criterion a zero head passes without forgetting anything.
+
+This is an interpretation, not a result. Confirming it needs the per-class logit values at the collapsed state, which the recovery notebook does not currently save.
+
+### Next decision from this section
+
+Reproduce `Discard e_f` on our own seed-0 checkpoint: replace task 3's code with a random one, train nothing, and read forget-task accuracy, class coverage and input sensitivity straight away. It costs no training and gives a residue number that does not depend on the recovery probe, which has now been the weak link in two attempts.
+
+If forget-task accuracy comes out above chance, the residue is in the trunk and measurable directly. If it comes out at chance, our implementation differs from the paper's on a point that changes the paper's own baseline, and locating that difference is itself worth recording.
