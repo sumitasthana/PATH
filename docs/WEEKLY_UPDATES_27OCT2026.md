@@ -3,8 +3,8 @@
 [Back to the weekly update index](WEEKLY_UPDATES.md)
 
 This update states the claim we want to make about UnCLe, and gives the evidence for each
-part of it. Each section is one question, followed by the answer and the measurements
-behind it.
+part of it. There are ten questions below. Each one is followed by the answer and the
+measurements behind it.
 
 ## Words used on this page
 
@@ -19,7 +19,7 @@ Every term is defined once, in one line.
 | Chance | The score a model gets by guessing. With 10 classes it is 10 percent. |
 | Tie threshold | 3 points. A difference smaller than this is read as no difference. |
 
-## What are we claiming?
+## 1. What are we claiming?
 
 UnCLe removes a task by changing that task's address. But the task's skill is not stored
 at that address. So the method does not work the way the paper says it works.
@@ -27,7 +27,7 @@ at that address. So the method does not work the way the paper says it works.
 We are not saying the method fails to forget. It does appear to forget. We are saying the
 reason the paper gives for why it works is not the reason it works.
 
-## Where is a task's skill stored?
+## 2. Where is a task's skill stored?
 
 **The paper's position.** In the task code. That is the only thing the forgetting step
 acts on, so the paper's account only makes sense if the skill is there.
@@ -51,7 +51,7 @@ task actually lives.
 
 These are the paper's numbers. We have not reproduced them.
 
-## What does the forgetting step do to the weights?
+## 3. What does the forgetting step do to the weights?
 
 **The paper's position.** It turns the generated weights into noise.
 
@@ -69,7 +69,7 @@ Zero and noise are not the same thing. A zeroed classifier is silent. A randomis
 is scrambled. Our implementation follows the paper's equation, and what we observe
 matches the derivation.
 
-## What does the forgotten model actually output?
+## 4. What does the forgotten model actually output?
 
 **The paper's position.** A uniform spread across all classes, which it scores as
 maximum confusion.
@@ -86,7 +86,7 @@ Exactly 10.00 percent on a balanced ten-class test set is what a constant answer
 This has now been seen on two tasks of different strength, at two stopping points, in
 three separate runs.
 
-## How does the paper decide that forgetting worked?
+## 5. How does the paper decide that forgetting worked?
 
 **The paper's position.** Three tests: forget accuracy at chance, uniformity at 100, and
 a membership inference attack at 50.
@@ -100,7 +100,7 @@ from near-zero outputs, and we have not measured them ourselves.
 These tests measure whether the model has gone silent. They do not measure whether the
 information was removed.
 
-## How many forgetting steps are actually needed?
+## 6. How many forgetting steps are actually needed?
 
 **The paper's position.** 100 steps, reduced over repeated operations down to 20.
 
@@ -116,7 +116,7 @@ seeds. By step 100 they have turned between 49.1 and 54.1 degrees.
 So the steps taken after the task is gone remove nothing further. They make the change
 harder to undo.
 
-## Can the forgotten task code be used again?
+## 7. Can the forgotten task code be used again?
 
 **The paper's position.** Not discussed.
 
@@ -140,7 +140,7 @@ Taken with the appendix result above, this gives the same conclusion from two
 directions. The paper's own baseline shows that an untrained code still reaches the
 task. Our runs show that the forgotten code is the one part that stopped working.
 
-## Is the skill truly gone?
+## 8. Is the skill truly gone?
 
 **The paper's position.** Yes, removed.
 
@@ -170,7 +170,7 @@ forgetting, at 35.60 percent, so the probe had no room to show a gain. Task 14 s
 The forgotten tasks were also no easier than tasks the model had never seen. Task 14 was
 in fact 5.0 and 5.6 points harder.
 
-## What do we not claim?
+## 9. What do we not claim?
 
 We do not claim the skill survives forgetting. Our own probe says it does not, three
 times over.
@@ -186,7 +186,7 @@ Our paper separates the two questions. Whether the method forgets is one questio
 the answer appears to be yes. How it forgets is a different question, and the paper's
 answer to that one does not match the measurements.
 
-## What is still missing?
+## 10. What is still missing?
 
 Three things, in order of importance.
 
