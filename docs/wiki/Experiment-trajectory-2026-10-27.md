@@ -2,6 +2,48 @@
 
 [Back to the experiment index](Experiment-trajectory)
 
+## Validation of the task-conditioning claim
+
+This audit supersedes the interpretations below that call the route probe a reproduction of Table 8, identify the code-only probe with a no-training probe, or say author code is unavailable. No new training result was produced. Local numerical results were checked against the working records and implementation, not recomputed from checkpoints or raw run logs.
+
+### Author code is public
+
+The [journal abstract](https://link.springer.com/article/10.1007/s10994-026-07125-8) links to [visprasadh/uncle](https://github.com/visprasadh/uncle). The inspected default-branch commit is `f9f1e218588f4382aac4429393510f782626438a`. The journal full text remains subscription content in the accessed page. The inspected source tree and README did not supply a discard-baseline driver, trained checkpoints, or Table 8 run logs. Code availability therefore removes one obstacle but does not establish the provenance of the reported baseline.
+
+The released [test function](https://github.com/visprasadh/uncle/blob/f9f1e218588f4382aac4429393510f782626438a/main.py#L250) switches only the hypernetwork to evaluation mode. The separately constructed target ResNet remains in its default training mode. Its [BatchNorm implementation](https://github.com/visprasadh/uncle/blob/f9f1e218588f4382aac4429393510f782626438a/toolbox/batchnorm.py#L144) uses current-batch statistics and updates running buffers in that mode, including inside a no-gradient context. Our notebook 34 instead evaluates the target with stored task buffers. This is a concrete implementation difference and a candidate explanation to test, not an established explanation of Table 8. The released main driver is not evidence that the unreleased discard driver used the same policy.
+
+The release also imports modules absent from its inspected tree in `toolbox/models.py`. It should not be described as verified runnable without repair. This audit did not execute the author training code.
+
+### The comparisons do not establish input independence
+
+The [preprint's Table 8](https://arxiv.org/html/2509.17530v1) reports replacement-embedding results for Request Sequence 1. Its definition of FA is an average over forgotten tasks at the end of the sequence. The same-dataset comparison for our Tiny ImageNet probe is 15.54 percent, not the 80.91 percent from 5-Tasks or 61.79 percent from Permuted-MNIST. Replacement is described without adaptation, and the reported unlearning time is zero. The text supports that intended operation, but does not verify implementation or establish immediate post-replacement accuracy.
+
+Our notebook 34 reports one seed, task 14 and retained task 7, and five random codes per task. It measures before and after a single request. The repeated before readings at stopping points 6 and 100 use the same source and codes, not independent replications. Chance accuracy on these sampled routes does not exclude every possible alternative route.
+
+High accuracy under sampled replacement codes would establish that useful prediction does not require the original code in that protocol. It would not establish that generated weights barely change with the code. Many different classifiers can have similar accuracy, and a task-independent useful component can coexist with a substantial task-dependent component. Nor would it establish independence across the entire embedding space. Testing that requires cross-code predictions and generated-weight comparisons on a fixed checkpoint, with all other task information controlled.
+
+### Frozen during learning is different from replaced after learning
+
+`uncle/probe.py:probe_once` confirms that the generator-only arm fixes a random code while fitting the generator to that code and task. The full arm fits both. The reported full-minus-generator-only gaps of -1.48, +1.01 and +1.27 percentage points are at the fresh-generator starting point, after probe training. They are not zero-shot scores or a whole-stream fixed-code ablation.
+
+These results support the narrower statement that code optimization showed no clear advantage in these probes. They do not establish equivalence. Notebook 29 borrows a threshold calculated for the full arm's change between probe points, rather than calculating uncertainty in paired full-versus-generator-only differences. From the three rounded seed gaps, the mean is +0.27 points; an illustrative Student-t interval is approximately -3.50 to +4.04 points under independent, normally distributed seed differences. This small sample does not justify an exact-zero claim. Learning-rate selection also uses test accuracy in `best_of_grid`, so these are selected probe endpoints rather than untouched test estimates.
+
+The probe training loop fits cross-entropy without the stream's preservation penalty. BatchNorm statistics also adapt. Its results cannot be extended directly to maintaining all old tasks through continual learning with every task code frozen.
+
+The code-only arm trains the code with the generator frozen and initializes new BatchNorm buffers. It is not a frozen random-code forward pass. Its chance-level result does not prove that a 32-dimensional code cannot select task knowledge from a suitable trained generator.
+
+A fixed random code can still identify a task after the generator learns its association with that code. An arbitrary identifier does not need a learned numerical meaning to carry identity. The claim that the code carries no information is therefore too broad; the claim that its numerical optimization may be unnecessary is testable and consistent with these observations.
+
+The PLAN component table describes proposed interventions in our study. It is not evidence that the paper adapted replacement embeddings. The earlier attribution to that table was mistaken.
+
+### Next decision
+
+Request the exact Table 8 discard script and configuration, relevant trained checkpoints, per-task immediate and final accuracies, embedding sampling and optimizer policy, and BatchNorm evaluation policy. Ask whether discarded embeddings enter later preservation losses. The existing local author letter asks for code and the journal version but not these baseline details or weights; it remains unsent.
+
+With a verified checkpoint, compare original, swapped, fresh-random and zero codes on the same tasks. Hold label mapping and other task state fixed. Separately compare stored-statistics evaluation with current-batch normalization. Measure prediction disagreement and layer-wise generated-weight changes as well as accuracy. For post-unlearning survival claims, add a matched model that never learned the forgotten task to separate retained task information from transfer. A general claim about hypernetwork continual learning requires replication beyond this implementation and these probe tasks.
+
+The current conclusion is a protocol and implementation discrepancy worth resolving. Neither the paper's aggregate baseline nor our fixed-code probes establish that the generator ignores task identity or that UnCLe's learning and unlearning results are invalid.
+
 ## The recovery probe on task 14
 
 Notebook 24 ran again with `FORGET_TASK = "14"`. Everything else was the same as the 26 October runs: study `paired_generalization_v2`, order 01, seed 0, stopping points at 6 and 100 steps, four arms, image budgets of 1, 5 and 20 per class, 100 recovery steps measured every 10, generator trainable, unseen controls 2, 4 and 6.
