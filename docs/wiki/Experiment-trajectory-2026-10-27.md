@@ -88,6 +88,54 @@ The retained tasks held, at 36.8 to 40.8 percent throughout.
 
 Three printed lines still said "Task 3" when the forgotten task was 14, so the unseen-task section of the output is mislabelled. The numbers in it are correct and belong to task 14. The earlier pass over the notebook replaced only the lower-case spelling. Fixed.
 
+## The alternative-route probe, and why it is void
+
+Notebook 34 was written to answer one question. Unlearning trains the shared generator so that the forgotten task's own code produces near-zero weights. Is the task still reachable through a different code? The paper's Appendix F, Table 8 says an untrained random embedding reaches a task at up to 80.91 percent, so the probe takes that measurement and repeats it after unlearning.
+
+Settings: study `paired_generalization_v2`, order 01, seed 0, `FORGET_TASK = "14"`, stopping points 6 and 100, five unused random task codes per reading, each given the target task's stored BatchNorm statistics. Nothing is trained anywhere in the notebook. Task 7 is the kept control, chosen as the last retained task in the order.
+
+| Stopping point and stage | Task 14, own code | Task 14 through random codes | Task 7 through random codes |
+| --- | ---: | ---: | ---: |
+| 6, before unlearning | 42.6 | 9.5 | 10.0 |
+| 6, after unlearning | 10.0 | 10.0 | 10.0 |
+| 100, before unlearning | 42.6 | 9.5 | 10.0 |
+| 100, after unlearning | 10.0 | 10.0 | 10.0 |
+
+Per-code detail, which matters more than the means. Before unlearning, the five random codes read task 14 at 10.0, 8.6, 10.0, 10.0 and 8.8 percent, using 1, 5, 1, 1 and 3 of the ten classes. On task 7 all five read exactly 10.0 percent using a single class. After unlearning every reading is 10.0 percent on a single class.
+
+So an untrained code in this model does not produce a weak classifier. It produces a collapsed one: a constant answer, which scores chance on a balanced set. The two readings that used more than one class scored 8.6 and 8.8 percent, below chance rather than above it.
+
+### The probe is void, and the before column is why
+
+The notebook printed "cannot decide" at both stopping points, and its stated reason is wrong. It reads the after column and says that reading through an unused code stopped working. The before column shows it never worked. Random codes read 9.5 and 10.0 percent on an untouched model, against 10 percent chance.
+
+So there is no alternative route in this model, before unlearning or after. The question the probe was built to ask does not arise here, and the after column carries no information about removal.
+
+### This repeats a result the study already has
+
+The 20 and 21 October record measured a frozen generator with a fresh task code and found chance on all three seeds. This is the same measurement reached by a different path, now also with the target task's own BatchNorm statistics supplied, and at two unlearning stopping points. It agrees.
+
+### What it says about Table 8
+
+Our reproduction does not reproduce the behaviour Table 8 reports. In this model an untrained code carries a task nowhere. In the paper it carries one to 80.91 percent on the strongest of four datasets.
+
+Two readings are open and this run does not separate them.
+
+1. Their generator generalises across codes far more than ours does. Their own spread is wide, at 80.91, 20.70, 61.79 and 15.54 percent, and the lowest of those is close to chance, so the effect may be dataset-dependent.
+2. Their discard baseline adapts the replacement embedding rather than freezing it. `docs/PLAN.md` already flags this as unresolved, in the component table under "Task embedding". If the replacement is adapted, Table 8 measures how fast an address can be retrained, not whether the task is reachable from an arbitrary address.
+
+Settling this needs the journal version or released code, which we do not have.
+
+### What this costs the current reading
+
+The 80.91 figure has been used in our working documents as evidence that a task code is only an address. It cannot carry that weight here, because the same measurement in our model gives chance. Any statement built on it has to be marked as the paper's result in the paper's setting, not as a property of hypernetwork unlearning in general.
+
+Together with the correction recorded in the 27 October weekly update, where the forgetting step was confirmed to train the generator and leave the task code frozen, this closes the address-versus-container reading from both directions.
+
+### Next decision from this section
+
+The route probe is not worth repeating on seeds 1 and 2 as it stands, because the instrument reads chance on an untouched model. It would become worth running again only if the Table 8 ambiguity is resolved in favour of an adapted embedding, in which case the probe should adapt the replacement code under a stated budget and the control stays as it is.
+
 ## Where this leaves the work
 
 The negative privacy result is now solid. It survives the fix that was meant to rescue it, on a task with real room above the floor, and the forgotten task is harder than tasks the model never saw rather than easier.

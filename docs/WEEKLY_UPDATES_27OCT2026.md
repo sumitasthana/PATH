@@ -25,15 +25,16 @@ Every term is defined once, in one line.
 
 ## 1. What are we claiming?
 
-That UnCLe silences one route into a shared generator, and that nobody has yet checked
-whether the skill is still reachable by a different route.
+That UnCLe silences one route into a shared generator, and that we still cannot tell
+whether the skill went with it.
 
 The method is honest about what it does. The open question is what that leaves behind.
-The paper's own appendix contains the measurement that would settle it, but the appendix
-runs it before forgetting rather than after. Question 9 sets this out.
+We tried to settle it by repeating the paper's own appendix measurement after forgetting,
+and that attempt failed for a reason worth knowing. Question 9 gives it.
 
-We are not saying the method fails. We are saying one test is missing, and without it the
-claim of removal is not supported.
+We are not saying the method fails. We are saying the evidence offered for removal does
+not separate removal from silence, and our own attempt to separate them did not work
+either.
 
 ## 2. What does the forgetting step actually change?
 
@@ -46,8 +47,12 @@ This matters enough to state carefully, because an earlier version of this page 
 on the wrong reading.
 
 The paper's appendix has a baseline that replaces a task's code with a random one and
-trains nothing. Accuracy on that task stays at 80.91 percent, against 10 percent chance.
-That result is real, and it does show that a task code by itself holds no skill.
+trains nothing. Accuracy on that task stays at 80.91 percent, against 10 percent chance,
+on the strongest of their four datasets.
+
+We have now run the same measurement on our own model, and it gives chance. See question
+9. So that figure describes their setting, not ours, and we cannot use it as evidence
+about hypernetworks in general.
 
 But the forgetting method does not replace the code. It keeps the code fixed and retrains
 the generator so that this code now produces near-zero weights. Our implementation makes
@@ -176,33 +181,47 @@ There is a limit to what this probe can show. Every arm trains the generator. Tr
 rebuild a skill, so a gain would have been hard to read, and the absence of a gain does not
 prove the skill is absent. The next question describes a probe without that weakness.
 
-## 9. What test would settle it?
+## 9. Did a direct test settle it?
 
-Run the paper's own appendix baseline again, but after forgetting instead of before.
+We ran one. It came back void, and the reason is itself a result.
 
-The appendix takes a trained model, gives it an unused random task code, and measures
-accuracy on the target task with no training at all. Before forgetting, that reaches 80.91
-percent. So an arbitrary code can reach the task through the generator.
+The idea was to repeat the appendix baseline after forgetting instead of before. Give the
+model an unused random task code, train nothing, and see whether the forgotten task is
+still readable through that other code. If it were, forgetting would have blocked one
+route and left the skill in place.
 
-Nobody has run this after forgetting. It is the question the method raises and does not
-answer. Forgetting changes the shared generator, so there are two possible outcomes, and
-they mean opposite things.
+Five random codes, two stopping points, with each code given the target task's stored
+BatchNorm statistics. A task the model kept was probed the same way as a control.
 
-| Result of the probe | What it means |
-| --- | --- |
-| An unused code still scores well above chance | Forgetting blocked one route. The skill is still in the generator and still reachable |
-| An unused code scores at chance | The skill really was removed from the generator, and the method does what it claims |
+| Stopping point and stage | Task 14, own code | Task 14 via random codes | Task 7 via random codes |
+| --- | ---: | ---: | ---: |
+| 6, before forgetting | 42.6 | 9.5 | 10.0 |
+| 6, after forgetting | 10.0 | 10.0 | 10.0 |
+| 100, before forgetting | 42.6 | 9.5 | 10.0 |
+| 100, after forgetting | 10.0 | 10.0 | 10.0 |
 
-This is cheap. There is no training. It is one forward pass per test image, using code we
-already have. It also extends the authors' own experiment rather than arguing against it,
-which makes it easy to defend.
+Read the before rows first. On an untouched model, random codes already read nothing. 9.5
+and 10.0 percent against 10 percent chance, and almost every reading used a single class.
+The instrument was dead before forgetting ever ran, so the after rows carry no information
+about removal.
+
+This is not a surprise in hindsight. Our 21 October runs measured a frozen generator with
+a fresh code and found chance on three seeds. This is the same fact reached another way.
+
+What it does tell us is that our model and the paper's behave differently on this point.
+In our model an untrained code carries a task nowhere. In theirs it carries one to 80.91
+percent. Either their generator generalises across codes far more than ours does, or their
+baseline adapts the replacement code rather than freezing it, which would make it a measure
+of retraining speed rather than of reachability. Our plan document already flagged that
+ambiguity and it is still open.
 
 ## 10. What is still missing?
 
 Four things, in order of importance.
 
-The probe in question 9 has not been run. It is the one measurement that separates a
-blocked route from a removed skill, and until it exists we cannot say which happened.
+We still cannot say whether the skill was removed or only blocked. The probe in question 9
+was meant to decide it and could not, so the question is open with no instrument that can
+reach it in this model.
 
 Everything above is one seed. Seeds 1 and 2 are needed before any of it is reported as a
 result.
