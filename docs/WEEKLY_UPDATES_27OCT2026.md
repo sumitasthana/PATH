@@ -47,12 +47,14 @@ This matters enough to state carefully, because an earlier version of this page 
 on the wrong reading.
 
 The paper's appendix has a baseline that replaces a task's code with a random one and
-trains nothing. Accuracy on that task stays at 80.91 percent, against 10 percent chance,
-on the strongest of their four datasets.
+trains nothing. Accuracy on the target task stays above chance on all four of their
+datasets. On Tiny ImageNet, which is the dataset family our own work uses, it is 15.54
+percent against 10 percent chance. Their largest figure, 80.91 percent, is from a
+different dataset and should not be used as the comparison for our results.
 
-We have now run the same measurement on our own model, and it gives chance. See question
-9. So that figure describes their setting, not ours, and we cannot use it as evidence
-about hypernetworks in general.
+We have run the same measurement on our own model and it gives chance. See question 9.
+So the baseline tells us about their setting, and the gap to ours is smaller than we
+first wrote.
 
 But the forgetting method does not replace the code. It keeps the code fixed and retrains
 the generator so that this code now produces near-zero weights. Our implementation makes
@@ -209,11 +211,15 @@ This is not a surprise in hindsight. Our 21 October runs measured a frozen gener
 a fresh code and found chance on three seeds. This is the same fact reached another way.
 
 What it does tell us is that our model and the paper's behave differently on this point.
-In our model an untrained code carries a task nowhere. In theirs it carries one to 80.91
-percent. Either their generator generalises across codes far more than ours does, or their
-baseline adapts the replacement code rather than freezing it, which would make it a measure
-of retraining speed rather than of reachability. Our plan document already flagged that
-ambiguity and it is still open.
+In our model an untrained code carries a task nowhere. On the comparable dataset theirs
+carries one to 15.54 percent, above chance but not by much.
+
+The authors have since been found to have released code, and it does not settle this. It
+contains no discard-embedding baseline, so that table was produced by code that is not
+public. It also evaluates differently from our probe: their test path leaves the target
+network in training mode, so its normalisation layers use each batch's own statistics,
+while our probe uses stored statistics. That difference alone could move these numbers and
+has not been tested. The detailed audit is in the 27 October experiment record.
 
 ## 10. What is still missing?
 

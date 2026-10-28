@@ -178,6 +178,86 @@ Together with the correction recorded in the 27 October weekly update, where the
 
 The route probe is not worth repeating on seeds 1 and 2 as it stands, because the instrument reads chance on an untouched model. It would become worth running again only if the Table 8 ambiguity is resolved in favour of an adapted embedding, in which case the probe should adapt the replacement code under a stated budget and the control stays as it is.
 
+## What the released source fixes about the objective and the settings
+
+The audit at the top of this page establishes that author code is public and sets out what it does and does not settle. This section records only the parts of that source that bear on our own implementation and on settings we previously had to infer. It does not restate the audit's conclusions. Nothing here has been run.
+
+Repository `https://github.com/visprasadh/uncle`, MIT licensed, described as "A Hypernetwork Framework for Data-Free Unlearning and Continual Learning". The readme asks readers to cite arXiv 2509.17530.
+
+### The unlearning optimiser excludes the task embedding
+
+In `main.py`, unlearning is given the hypernetwork alone.
+
+```
+optimizer = torch.optim.Adam(
+    hnet.parameters(),
+    lr=unlearning_rate,
+```
+
+Learning in the same file includes the embedding, which makes the contrast explicit.
+
+```
+list(hnet.parameters()) + [task_embeddings[task]],
+```
+
+The embeddings are passed to the regularisers during unlearning but never to the optimiser. `hypernet/hnet/layer_chunked_hypernet_yaml.py` carries the matching comment, "Task embeddings are not internally maintained", and takes the embedding as an argument to `forward`.
+
+Our reimplementation does the same. This settles the correction recorded in the 27 October weekly update: the forgetting method and the discard baseline act on different things, so they never contradicted each other.
+
+### The forget objective is minimised at zero in their source too
+
+`toolbox/regularisation.py`:
+
+```
+for sample in range(n_sampling):
+    noise = torch.randn_like(param)
+    error = error + (param - noise).pow(2).sum()
+return error / n_sampling
+```
+
+Fresh standard-normal draws per sample, squared distance, averaged. The draws are zero-mean, so the average is the squared length of the generated parameters plus a constant, smallest when those parameters are zero.
+
+Our derivation was made from the paper's equation and our own implementation. It now also holds against the authors' source. This is the one reading of ours that rests on code rather than on inference from results.
+
+### Settings previously inferred are now read directly
+
+From `config/main/tiny_20a_s42.yaml`: `n_forget_epochs` 100, `n_sampling` 10, `gamma` 0.01, `beta` 0.01, `lr` 0.001, `ulr` 0.001, `task_embedding_dim` 32, `chunk_embedding_dim` 32, `n_chunks` 200, `resnet_type` 50, `n_tasks` 20, `mnet_in_dim` 3 by 32 by 32.
+
+`config/main/c100_10a_s42.yaml` and `config/main/pm_10a_s42.yaml` agree except for `beta`, which is 0.1 there, and `n_tasks`, which is 10.
+
+The annealing is in `main.py`, cutting the step count by a tenth after each unlearning operation.
+
+```
+current_forget_epochs = int(current_forget_epochs * 0.9)
+```
+
+### A partial-unlearning option exists and appears unused
+
+When `partial` is true, `noisy_forget` applies only to the tail of the generated parameters.
+
+```
+lw = w[-10 * 2048 :]
+lb = b[-10:]
+```
+
+That is the final classifier layer alone, ten outputs over 2048 features. It is `false` in the three configuration files read here, out of 36 in the repository, so the remaining 33 were not checked. It shows head-only forgetting was considered.
+
+### Their sequences interleave many unlearning operations
+
+The `instruction_str` key gives the whole sequence, L for learning and U for unlearning. `tiny_20a_s42` runs 30 operations of which 12 are unlearning. `c100_10a_s42` and `pm_10a_s42` run 15 of which 5 are unlearning.
+
+Repeated unlearning is therefore their ordinary setting rather than an extension of it, and the annealing makes later operations shorter than earlier ones. Any question about what accumulates across many forget operations has to be asked against that.
+
+### What this does and does not change for R4
+
+R4, the collapse check on the paper's own settings, no longer needs the journal version in order to know the settings. They are listed above.
+
+It is not therefore unblocked. The audit records that the release imports modules absent from its inspected tree in `toolbox/models.py`, so it should not be described as runnable without repair, and no checkpoints or Table 8 run logs are included. R4 as originally written assumed a working reference implementation.
+
+### Our own figures to correct
+
+Working documents in this repository have repeatedly quoted 80.91 percent as the discard-baseline comparison. The audit above establishes that the same-dataset comparison for our Tiny ImageNet probe is 15.54 percent. The 80.91 figure is the 5-Tasks row. Statements built on the larger number overstate the gap between their result and ours, and the 27 October weekly update has been corrected.
+
 ## Where this leaves the work
 
 The negative privacy result is now solid. It survives the fix that was meant to rescue it, on a task with real room above the floor, and the forgotten task is harder than tasks the model never saw rather than easier.
