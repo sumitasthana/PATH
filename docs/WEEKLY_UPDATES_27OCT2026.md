@@ -2,9 +2,13 @@
 
 [Back to the weekly update index](WEEKLY_UPDATES.md)
 
-This update states the claim we want to make about UnCLe, and gives the evidence for each
-part of it. There are ten questions below. Each one is followed by the answer and the
-measurements behind it.
+This update states where the UnCLe work stands. There are ten questions below. Each one
+is followed by the answer and the measurements behind it.
+
+An earlier version of this page claimed that UnCLe's forgetting step acts on the task
+code and therefore aims at something that holds no skill. That was wrong. The forgetting
+step trains the shared generator, not the task code. Question 2 explains the correction
+and what it costs us. The earlier version is in the repository history.
 
 ## Words used on this page
 
@@ -21,84 +25,90 @@ Every term is defined once, in one line.
 
 ## 1. What are we claiming?
 
-UnCLe removes a task by changing that task's address. But the task's skill is not stored
-at that address. So the method does not work the way the paper says it works.
+That UnCLe silences one route into a shared generator, and that nobody has yet checked
+whether the skill is still reachable by a different route.
 
-We are not saying the method fails to forget. It does appear to forget. We are saying the
-reason the paper gives for why it works is not the reason it works.
+The method is honest about what it does. The open question is what that leaves behind.
+The paper's own appendix contains the measurement that would settle it, but the appendix
+runs it before forgetting rather than after. Question 9 sets this out.
 
-## 2. Where is a task's skill stored?
+We are not saying the method fails. We are saying one test is missing, and without it the
+claim of removal is not supported.
 
-**The paper's position.** In the task code. That is the only thing the forgetting step
-acts on, so the paper's account only makes sense if the skill is there.
+## 2. What does the forgetting step actually change?
 
-**What the measurement shows.** The skill is in the shared trunk, not in the code.
+**What we assumed earlier.** That it changes the task code.
 
-The evidence here is the paper's own, in its appendix. The authors take a fully trained
-model, replace the forgotten task's code with a random one, and train nothing at all. If
-the skill lived in the code, accuracy should fall to chance. It does not.
+**What the code shows.** It changes the shared generator. The task code is frozen
+throughout.
 
-| Dataset | Accuracy after the code is replaced | Chance |
-| --- | ---: | ---: |
-| 1 | 80.91 | 10 |
-| 2 | 20.70 | 10 |
-| 3 | 61.79 | 10 |
-| 4 | 15.54 | 10 |
+This matters enough to state carefully, because an earlier version of this page was built
+on the wrong reading.
 
-A code the model has never trained with still reaches the task through the trunk. The
-authors report this as a baseline that failed. We read it as a measurement of where the
-task actually lives.
+The paper's appendix has a baseline that replaces a task's code with a random one and
+trains nothing. Accuracy on that task stays at 80.91 percent, against 10 percent chance.
+That result is real, and it does show that a task code by itself holds no skill.
 
-These are the paper's numbers. We have not reproduced them.
+But the forgetting method does not replace the code. It keeps the code fixed and retrains
+the generator so that this code now produces near-zero weights. Our implementation makes
+this explicit: the optimiser is given the trunk and the heads, and everything else is
+frozen.
 
-## 3. What does the forgetting step do to the weights?
+So the appendix baseline and the method are consistent. The authors never claimed the
+skill sits in the code. They claim it sits in the mapping from code to weights, and the
+method edits that mapping.
 
-**The paper's position.** It turns the generated weights into noise.
+This removes our strongest-sounding criticism. What follows is what survives it.
 
-**What the derivation shows.** It pushes them to zero.
+## 3. What does the forgetting step do to the generated weights?
 
-This one needs no experiment. The forgetting loss measures the squared distance between
-the generated weights and fresh samples of random noise. Those samples average to zero.
-So the average squared distance works out to the squared length of the weights, plus a
+**The paper's position.** It turns them into noise.
+
+**What the derivation shows.** It drives them to zero.
+
+This needs no experiment. The forgetting loss measures the squared distance between the
+generated weights and fresh samples of random noise. Those samples average to zero. So
+the average squared distance works out to the squared length of the weights, plus a
 constant that does not depend on the weights.
 
-That quantity is smallest when the weights are exactly zero. Minimising the loss
-therefore drives the weights to zero. It does not make them random.
+That quantity is smallest when the weights are exactly zero. Minimising the loss drives
+the weights to zero. It does not make them random.
 
-Zero and noise are not the same thing. A zeroed classifier is silent. A randomised one
-is scrambled. Our implementation follows the paper's equation, and what we observe
-matches the derivation.
+Zero and noise are not the same thing. A zeroed classifier is silent. A randomised one is
+scrambled. The difference matters for every question below, because a silent model and an
+empty model look alike from the outside.
 
 ## 4. What does the forgotten model actually output?
 
-**The paper's position.** A uniform spread across all classes, which it scores as
-maximum confusion.
+**The paper's position.** A uniform spread across all classes, which it scores as maximum
+confusion.
 
 **What we measured.** One single class, for every image.
 
-We recorded the model's predictions directly, immediately after forgetting. On a task
-that stood at 42.60 percent beforehand, the model after 6 forgetting steps used 1 of 10
-classes and put 100 percent of its predictions in that one class. It scored exactly
-10.00 percent. After 100 steps, the same.
+We recorded the model's predictions directly, immediately after forgetting. On a task that
+stood at 42.60 percent beforehand, the model after 6 forgetting steps used 1 of 10 classes
+and put 100 percent of its predictions in that one class. It scored exactly 10.00 percent.
+After 100 steps, the same.
 
 Exactly 10.00 percent on a balanced ten-class test set is what a constant answer gives.
 
-This has now been seen on two tasks of different strength, at two stopping points, in
-three separate runs.
+This has been seen on two tasks of different strength, at two stopping points, in three
+separate runs.
 
 ## 5. How does the paper decide that forgetting worked?
 
-**The paper's position.** Three tests: forget accuracy at chance, uniformity at 100, and
-a membership inference attack at 50.
+**The paper's position.** Three tests: forget accuracy at chance, uniformity at 100, and a
+membership inference attack at 50.
 
 **The problem.** A model that answers one fixed class for every image passes all three.
 
 The previous section shows that this is not a hypothetical model. It is the model the
-method produces. Forget accuracy at chance is measured directly. The other two follow
-from near-zero outputs, and we have not measured them ourselves.
+method produces. Forget accuracy at chance we measured directly. The other two follow from
+near-zero outputs, and we have not measured them ourselves.
 
-These tests measure whether the model has gone silent. They do not measure whether the
-information was removed.
+These tests show that the model has gone quiet. They do not show that the information was
+removed. This point is not ours alone, and other recent work in unlearning evaluation makes
+a similar argument.
 
 ## 6. How many forgetting steps are actually needed?
 
@@ -106,21 +116,19 @@ information was removed.
 
 **What we measured.** The collapse is complete after about 6.
 
-Two measurements agree. First, accuracy. The task reaches chance by step 6 on one task
-and by step 20 on another, and never moves again after that.
+Two measurements agree. First, accuracy. The task reaches chance by step 6 on one task and
+by step 20 on another, and never moves again after that.
 
 Second, the direction of the weights. At step 20 the weights still point almost exactly
-where they started, having turned between 7.3 and 10.5 degrees, measured over three
-seeds. By step 100 they have turned between 49.1 and 54.1 degrees.
+where they started, having turned between 7.3 and 10.5 degrees, measured over three seeds.
+By step 100 they have turned between 49.1 and 54.1 degrees.
 
-So the steps taken after the task is gone remove nothing further. They make the change
-harder to undo.
+So the steps taken after the task is gone remove nothing further. They move the shared
+generator a long way for no measured gain, and they make the change harder to undo.
 
-## 7. Can the forgotten task code be used again?
+## 7. What happens to the forgotten task's own code?
 
-**The paper's position.** Not discussed.
-
-**What we measured.** No. The old code is damaged, and a new code is not.
+**What we measured.** It stops working, as designed.
 
 After forgetting, we tried to teach the same task again. Some arms kept the forgotten
 task's own code. Others used a brand new one.
@@ -133,26 +141,23 @@ task's own code. Others used a brand new one.
 | Fresh start | Brand new | 2 |
 
 The split follows the code and nothing else. It held across three runs on two different
-tasks, at every image budget and both stopping points. Eighteen runs on tasks the model
-had never seen also started responding immediately.
+tasks, at every image budget and both stopping points.
 
-Taken with the appendix result above, this gives the same conclusion from two
-directions. The paper's own baseline shows that an untrained code still reaches the
-task. Our runs show that the forgotten code is the one part that stopped working.
+We first read this as damage. It is better read as confirmation. The method trains the
+generator so that this one code produces zeros, so this one code going quiet is the method
+doing exactly what it says. The measurement is still useful, because it shows the effect is
+sharply targeted: a new code is unaffected and starts responding immediately.
 
-## 8. Is the skill truly gone?
+## 8. Is the skill gone?
 
 **The paper's position.** Yes, removed.
 
-**What we measured.** We cannot tell. Relearning the forgotten task is no faster than
-learning it from nothing.
+**What we measured.** Relearning the forgotten task is no faster than learning it from
+nothing.
 
-This is the result that limits what we can claim, so it is stated carefully.
-
-We took the forgotten model and gave it a small number of images from the forgotten
-task, between 1 and 20 per class. We then compared how fast it recovered against a model
-that had never seen that task. If something had been left behind, the forgotten model
-should come back faster.
+We took the forgotten model and gave it a small number of images from the forgotten task,
+between 1 and 20 per class. We then compared how fast it recovered against a model that had
+never seen that task.
 
 | Task probed | Gap at the 6-step model | Gap at the 100-step model |
 | --- | ---: | ---: |
@@ -163,39 +168,49 @@ should come back faster.
 A positive number means the forgotten model did better than a fresh start. The task 14
 numbers are inside the 3-point tie threshold, so they count as a tie, not a win.
 
-Task 14 matters because it answers the obvious objection. Task 3 was weak before
-forgetting, at 35.60 percent, so the probe had no room to show a gain. Task 14 stood at
-42.60 percent with about 12 points of room. The answer did not change.
+Task 14 matters because it answers the obvious objection. Task 3 was weak before forgetting,
+at 35.60 percent, so the probe had no room to show a gain. Task 14 stood at 42.60 percent
+with about 12 points of room. The answer did not change.
 
-The forgotten tasks were also no easier than tasks the model had never seen. Task 14 was
-in fact 5.0 and 5.6 points harder.
+There is a limit to what this probe can show. Every arm trains the generator. Training can
+rebuild a skill, so a gain would have been hard to read, and the absence of a gain does not
+prove the skill is absent. The next question describes a probe without that weakness.
 
-## 9. What do we not claim?
+## 9. What test would settle it?
 
-We do not claim the skill survives forgetting. Our own probe says it does not, three
-times over.
+Run the paper's own appendix baseline again, but after forgetting instead of before.
 
-The likely explanation is that the gradients pass through the trunk on their way to the
-task code, and damage the trunk along the way. If so, forgetting works by side effect.
-The paper credits the task code, and the task code was never holding the skill.
+The appendix takes a trained model, gives it an unused random task code, and measures
+accuracy on the target task with no training at all. Before forgetting, that reaches 80.91
+percent. So an arbitrary code can reach the task through the generator.
 
-A second explanation remains open: the trunk is intact and our relearning probe is
-simply unable to detect what is left. We cannot rule this out.
+Nobody has run this after forgetting. It is the question the method raises and does not
+answer. Forgetting changes the shared generator, so there are two possible outcomes, and
+they mean opposite things.
 
-Our paper separates the two questions. Whether the method forgets is one question, and
-the answer appears to be yes. How it forgets is a different question, and the paper's
-answer to that one does not match the measurements.
+| Result of the probe | What it means |
+| --- | --- |
+| An unused code still scores well above chance | Forgetting blocked one route. The skill is still in the generator and still reachable |
+| An unused code scores at chance | The skill really was removed from the generator, and the method does what it claims |
+
+This is cheap. There is no training. It is one forward pass per test image, using code we
+already have. It also extends the authors' own experiment rather than arguing against it,
+which makes it easy to defend.
 
 ## 10. What is still missing?
 
-Three things, in order of importance.
+Four things, in order of importance.
 
-The recovery probe and the collapse measurement have been run on one seed. Two more
-seeds are needed before any of this is reported as a result.
+The probe in question 9 has not been run. It is the one measurement that separates a
+blocked route from a removed skill, and until it exists we cannot say which happened.
 
-One observation is not yet a claim. The old code costs about 40 steps of dead time, and
-then saves about 20 to 40 steps of learning once it wakes. On one task the two roughly
-cancel. The pattern was mixed on the other task, so it needs the extra seeds.
+Everything above is one seed. Seeds 1 and 2 are needed before any of it is reported as a
+result.
 
-We have not checked the collapse using the paper's exact published settings. That needs
-the journal version of the paper, which we do not have access to.
+One observation is not yet a claim. The forgotten task's old code costs about 40 steps of
+dead time, and then saves about 20 to 40 steps of learning once it responds again. On one
+task the two roughly cancel. The pattern was mixed on the other task, so it needs the extra
+seeds.
+
+We have not checked the collapse using the paper's exact published settings. That needs the
+journal version of the paper, which we do not have access to.

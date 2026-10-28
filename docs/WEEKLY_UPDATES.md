@@ -6,7 +6,7 @@ including runs that failed, are in the [experiment trajectory](wiki/Experiment-t
 
 | Date | Page | What it covers |
 | --- | --- | --- |
-| 27 October 2026 | [WEEKLY_UPDATES_27OCT2026.md](WEEKLY_UPDATES_27OCT2026.md) | The claim we want to make about UnCLe, and the evidence for each part of it. Where a task's skill is stored, what the forgetting step really does, and what we cannot yet claim. |
+| 27 October 2026 | [WEEKLY_UPDATES_27OCT2026.md](WEEKLY_UPDATES_27OCT2026.md) | What the forgetting step really changes, with an earlier claim of ours corrected. What survives the correction, and the one cheap probe that would show whether a task was removed or only blocked. |
 | 21 October 2026 | [WEEKLY_UPDATES_21OCT2026.md](WEEKLY_UPDATES_21OCT2026.md) | Plasticity measured on three seeds. Which neurons still fire after unlearning. The plan for testing recovery. |
 | 18 October 2026 | [WEEKLY_UPDATES_18OCT2026.md](WEEKLY_UPDATES_18OCT2026.md) | Andrii's two questions, with answers. |
 
