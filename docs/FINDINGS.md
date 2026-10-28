@@ -146,6 +146,38 @@ Subtracting those leaves the weight-space forgetting loss, equation 3, as the ne
 
 ---
 
+### 9. Does forgetting restore the model's ability to learn new tasks?
+
+Claimed: Ablations, "Saturation Alleviation", page 7, with results in Table 3 and Appendix D, page 10. Forgetting an obsolete task is said to restore plasticity, meaning the ability to learn something new. The reason given is that the objective "restores the learned task-specific classifier parameters to a randomly initialized state, akin to a Kaiming He initialization."
+
+Found: the reason cannot be right, and the benefit does not reproduce here.
+
+How: the reason first. A Kaiming-initialized head produces outputs that change with the input. The head produced here does not: input sensitivity after forgetting is 2.280e-06. The paper's own Table 8 agrees from the other side, with a uniformity score of exactly 100.0, which is what perfectly flat outputs give. And Appendix E, page 11, states the objective drives the weights toward zero. Zero is not a Kaiming initialization. It is the one starting point that cannot learn, because every unit receives the same gradient. So whatever produces the benefit in Table 3, it is not the head being re-initialized.
+
+Then the benefit itself, measured three ways.
+
+There is no plasticity loss here to restore. After learning eight tasks, the generator learns an unseen task 6.62 points better than a generator that has learned nothing, against a noise floor of 4.85 measured from five repetitions. A second notebook, using a different probe task and a different protocol, agrees at 6.3 points.
+
+Forgetting does not improve later learning. The comparison the claim needs is forget-then-learn against learn-alone. Over three seeds it reads +5.40 points for one forgotten task and -0.20 for another. Both sit at or inside the noise floor.
+
+A third route agrees. Measuring a later task after forgetting at three step budgets gives 47.8, 42.2 and 43.4 percent against a control of 47.6. The figures are not ordered by budget and all sit inside the 8.4-point noise floor for that comparison.
+
+These runs cover eight tasks. The paper's claim is made on longer sequences, and it notes that its own short benchmarks "have not attained saturation yet". So this does not refute the claim at the paper's scale. It does show that the stated mechanism is wrong at any scale, since that part follows from the paper's own appendix.
+
+---
+
+### 10. Can the uniformity result be checked?
+
+Claimed: Table 8, Appendix E, page 11. UnCLe scores exactly 100.0 on a column headed UNI, on all four datasets, while the alternatives score 0.80, 6.88, and negative values as low as -214.0.
+
+Found: no. The metric is never defined.
+
+How: I searched the full text of the paper. "UNI" appears four times, each time as a column header in Table 8. There is no formula, no description, no worked example and no citation for it anywhere in the paper or its appendices. The word "uniformity" appears nowhere outside that table.
+
+A reader cannot recompute the number, cannot check whether 100.0 is a maximum or a scale, and cannot tell what a negative value means. The three results the paper offers as evidence of successful forgetting include one that cannot be reproduced at all.
+
+---
+
 ## Still open
 
 Whether the task's information survives forgetting. Question 7 was meant to settle it and could not.
