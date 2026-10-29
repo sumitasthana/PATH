@@ -101,8 +101,60 @@ That second possibility deserves saying plainly. The first pass's +5.76 was neve
 
 The 17 and 21 October runs are a separate matter, because they also averaged three probe tasks and trained on 5,000 images. The selection rule is cleared for them too, but the other differences are not.
 
+## The training split, isolated
+
+Commit `c62424e`. Notebook 35 with one change from the second pass and nothing else: the training split back to 4,800 images, which is the 5,000 of the earlier runs with 200 held out for validation. EuroSAT switched off behind `INCLUDE_EUROSAT`. 66 runs, seed 0, order 01, full arm, Tiny ImageNet task 2 only.
+
+Finished runs are saved under `RUN_LABEL`, here `pass3_train4800`, so the three protocols cannot pool.
+
+### Result
+
+| Probe task | t = 0 | t = 8 | Change | Noise floor | Verdict |
+| --- | ---: | ---: | ---: | ---: | --- |
+| Tiny ImageNet task 2 | 57.47 | 59.51 | +2.04 | 2.63 | Inside the floor |
+
+### The three task 2 readings together
+
+| Pass | Training images | Repetitions | t = 0 | t = 8 | Change | Floor | Spread |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| First, 28 Oct | 5,000 | 5 and 2 | 56.64 | 62.40 | +5.76 | 6.44 | 3.93 |
+| Second, 29 Oct | 800 | 11 and 11 | 50.42 | 51.60 | +1.18 | 2.89 | 3.46 |
+| Third, 29 Oct | 4,800 | 11 and 11 | 57.47 | 59.51 | +2.04 | 2.63 | 3.15 |
+
+Spreads are worked back from the floors.
+
+**The training split controls the level, not the gain.** Restoring the images lifted t = 0 by 7.05 points and t = 8 by 7.91, so the earlier accuracy range is back and the protocol is comparable with the first pass again. The gap between the two points moved only from +1.18 to +2.04. That is nowhere near the +5.76 the first pass reported.
+
+**The split is cleared, and so the repetition count is what is left.** The first pass differed from the third in three ways. The rate rule was ruled out by the re-scoring check above. The training split is ruled out here. The only remaining difference is that the first pass took two repetitions at t = 8 against eleven.
+
+The arithmetic supports that. With a spread near 3.9 and two repetitions at t = 8 against five at t = 0, the uncertainty on one difference is about 3.3 points. Reading +5.76 when the underlying value is near +2.0 is a gap of a little over one standard error. That is an ordinary draw.
+
+### What this withdraws, and what it does not
+
+**The large gain is withdrawn as an artifact of too few repetitions.** The readings of 17 October, +6.62 against a floor of 4.85, and of 20 and 21 October, +6.37, +3.01 and +4.86, all used five repetitions at t = 0 and two at the later point. Three passes at eleven repetitions now put the change at +1.18, +2.04 and, on EuroSAT, -2.09. None of these clears its floor.
+
+This is not a claim that those runs were wrong. They were measured correctly and reported as inside or near their floors at the time. It is a claim that the number they produced was imprecise, and that the imprecision was large enough to account for the whole apparent gain.
+
+**No plasticity loss is withdrawn.** Nothing in any pass has fallen past a floor. The reading that bears on the paper's saturation claim is unaffected.
+
+**The 21 October E1 result is untouched by this.** The random-label measurement fell by 0.70, 0.76 and 0.64 against floors of 0.29, 0.42 and 0.18, and all three cleared. That is a separate endpoint with a much smaller spread, and nothing here bears on it.
+
+### How close this is to resolving
+
+The change is +2.04 against a floor of 2.63. At the measured spread of 3.15, nineteen repetitions at each point would bring the floor to about 2.00.
+
+Notebook 35 resumes by run identity, and the identity carries the repetition number. So raising the repetitions from eleven to nineteen skips the 66 runs already finished and adds 48 new ones, about 30 minutes, writing to the same saved file.
+
+That would be optional stopping: the count would be raised after seeing the result, which biases toward a finding. If it is run, the record must say so and the reading is weaker than a pre-planned one.
+
+The alternative avoids the bias. Run seeds 1 and 2 at the settings used here, unchanged. Three independent seeds agreeing on a small positive change would be stronger evidence than one seed pushed to more repetitions, and it matches what the 20 and 21 October run did. 132 runs, about 80 minutes.
+
 ## Next decision
 
-Do not start seeds 1 and 2 on this protocol. Seed 0 did not resolve, and two more seeds would measure the same unexplained mixture.
+The decisive test has now run and the collapse is explained. The remaining choice is how to finish the task 2 reading.
 
-The decisive test is cheap and isolates one variable. Run Tiny ImageNet task 2 alone, validation selection kept, eleven repetitions at both points, and put the training split back to 5,000 images. If the change returns to about +5, the training split is the cause and the earlier gains are real at that split. If it stays near +1, the remaining difference is the probe-task set, and the 21 October gain rests on averaging three tasks. Roughly 66 runs, about 40 minutes.
+Preferred: seeds 1 and 2 at exactly the settings of the third pass, 4,800 training images, eleven repetitions, validation selection, full arm, task 2 only. 132 runs, about 80 minutes. Three seeds at a small positive change would be a result worth reporting, and the protocol is fixed in advance.
+
+Cheaper but weaker: raise seed 0 to nineteen repetitions, 48 new runs and about 30 minutes, resuming into the same file. This is optional stopping and must be recorded as such.
+
+After either, EuroSAT should be rerun at the settled protocol with enough repetitions to clear its wider floor. EuroSAT is the probe that separates transfer from plasticity, and it is the number the write-up needs. Its spread of 6.78 means it needs roughly four times the repetitions of task 2 for the same resolution.
