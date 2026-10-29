@@ -1,8 +1,10 @@
 # Experiment trajectory
 
-Updated 27 October 2026. This is the index for the dated experiment record. Each page keeps the questions, settings, results, evidence links, and decisions together.
+Updated 28 October 2026. This is the index for the dated experiment record. Each page keeps the questions, settings, results, evidence links, and decisions together.
 
 ## Latest findings
+
+**An unrelated probe task was run, and it does not settle the plasticity question.** EuroSAT, satellite imagery with ten classes, was probed beside one Tiny ImageNet task in the same session, seed 0. Both moved upward, EuroSAT by +7.76 points and the Tiny ImageNet task by +5.76, and neither cleared its own noise floor of 14.66 and 6.44. Three things do follow. EuroSAT reads 55.84 percent at t = 0, so the probe learns satellite images about as well as it learns a Tiny ImageNet task and the domain gap is not a problem. The transfer explanation is not supported, because a probe sharing no classes with the stream moved at least as much as one that does. And the code-only arm sits at chance on EuroSAT at both points, so the finding that 32 numbers cannot hold a task now holds on a second dataset. This does not contradict the 17 October reading: that floor was built from an average over three probe tasks, which has a smaller spread than any single task. Notebook 35 also missed two requirements of the 22 October plan, choosing the rate by test accuracy and using no validation split. Details in the [28 October record](Experiment-trajectory-2026-10-28).
 
 **The recovery probe's two stopping points were the same model, and seed 1 exposed it.** `run_request` takes its step count from `config.burn_in`, while the notebook passed the stopping point to `forget_interval`, which only sets how often state is saved. Every arm at both settings ran 100 unlearning steps. Seed 1 made this visible: all six arms keeping task 14's own code give identical traces at both settings, to four significant figures. This withdraws the finding that the stopping point makes no difference, and the step-6 collapse figure taken from this notebook. The dead-code split, the recovery result and the harder-than-unseen result all survive, because they compare arms within one setting. Both notebooks are fixed. Details in the [28 October record](Experiment-trajectory-2026-10-28).
 
@@ -80,11 +82,11 @@ The [8 October setup record](Experiment-trajectory-2026-10-08) describes reserve
 
 | Reporting date or period | What is covered |
 | --- | --- |
-| [28 October 2026](Experiment-trajectory-2026-10-28) | The stopping-point defect in the recovery probe, which ran every arm for 100 steps at both settings, and seed 1 of the probe. |
+| [28 October 2026](Experiment-trajectory-2026-10-28) | The stopping-point defect in the recovery probe, which ran every arm for 100 steps at both settings, and seed 1 of the probe. Also the first EuroSAT probe, seed 0: both probes rise, neither clears its floor, and the transfer explanation is not supported. |
 | [27 October 2026](Experiment-trajectory-2026-10-27) | The recovery probe repeated on task 14, which had room above the floor: still no recovery advantage, a strong task shown to collapse to one class by step 6, and the dead-code split replicated on a second task. Also the alternative-route probe, which is void because an untrained code reads nothing even before unlearning. |
 | [26 October 2026](Experiment-trajectory-2026-10-26) | First recovery probe: no recovery advantage at either stopping point, the forgotten task's own code shown to cost 40 to 50 steps of dead time, and the single-class collapse confirmed directly. Also a reading of the paper's discard-embedding baseline and its uniformity argument. |
 | [23 October 2026](Experiment-trajectory-2026-10-23) | First direction measurement: unlearning turns the weights 49 degrees as well as shrinking them, seed 0 on CPU. Also the review against the adapter study and the correction withdrawing its main claim. |
-| [22 October 2026](Experiment-trajectory-2026-10-22) | EuroSAT external-probe plan, rationale, controls, measurements, and compute budget. Not yet run. |
+| [22 October 2026](Experiment-trajectory-2026-10-22) | EuroSAT external-probe plan, rationale, controls, measurements, and compute budget. First run on 28 October, by a notebook that missed two of this plan's requirements. |
 | [20 and 21 October 2026](Experiment-trajectory-2026-10-21) | Plasticity probe completed on three seeds: no loss, a small gain, and the task code shown to add nothing. |
 | [17 October 2026](Experiment-trajectory-2026-10-17) | Plasticity probe: the missing fresh-generator baseline for task 15, three seeds, no plasticity change found. |
 | [10 October 2026](Experiment-trajectory-2026-10-10) | All selected training and CPU review complete; six verified comparisons, three-seed averages, and readable report. |

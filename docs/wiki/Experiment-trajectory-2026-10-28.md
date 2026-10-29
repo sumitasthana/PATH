@@ -111,6 +111,71 @@ The attacker at the 20-image budget peaked at 16.0 percent at step 90 and fell t
 
 About eleven hours for 40 cells, against an estimate of half an hour given in conversation. That estimate was wrong and the seed 2 run should be planned as an overnight job.
 
+## An unrelated probe task: EuroSAT, seed 0
+
+The plasticity probes so far all draw their probe tasks from Tiny ImageNet, the same dataset the stream learns. `uncle/probe.py` records this as a forced limitation. So the gain reported on 17 and 21 October may be transfer from similar classes rather than plasticity. EuroSAT is satellite imagery with exactly ten classes, which is the only shape that fits the generator's fixed output layout.
+
+Notebook 35, `notebooks/35_eurosat_probe.ipynb`, was written and run on 28 October. Commit `858bfcf`.
+
+### This was built without reading the existing plan
+
+A full EuroSAT plan already existed, written on 22 October, and the index marks it as not yet run. Notebook 35 was designed from `uncle/probe.py` and notebook 29 instead, and the plan was found only after the run finished. Two of its requirements were missed.
+
+The plan requires the learning rate to be chosen on a validation split and the chosen run to be scored on a held-out test split. It names notebook 29's practice of choosing the rate by test accuracy as the thing to correct. Notebook 35 reuses `best_of_grid`, which picks the highest test accuracy, so it repeats that practice. Taking the best of three rates on the test score raises the reported accuracy and widens the spread between repetitions.
+
+The plan also specifies 800 training, 200 validation and 2,000 test images. Notebook 35 uses 500 training and 50 test images per class, chosen to match the shape of a Tiny ImageNet task, and has no validation split at all.
+
+Neither error invalidates the comparison between the two probe points, because both points were measured the same way. Both affect the absolute accuracies and the noise floor.
+
+### Settings actually run
+
+Seed 0 only, order 01, probe points t = 0 and t = 8. Three learning rates, two arms, five repetitions at t = 0 and two at t = 8. EuroSAT and Tiny ImageNet task 2, the second one included so that both probes run in the same session. The 17 October record shows repeats within a session vary by about 3 points and repeats across sessions by 8.4, so a comparison against notebook 29's stored numbers would have mixed the probe task with the session.
+
+84 probe runs, 53.1 minutes on the reported accelerator, against an estimate of 50 minutes given in conversation. The model was verified unchanged after every run.
+
+### Result
+
+| Arm | Probe task | t = 0 | t = 8 | Change | Noise floor | Verdict |
+| --- | --- | ---: | ---: | ---: | ---: | --- |
+| full | EuroSAT | 55.84 | 63.60 | +7.76 | 14.66 | Inside the floor |
+| full | Tiny ImageNet task 2 | 56.64 | 62.40 | +5.76 | 6.44 | Inside the floor |
+| code-only | EuroSAT | 10.24 | 9.80 | -0.44 | 6.33 | Inside the floor |
+| code-only | Tiny ImageNet task 2 | 10.28 | 10.70 | +0.42 | 1.50 | Inside the floor |
+
+Accuracies are percentages. The floor is `1.96 * s * sqrt(1/n_t + 1/n_0)` with s the spread of single repetitions at t = 0.
+
+**No verdict is reached on the main question.** Both full-arm changes point the same way, upward, and neither clears its own floor.
+
+### What the numbers do settle
+
+**The domain gap is not a problem.** EuroSAT reads 55.84 percent at t = 0, against 56.64 for a Tiny ImageNet task. The worry recorded when this run was planned, that a satellite-image probe might sit near chance at both points and measure nothing, does not happen. The probe learns EuroSAT about as well as it learns a Tiny ImageNet task.
+
+**The transfer explanation is not supported.** If the gain reported on 17 and 21 October were transfer from similar Tiny ImageNet classes, EuroSAT should be flat, because it shares no classes with the stream. It is not flat. It moves +7.76, slightly more than the related probe's +5.76. This is suggestive and not established, because neither change clears its floor.
+
+**A task code still carries nothing, on a second dataset.** The code-only arm sits at chance on EuroSAT at both probe points, 10.24 and 9.80 against a chance level of 10. The same arm on Tiny ImageNet reads 10.28 and 10.70. The 17 October finding that 32 numbers cannot hold a task now holds on an unrelated dataset as well.
+
+### Why this does not contradict 17 October
+
+On 17 October the change was +6.62 against a floor of 4.85, which cleared it. Here a similar change does not. The two floors are not measuring the same thing.
+
+Notebook 29 averages its three probe tasks into one number per repetition and then takes the spread of those averages. Averaging three tasks shrinks the spread, so the floor it produces belongs to a three-task average. Notebook 35 computes a floor per probe task, from the spread of single-task repetitions, which is larger.
+
+Working back from the floors gives the repetition spread at t = 0: about 2.96 points for notebook 29's three-task average, 3.93 for Tiny ImageNet task 2 alone, and 8.94 for EuroSAT alone.
+
+So this is a different estimator, not a failed replication. It also means the earlier reading rests on averaging, and a single-task comparison at this repetition count cannot resolve a change of this size.
+
+### EuroSAT is the noisier probe
+
+Its repetition spread of 8.94 points is more than twice task 2's 3.93. Both probes score 500 test images, so sampling noise on the test set, about 2.2 points, explains neither. The spread comes from the probe itself: different random starting codes land in very different places on EuroSAT.
+
+Part of it is the rate selection described above. Taking the best of three rates on the test score inflates both the mean and the spread. How much cannot be separated from this run, because no validation split was recorded.
+
+### What this costs to resolve
+
+With equal repetitions at both points the floor becomes `1.96 * s * sqrt(2/n)`. Holding the spreads measured here, Tiny ImageNet task 2 would resolve its +5.76 at 4 repetitions per point. EuroSAT would need about 11 per point to resolve +7.76.
+
+Eleven repetitions at both points, the full arm only, both probe tasks and three rates is 132 runs, about 82 minutes at the per-run cost measured here. Dropping the code-only arm is safe: it has now read chance in four of four places.
+
 ## Next decision
 
 Seed 2 should not start until the stopping-point fix is in the notebook, so that its two settings are genuinely 6 and 100 steps.
@@ -118,3 +183,5 @@ Seed 2 should not start until the stopping-point fix is in the notebook, so that
 The stopping-point question is now unanswered rather than answered, and it is the cheapest thing the fixed notebook buys back.
 
 The step-6 collapse claim needs its own measurement from a path that does not use `run_request`, or a short run of the fixed notebook at a 6-step setting.
+
+The EuroSAT probe needs a second pass before it says anything. Three changes, in order of importance: choose the learning rate on a validation split and score on a held-out test split, as the 22 October plan requires; raise the repetitions to eleven at both probe points; drop the code-only arm. Seed 0 first, then seeds 1 and 2 only if seed 0 resolves.
