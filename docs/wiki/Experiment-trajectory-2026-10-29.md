@@ -149,12 +149,49 @@ That would be optional stopping: the count would be raised after seeing the resu
 
 The alternative avoids the bias. Run seeds 1 and 2 at the settings used here, unchanged. Three independent seeds agreeing on a small positive change would be stronger evidence than one seed pushed to more repetitions, and it matches what the 20 and 21 October run did. 132 runs, about 80 minutes.
 
+## Three seeds at the settled protocol
+
+Commit `4fd0c19`. Seeds 1 and 2 added to the third pass at exactly its settings: 4,800 training images, eleven repetitions at both probe points, validation-based rate selection, full arm, Tiny ImageNet task 2 only, EuroSAT off. Nothing else changed, so seed 0's 66 saved runs were skipped and 132 new ones ran.
+
+The settings were fixed before these two seeds ran. Seed 0's result was known at that point, so the choice to add seeds was made after seeing it, but the protocol they ran was not adjusted to it.
+
+### Result
+
+| Seed | t = 0 | t = 8 | Change | Noise floor | Verdict |
+| --- | ---: | ---: | ---: | ---: | --- |
+| 0 | 57.47 | 59.51 | +2.04 | 2.63 | Inside the floor |
+| 1 | 55.45 | 59.73 | +4.27 | 2.86 | Higher than at t = 0 |
+| 2 | 54.91 | 57.89 | +2.98 | 2.96 | Higher than at t = 0 |
+| Mean | 55.94 | 59.04 | +3.10 | | |
+
+Accuracies are percentages. The floor is the per-seed noise floor, `d = 1.96 * s * sqrt(1/n_0 + 1/n_t)`.
+
+**The change is positive and it is now separable from zero.** All three seeds moved the same way. Two of the three cleared their own floor, seed 2 only barely. Across the three seeds the change is +3.10 with a standard deviation of 1.12, so the 95 percent interval on the seed mean runs from +0.32 to +5.88 and excludes zero.
+
+That interval is wide because three seeds give two degrees of freedom. It is the first reading in this line that excludes zero at all.
+
+### What this settles
+
+**Learning a new task is easier after eight tasks, not harder.** The probe reaches a higher accuracy at t = 8 than at t = 0 on every seed. This is the direct opposite of the saturation the paper claims, measured on the paper's own architecture.
+
+**The size is about +3 points, not about +6.** The 17 and 21 October runs read +6.62, +6.37, +3.01 and +4.86 on two repetitions at the later point. The settled protocol reads +2.04, +4.27 and +2.98 on eleven. The direction of those earlier readings survives; their size does not.
+
+So the withdrawal recorded above needs narrowing. What is withdrawn is the magnitude, not the sign. A gain of roughly six points was an artifact of too few repetitions. A gain of roughly three points is what the protocol with enough repetitions reports, and it is now the most precise number this line holds.
+
+### What this still cannot say
+
+It cannot separate transfer from plasticity. Tiny ImageNet task 2 shares its data distribution with the eight learned tasks, so a model that has seen eight Tiny ImageNet tasks may simply have better features for a ninth. That is ordinary forward transfer and it is not a statement about the generator's capacity to change.
+
+EuroSAT exists to break that tie, because it is a different image domain. Its single reading at eleven repetitions was -2.09 against a floor of 5.67, which says nothing. Its spread of 6.78 is about twice task 2's, so it needs roughly four times the repetitions for the same resolution.
+
+**Until EuroSAT resolves, the honest claim is bounded.** No plasticity loss appears at eight tasks, and new-task accuracy within the training distribution rises by about three points. Whether that rise is transfer or a genuine capacity change is open.
+
 ## Next decision
 
-The decisive test has now run and the collapse is explained. The remaining choice is how to finish the task 2 reading.
+Task 2 is finished at this protocol. Three seeds agree, the interval excludes zero, and more seeds would only narrow a number that is already the tightest in this line.
 
-Preferred: seeds 1 and 2 at exactly the settings of the third pass, 4,800 training images, eleven repetitions, validation selection, full arm, task 2 only. 132 runs, about 80 minutes. Three seeds at a small positive change would be a result worth reporting, and the protocol is fixed in advance.
+The open question is EuroSAT, and it is the one the write-up needs, because it is what separates transfer from capacity. At its measured spread of 6.78 and a target floor near 2.5, it needs roughly forty repetitions at each probe point rather than eleven. That is about 240 runs per seed at three rates, so one seed is roughly 150 minutes and three seeds roughly 7.5 hours.
 
-Cheaper but weaker: raise seed 0 to nineteen repetitions, 48 new runs and about 30 minutes, resuming into the same file. This is optional stopping and must be recorded as such.
+A cheaper first step is one seed of EuroSAT at forty repetitions, about 150 minutes. If it lands outside its floor on one seed, the three-seed run is worth the time. If it lands inside, the bound alone is still a reportable result and is much tighter than -2.09 against 5.67.
 
-After either, EuroSAT should be rerun at the settled protocol with enough repetitions to clear its wider floor. EuroSAT is the probe that separates transfer from plasticity, and it is the number the write-up needs. Its spread of 6.78 means it needs roughly four times the repetitions of task 2 for the same resolution.
+The 21 October random-label result is untouched by any of this and still stands.
