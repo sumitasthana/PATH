@@ -47,7 +47,9 @@ This is the part that worked.
 
 The spreads are worked back from the floors, using `d = 1.96 * s * sqrt(1/n_0 + 1/n_t)`.
 
-Two separate things pulled the floor down. Raising the repetitions from five and two to eleven and eleven accounts for most of it, because the floor falls as the square root of the count. The rest is the spread itself falling, by 24 percent on EuroSAT and 12 percent on task 2. Choosing the rate on validation instead of on test removes a maximum taken over three noisy numbers, and that is the expected effect.
+Raising the repetitions from five and two to eleven and eleven accounts for most of the drop, because the floor falls as the square root of the count. The spread itself also fell, by 24 percent on EuroSAT and 12 percent on task 2.
+
+An earlier version of this page credited that spread drop to the new selection rule, reasoning that choosing on validation removes a maximum taken over three noisy numbers. The re-scoring below shows that was wrong. Inside this pass the two rules give spreads of 3.46 and 3.48 on task 2, and 6.78 either way on EuroSAT. The selection rule does not move the spread here. The drop belongs to the split change along with everything else.
 
 ### The measured changes collapsed
 
@@ -66,7 +68,7 @@ The absolute accuracies moved too. EuroSAT at t = 0 rose slightly, from 55.84 to
 
 **No plasticity loss shows at eight tasks.** Nothing fell past a floor. That part of the project's reading is unaffected by this run, and it is the part that bears on the paper's saturation claim.
 
-**The gain is the part now in doubt.** The 17 and 21 October runs reported a rise of +6.62 on one seed and +6.37, +3.01 and +4.86 on three. Both used test-based rate selection. Under validation-based selection the same comparison on a single task gives +1.18, inside its floor. This does not withdraw the earlier finding, because the two protocols differ in more than the selection rule. It does mean the earlier finding is no longer safe to state without a check.
+**The gain is the part now in doubt.** The 17 and 21 October runs reported a rise of +6.62 on one seed and +6.37, +3.01 and +4.86 on three. The same comparison here, on a single task, gives +1.18, inside its floor. This does not withdraw the earlier finding, because the two protocols differ in several ways. It does mean the earlier finding is not safe to state until one of them is shown to be the cause.
 
 ### What this run cannot say
 
@@ -78,18 +80,29 @@ Or the training split may be the cause. Dropping from 5,000 training images to 8
 
 Changing both in one pass was an error of sequencing, not of method. Each change was individually justified by the 22 October plan. They should not have gone in together.
 
-### The check that costs nothing
+### The re-scoring check clears the selection rule
 
-Both accuracies were recorded for every run in this pass, the validation one and the test one. So the same 132 runs can be scored again under the old rule, choosing the rate by test accuracy, with no new training.
+Every run in this pass recorded both its validation accuracy and its test accuracy. So the same 132 runs were scored again under the old rule, choosing the rate by test accuracy and breaking ties on test loss. Nothing was trained. The runs were read from `partial_v2.jsonl` in R2 and scored on a laptop.
 
-If re-scoring returns a large positive change, the selection rule was the cause and the earlier gains were an artifact. If it returns something close to +1.18 and -2.09, the smaller training split was the cause, and the selection rule is cleared.
+| Rule | Probe task | t = 0 | t = 8 | Change | Floor | Spread |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| Validation, this pass | Tiny ImageNet task 2 | 50.42 | 51.60 | +1.18 | 2.89 | 3.46 |
+| Test, the first pass | Tiny ImageNet task 2 | 50.71 | 51.82 | +1.11 | 2.91 | 3.48 |
+| Validation, this pass | EuroSAT | 58.18 | 56.09 | -2.09 | 5.67 | 6.78 |
+| Test, the first pass | EuroSAT | 58.18 | 57.23 | -0.95 | 5.67 | 6.78 |
 
-This is the next thing to run, and it needs no GPU.
+The two rules disagree on which rate to pick in only 3 of 22 cases per probe task, and the resulting numbers differ by 0.07 points on task 2 and 1.14 on EuroSAT, both far inside the floor.
+
+**So the selection rule is not what inflated the earlier numbers.** Scored the old way, this pass still gives +1.11 and -0.95, not the +5.76 and +7.76 the first pass reported. One candidate cause is removed.
+
+Two candidates remain for task 2, whose test split did not change between the passes. The training split fell from 5,000 images to 800. And the repetitions at t = 8 rose from two to eleven, so the first pass's t = 8 mean came from two numbers. A mean of two draws from a spread of about 3.9 points moves easily by several points, which is exactly why that reading was recorded as inside its floor at the time.
+
+That second possibility deserves saying plainly. The first pass's +5.76 was never a finding. It was reported as unresolved, and the honest reading of the two passes together is that it was noise in a two-sample mean, now shrunk toward +1 by nine more repetitions. No artifact is needed to explain it.
+
+The 17 and 21 October runs are a separate matter, because they also averaged three probe tasks and trained on 5,000 images. The selection rule is cleared for them too, but the other differences are not.
 
 ## Next decision
 
-Run the free re-scoring check before anything else. It decides whether the 21 October headline stands, and it costs one cell.
+Do not start seeds 1 and 2 on this protocol. Seed 0 did not resolve, and two more seeds would measure the same unexplained mixture.
 
-Do not start seeds 1 and 2 on this protocol yet. Seed 0 did not resolve, and until the cause of the collapse is known, two more seeds would measure an unknown mixture.
-
-If the re-scoring clears the selection rule, the open question becomes the training-split size, and the cheap test is one pass on Tiny ImageNet task 2 alone at the old 5,000-image split, validation selection kept, eleven repetitions. Roughly 66 runs.
+The decisive test is cheap and isolates one variable. Run Tiny ImageNet task 2 alone, validation selection kept, eleven repetitions at both points, and put the training split back to 5,000 images. If the change returns to about +5, the training split is the cause and the earlier gains are real at that split. If it stays near +1, the remaining difference is the probe-task set, and the 21 October gain rests on averaging three tasks. Roughly 66 runs, about 40 minutes.
