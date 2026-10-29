@@ -190,8 +190,9 @@ def _evaluate(hypernet, target, trainer, task, dataset, batch_size, feature_imag
 
 
 def probe_once(hypernet, target, trainer, *, task, train_set, test_set=None,
-               steps, learning_rate, batch_size=64, code_only=False,
-               train_code=True, seed=12345, feature_images=0, checkpoints=4):
+               validation_set=None, steps, learning_rate, batch_size=64,
+               code_only=False, train_code=True, seed=12345, feature_images=0,
+               checkpoints=4):
     """Train a discarded copy on one task and report how well it learned.
 
     task            a task name the model has never learned. A fresh code is
@@ -199,6 +200,9 @@ def probe_once(hypernet, target, trainer, *, task, train_set, test_set=None,
     train_set       images the probe trains on
     test_set        images it is scored on. Omit for the random-label probe,
                     where a test score has no meaning.
+    validation_set  images used to pick the learning rate. Held apart from
+                    test_set so that the rate is never chosen on the numbers
+                    the result is reported from. Omit when no rate is picked.
     steps           how many updates. Fixed, and never varied between probe
                     points, or the comparison measures the budget instead.
     code_only       freeze the generator, so only the 32-number code trains.
@@ -310,6 +314,10 @@ def probe_once(hypernet, target, trainer, *, task, train_set, test_set=None,
             scored = _evaluate(hypernet, target, trainer, task, test_set, 256)
             result["test_accuracy"] = scored["accuracy"]
             result["test_loss"] = scored["loss"]
+        if validation_set is not None:
+            scored = _evaluate(hypernet, target, trainer, task, validation_set, 256)
+            result["val_accuracy"] = scored["accuracy"]
+            result["val_loss"] = scored["loss"]
         return result
     finally:
         restore(hypernet, trainer, state)
