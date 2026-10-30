@@ -1,4 +1,9 @@
-"""Weight change and weight norm at a task boundary.
+"""Cheap plasticity indicators, read at a task boundary.
+
+Three measurements live here: how far the weights moved, how large they are,
+and how many directions the features use. None of them trains, forks or needs
+labels, so the whole set rides along with a stream run for the cost of one
+weight generation and a few forward passes.
 
 The adapter plasticity study in `reference/adapter-plasticity-study` reports a
 list of cheap plasticity indicators and finds that the plainest of them, how
@@ -30,19 +35,30 @@ data. The generator trunk is Linear and ReLU only, with no dropout and no batch
 normalisation, so train and eval mode make no difference to what it produces
 and this module does not touch module modes.
 
+The rank measurements read the features of the network the reference code
+generates, for the same reason: it asks what kind of network this generator now
+writes, with nothing else allowed to vary.
+
 Typical use, once per task boundary:
 
     code = reference_code(hypernet)
     start = flatten(hypernet, code)             # at t = 0, keep this
     ...                                          # learn a task
     record = weight_change(flatten(hypernet, code), start)
+    record.update(ranks(hypernet, target, trainer, image_sets, code))
 """
 
 import torch
 
+from .probe import _features_and_logits, effective_rank
+
 # Fixed so that every run, every seed and every order reads the same reference
 # code. Changing it makes new numbers incomparable with the old ones.
 REFERENCE_SEED = 20261030
+
+# Kumar et al. 2021 define srank with delta = 0.01, and the adapter study uses
+# that value, so the two sets of numbers line up.
+SRANK_DELTA = 0.01
 
 
 def reference_code(hypernet, seed=REFERENCE_SEED):
@@ -88,4 +104,80 @@ def weight_change(now, start):
         here, began = now[part], start[part]
         record[f"norm_{part}"] = float(here.norm())
         record[f"delta_w_{part}"] = float((here - began).norm() / began.norm())
+    return record
+
+
+# -- how many directions the features use ------------------------------------
+
+def srank(features, delta=SRANK_DELTA):
+    """The smallest number of directions holding all but `delta` of the signal.
+
+    Kumar et al. 2021. Sort the singular values largest first, add them up as a
+    running share of the total, and count how many are needed to reach
+    1 - delta. Unlike effective rank this is a whole number, and it ignores the
+    long tail of tiny directions rather than letting them contribute.
+
+    Both are reported because each misses something. Effective rank is swayed
+    by a tail of near-zero directions; srank throws that tail away entirely.
+    """
+    values = torch.linalg.svdvals(features.double())
+    shares = torch.cumsum(values, 0) / values.sum()
+    return int((shares < 1 - delta).sum().item()) + 1
+
+
+@torch.no_grad()
+def features(hypernet, target, trainer, images, code, *, batch_size=64):
+    """The classifier's input for one set of images, under one fixed code.
+
+    The network is the one the reference code generates, so this is a property
+    of the generator rather than of any learned task.
+
+    Batch-normalisation statistics come from `trainer.buffer_template`, the
+    clean set every new task starts from. They are the same at every boundary,
+    so a change in these features can only come from the weights. Using a
+    learned task's statistics instead would let two things move at once.
+
+    Evaluation mode is forced for the same reason it is forced in the probe: a
+    BatchNorm layer left in training mode rescales using whatever batch is in
+    front of it, which revives a nearly dead signal and hides what is being
+    measured. The previous modes are put back afterwards.
+    """
+    weights = hypernet.weights_from_code(code)
+    modes = hypernet.training, target.training
+    hypernet.eval()
+    target.eval()
+    collected = []
+    try:
+        for start in range(0, len(images), batch_size):
+            batch = images[start:start + batch_size].to(trainer.device)
+            # task is unused once weights and buffers are both supplied.
+            captured, _ = _features_and_logits(hypernet, target, trainer, None, batch,
+                                               weights=weights,
+                                               buffers=trainer.buffer_template)
+            collected.append(captured.float().cpu())
+    finally:
+        hypernet.train(modes[0])
+        target.train(modes[1])
+    return torch.cat(collected)
+
+
+def ranks(hypernet, target, trainer, image_sets, code, *, batch_size=64):
+    """Effective rank and srank on each fixed image set.
+
+    `image_sets` maps a name to a tensor of images. Three sets are worth
+    keeping apart: images from the learned tasks, images from a held-out task
+    in the same dataset, and images from a different dataset altogether. The
+    adapter plasticity study measured rank on the current task's images first
+    and had to redo the whole analysis on fixed sets, because that mixed "the
+    representation of this data changed" with "the representation changed".
+
+    Returns one entry per set, keyed by `{measure}_{set name}` so the result
+    merges straight into the boundary record.
+    """
+    record = {}
+    for name, images in image_sets.items():
+        matrix = features(hypernet, target, trainer, images, code, batch_size=batch_size)
+        record[f"effective_rank_{name}"] = effective_rank(matrix)
+        record[f"srank_{name}"] = srank(matrix)
+        record[f"images_{name}"] = int(matrix.shape[0])
     return record
