@@ -44,20 +44,22 @@ The rank and dormancy measurements read the network the reference code
 generates, for the same reason: they ask what kind of network this generator
 now writes, with nothing else allowed to vary.
 
-Typical use, once per task boundary:
+`BoundaryLog` puts the whole set together and writes one JSON line per
+boundary, so a run only has to call it:
 
-    code = reference_code(hypernet)
-    start = flatten(hypernet, code)             # at t = 0, keep this
-    ...                                          # learn a task
-    record = weight_change(flatten(hypernet, code), start)
-    record.update(ranks(hypernet, target, trainer, image_sets, code))
-    record.update(dormancy(hypernet, target, trainer, image_sets, code))
+    log = BoundaryLog(path, hypernet, target, trainer, image_sets,
+                      study=..., order=..., seed=...)
+    log.record(0)                                # the fresh generator
+    for t, task in enumerate(order, start=1):
+        rows, watch = loss_progress_recorder(hypernet, target, trainer, task)
+        trainer.learn(task, protected, on_step=watch)
+        log.record(t, task, progress_rows=rows)
 
-And once per task, around the learning itself:
-
-    rows, watch = loss_progress_recorder(hypernet, target, trainer, task)
-    trainer.learn(task, protected, on_step=watch)
+The pieces are also callable on their own, which is how the tests use them.
 """
+
+import json
+from pathlib import Path
 
 import torch
 from torch.func import functional_call
@@ -377,3 +379,108 @@ def loss_progress_recorder(hypernet, target, trainer, task,
             rows.append(row)
 
     return rows, watch
+
+
+# -- writing the boundary record ---------------------------------------------
+
+def indicator_key(study, order, seed):
+    """Where one run's boundary record lives in R2.
+
+    One file per run, in the same shape as the probe runs, so a stream that
+    crashes at task six resumes from its own file instead of starting again.
+    """
+    return f"uncle/indicators/{study}/{order}/seed_{seed}.jsonl"
+
+
+class BoundaryLog:
+    """Every indicator for one run, one JSON line per task boundary.
+
+    The line carries the run's identity, the boundary number, the task just
+    learned, and every measure. Measures that depend on an image set have the
+    set's name in the key, so one flat line holds all three sets and the file
+    needs no nesting.
+
+    Two files are written. The record itself is `path`, appended to as the run
+    proceeds. Beside it sits `path` with `.baseline.pt` in place of `.jsonl`,
+    holding the two weight vectors from boundary zero. That second file is
+    what makes a resume possible: relative weight change is measured against
+    boundary zero, and once the generator has moved, boundary zero cannot be
+    recreated from anything else the run saves.
+
+    A boundary already in the file is skipped rather than rewritten, so a
+    resumed run picks up exactly where it stopped.
+    """
+
+    def __init__(self, path, hypernet, target, trainer, image_sets, *,
+                 study, order, seed):
+        self.path = Path(path)
+        self.baseline_path = self.path.with_suffix(".baseline.pt")
+        self.hypernet, self.target, self.trainer = hypernet, target, trainer
+        self.image_sets = image_sets
+        self.labels = {"study": study, "order": order, "seed": seed}
+        self.code = reference_code(hypernet)
+
+        self.written = set()
+        if self.path.exists():
+            for line in self.path.read_text(encoding="utf-8").splitlines():
+                if line.strip():
+                    self.written.add(json.loads(line)["t"])
+
+        if self.baseline_path.exists():
+            self.start = torch.load(self.baseline_path, map_location="cpu")
+        elif self.written:
+            raise ValueError(
+                f"{self.path} has rows but {self.baseline_path} is missing. "
+                "Weight change is measured against boundary zero, which cannot "
+                "be recreated once the generator has moved.")
+        else:
+            self.start = None
+
+    def record(self, t, task=None, *, progress_rows=()):
+        """Measure everything at this boundary and append one line.
+
+        `t` counts boundaries, so t = 0 is the fresh generator before any task
+        and `task` is None there. `progress_rows` is the list a
+        `loss_progress_recorder` filled while the task at this boundary was
+        being learned; it is empty at t = 0.
+
+        Returns the row, or None if this boundary is already in the file.
+        """
+        if t in self.written:
+            return None
+
+        now = flatten(self.hypernet, self.code)
+        if self.start is None:
+            self.start = now
+            self.baseline_path.parent.mkdir(parents=True, exist_ok=True)
+            torch.save(self.start, self.baseline_path)
+
+        row = {**self.labels, "t": t, "task": task}
+        row.update(weight_change(now, self.start))
+        row.update(ranks(self.hypernet, self.target, self.trainer,
+                         self.image_sets, self.code))
+        row.update(dormancy(self.hypernet, self.target, self.trainer,
+                            self.image_sets, self.code))
+        row.update(progress_summary(progress_rows))
+
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        with self.path.open("a", encoding="utf-8") as stream:
+            stream.write(json.dumps(row, allow_nan=False) + "\n")
+        self.written.add(t)
+        return row
+
+
+def progress_summary(rows):
+    """The loss progress curve for one task, and its mean.
+
+    The mean is what gets compared between boundaries: a falling mean at a
+    fixed learning rate means the model has become harder to move. The curve
+    is kept because a mean hides whether the task started slow or ended slow.
+
+    An empty list, which is what boundary zero has, gives a mean of None rather
+    than an error. There was no task, so there is no number.
+    """
+    values = [row["loss_progress"] for row in rows]
+    return {"loss_progress_mean": sum(values) / len(values) if values else None,
+            "loss_progress_curve": [[row["step"], row["loss_progress"]]
+                                    for row in rows]}

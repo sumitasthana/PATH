@@ -6,8 +6,10 @@ must not change the model, because every boundary measurement happens in the
 middle of a stream that has to continue unaffected.
 """
 
+import json
 from pathlib import Path
 import sys
+import tempfile
 import unittest
 
 import torch
@@ -17,10 +19,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from uncle.config import Config
 from uncle.hypernet import HyperNetwork, build_target
 from uncle import plasticity_indicators
-from uncle.plasticity_indicators import (LOSS_PROGRESS_EVERY, activation_sites, dormancy,
-                                         dormant_fraction, features, flatten,
-                                         loss_progress, loss_progress_recorder, ranks,
-                                         reference_code, srank, weight_change)
+from uncle.plasticity_indicators import (LOSS_PROGRESS_EVERY, BoundaryLog, activation_sites,
+                                         dormancy, dormant_fraction, features, flatten,
+                                         indicator_key, loss_progress, loss_progress_recorder,
+                                         progress_summary, ranks, reference_code, srank,
+                                         weight_change)
 from uncle.probe import effective_rank, snapshot, unchanged
 from uncle.trainer import UnCLe
 
@@ -579,6 +582,117 @@ class LossProgressRecorder(unittest.TestCase):
         self.assertEqual(len(seen), 1)
         self.assertIsNot(seen[0], trainer.task_buffers["0"])
         self.assertIsNot(seen[0]["fake"], trainer.task_buffers["0"]["fake"])
+
+
+class ProgressSummary(unittest.TestCase):
+
+    def test_the_mean_is_the_mean_of_the_rows(self):
+        rows = [{"step": 10, "loss_progress": 0.2}, {"step": 20, "loss_progress": 0.4}]
+        self.assertAlmostEqual(progress_summary(rows)["loss_progress_mean"], 0.3)
+
+    def test_the_curve_keeps_the_step_numbers(self):
+        """A mean hides whether a task started slow or ended slow."""
+        rows = [{"step": 10, "loss_progress": 0.2}, {"step": 20, "loss_progress": 0.4}]
+        self.assertEqual(progress_summary(rows)["loss_progress_curve"],
+                         [[10, 0.2], [20, 0.4]])
+
+    def test_no_rows_gives_no_mean(self):
+        """Boundary zero has no task behind it, so there is no number."""
+        self.assertIsNone(progress_summary([])["loss_progress_mean"])
+
+
+class IndicatorKey(unittest.TestCase):
+
+    def test_one_file_per_run(self):
+        """Order and seed both go in the path, so two runs never share a file."""
+        self.assertEqual(indicator_key("paired_v2", "order_01", 2),
+                         "uncle/indicators/paired_v2/order_01/seed_2.jsonl")
+
+
+class Boundaries(unittest.TestCase):
+    """The writer, checked on a tiny model and a temporary folder."""
+
+    def setUp(self):
+        self.folder = tempfile.TemporaryDirectory()
+        self.addCleanup(self.folder.cleanup)
+        self.path = Path(self.folder.name) / "seed_0.jsonl"
+        self.config, self.target, self.hypernet, self.trainer, images = ready()
+        self.image_sets = {"in_stream": images}
+
+    def log(self, hypernet=None):
+        return BoundaryLog(self.path, hypernet or self.hypernet, self.target,
+                           self.trainer, self.image_sets,
+                           study="test", order="order_01", seed=0)
+
+    def rows(self):
+        return [json.loads(line) for line in
+                self.path.read_text(encoding="utf-8").splitlines()]
+
+    def test_boundary_zero_has_not_moved(self):
+        """The first boundary is its own baseline, so the distance is exactly zero."""
+        row = self.log().record(0)
+        self.assertEqual(row["t"], 0)
+        self.assertIsNone(row["task"])
+        self.assertEqual(row["delta_w_generator"], 0.0)
+        self.assertEqual(row["delta_w_target"], 0.0)
+
+    def test_one_line_per_boundary(self):
+        """The file is read back line by line, so a row must never span two lines."""
+        log = self.log()
+        log.record(0)
+        nudge(self.hypernet)
+        log.record(1, task="3")
+        self.assertEqual([row["t"] for row in self.rows()], [0, 1])
+        self.assertEqual(self.rows()[1]["task"], "3")
+
+    def test_a_later_boundary_is_measured_against_boundary_zero(self):
+        log = self.log()
+        log.record(0)
+        nudge(self.hypernet)
+        self.assertGreater(log.record(1, task="3")["delta_w_generator"], 0)
+
+    def test_every_measure_lands_in_one_flat_row(self):
+        """One line holds all of it, so the reporting step needs no nesting."""
+        row = self.log().record(0)
+        for key in ("norm_target", "delta_w_target", "effective_rank_in_stream",
+                    "srank_in_stream", "dormant_0.1_in_stream", "units_in_stream",
+                    "loss_progress_mean", "loss_progress_curve"):
+            self.assertIn(key, row)
+
+    def test_loss_progress_rows_are_folded_in(self):
+        rows = [{"step": 10, "loss_progress": 0.5}]
+        row = self.log().record(1, task="3", progress_rows=rows)
+        self.assertAlmostEqual(row["loss_progress_mean"], 0.5)
+
+    def test_a_boundary_already_written_is_not_written_again(self):
+        """A resumed run must not append a second copy of a boundary it finished."""
+        self.log().record(0)
+        self.assertIsNone(self.log().record(0))
+        self.assertEqual(len(self.rows()), 1)
+
+    def test_a_resumed_run_keeps_the_original_baseline(self):
+        """A fresh baseline would reset every later distance to zero.
+
+        This is the whole reason the baseline is saved to its own file. The
+        resumed log has never seen boundary zero's weights, so without that
+        file it would measure boundary one against itself.
+        """
+        self.log().record(0)
+        nudge(self.hypernet)
+        self.assertGreater(self.log().record(1, task="3")["delta_w_generator"], 0)
+
+    def test_rows_without_a_baseline_are_refused(self):
+        """Carrying on would silently restart the distances from the wrong place."""
+        self.log().record(0)
+        self.path.with_suffix(".baseline.pt").unlink()
+        with self.assertRaises(ValueError):
+            self.log()
+
+    def test_a_fresh_folder_needs_no_setup(self):
+        """The writer is handed to a run, not set up beside one."""
+        self.path = Path(self.folder.name) / "deeper" / "seed_0.jsonl"
+        self.assertEqual(self.log().record(0)["t"], 0)
+        self.assertTrue(self.path.exists())
 
 
 if __name__ == "__main__":
