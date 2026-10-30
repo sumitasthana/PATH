@@ -15,7 +15,8 @@ import torch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from uncle.config import Config
 from uncle.hypernet import HyperNetwork, build_target
-from uncle.plasticity_indicators import (features, flatten, ranks, reference_code,
+from uncle.plasticity_indicators import (activation_sites, dormancy, dormant_fraction,
+                                         features, flatten, ranks, reference_code,
                                          srank, weight_change)
 from uncle.probe import effective_rank, snapshot, unchanged
 from uncle.trainer import UnCLe
@@ -177,12 +178,25 @@ class Features(unittest.TestCase):
         self.assertGreater(matrix.shape[1], 0)
 
     def test_batching_does_not_change_the_answer(self):
-        """A boundary set is larger than one batch, so the split must not matter."""
+        """A boundary set is larger than one batch, so the split must not matter.
+
+        Not bit-for-bit. A convolution adds its terms in a different order at a
+        different batch size, so float32 results drift by about 1e-5 on values
+        that reach 25. The tolerance is set to catch a wrong slice, which would
+        move whole rows, and to ignore that rounding.
+        """
         _, target, hypernet, trainer, images = ready(size=10)
         code = reference_code(hypernet)
         whole = features(hypernet, target, trainer, images, code, batch_size=64)
         split = features(hypernet, target, trainer, images, code, batch_size=3)
-        self.assertTrue(torch.allclose(whole, split, atol=1e-6))
+        self.assertTrue(torch.allclose(whole, split, atol=1e-4))
+
+    def test_a_wrong_slice_would_be_caught(self):
+        """The tolerance above is loose, so check it still sees shuffled rows."""
+        _, target, hypernet, trainer, images = ready(size=10)
+        code = reference_code(hypernet)
+        matrix = features(hypernet, target, trainer, images, code)
+        self.assertFalse(torch.allclose(matrix, matrix.flip(0), atol=1e-4))
 
     def test_same_code_gives_the_same_features(self):
         _, target, hypernet, trainer, images = ready()
@@ -230,6 +244,138 @@ class Ranks(unittest.TestCase):
         self.assertLessEqual(record["effective_rank_set"], 6.0 + 1e-6)
 
 
+class SharedRelu(torch.nn.Module):
+    """One ReLU module used at three places, as a torchvision ResNet block does."""
+
+    def __init__(self):
+        super().__init__()
+        self.relu = torch.nn.ReLU()
+        self.first = torch.nn.Linear(4, 6)
+        self.second = torch.nn.Linear(6, 8)
+        self.third = torch.nn.Linear(8, 5)
+
+    def forward(self, x):
+        x = self.relu(self.first(x))
+        x = self.relu(self.second(x))
+        return self.relu(self.third(x))
+
+
+class ActivationSites(unittest.TestCase):
+
+    def test_one_site_per_call_not_per_module(self):
+        """Three calls on one module are three places in the network, not one."""
+        model = SharedRelu()
+        sums = activation_sites(model, lambda reset: (reset(), model(torch.randn(7, 4))))
+        self.assertEqual(len(sums), 3)
+        self.assertEqual([vector.numel() for vector in sums], [6, 8, 5])
+
+    def test_batches_accumulate_into_one_total(self):
+        """Two batches of five must give the same totals as one batch of ten."""
+        model = SharedRelu()
+        torch.manual_seed(0)
+        images = torch.randn(10, 4)
+
+        def whole(reset):
+            reset()
+            model(images)
+
+        def split(reset):
+            for start in (0, 5):
+                reset()
+                model(images[start:start + 5])
+
+        one, two = activation_sites(model, whole), activation_sites(model, split)
+        for first, second in zip(one, two):
+            self.assertTrue(torch.allclose(first, second, atol=1e-6))
+
+    def test_without_the_reset_a_batch_opens_new_sites(self):
+        """The reset is what makes batch two land on batch one's sites."""
+        model = SharedRelu()
+        images = torch.randn(4, 4)
+        sums = activation_sites(model, lambda reset: (reset(), model(images), model(images)))
+        self.assertEqual(len(sums), 6)
+
+    def test_hooks_are_removed(self):
+        model = SharedRelu()
+        activation_sites(model, lambda reset: (reset(), model(torch.randn(3, 4))))
+        self.assertEqual(len(model.relu._forward_hooks), 0)
+
+
+class DormantFraction(unittest.TestCase):
+
+    def test_equal_units_are_never_dormant(self):
+        record = dormant_fraction([torch.ones(4)])
+        self.assertEqual(record["dormant_0.1"], 0.0)
+        self.assertEqual(record["units"], 4)
+
+    def test_silent_units_are_counted(self):
+        """Totals of 0, 0, 1, 3 give a site mean of 1, so two units score zero."""
+        record = dormant_fraction([torch.tensor([0.0, 0.0, 1.0, 3.0])])
+        self.assertEqual(record["dormant_0.01"], 0.5)
+
+    def test_a_fully_silent_site_is_fully_dormant(self):
+        """There is no site mean to divide by, and every unit has stopped."""
+        record = dormant_fraction([torch.zeros(5)])
+        self.assertEqual(record["dormant_0.01"], 1.0)
+
+    def test_a_higher_cut_off_never_catches_less(self):
+        torch.manual_seed(0)
+        record = dormant_fraction([torch.rand(50), torch.rand(30)])
+        self.assertLessEqual(record["dormant_0.01"], record["dormant_0.025"])
+        self.assertLessEqual(record["dormant_0.025"], record["dormant_0.1"])
+
+    def test_a_quiet_site_is_not_a_dormant_site(self):
+        """Scoring against one network-wide mean would wipe out the quiet site.
+
+        Both sites are perfectly healthy: every unit matches its neighbours.
+        The quiet one sits far below every cut-off in raw terms, so only
+        dividing by its own site mean saves it.
+        """
+        loud, quiet = torch.tensor([1000.0, 1000.0]), torch.tensor([0.001, 0.001])
+        self.assertEqual(dormant_fraction([loud, quiet])["dormant_0.1"], 0.0)
+
+    def test_scale_does_not_matter_within_a_site(self):
+        """Twice as many images means twice the totals and the same answer."""
+        once = dormant_fraction([torch.tensor([0.0, 2.0, 4.0])])
+        twice = dormant_fraction([torch.tensor([0.0, 4.0, 8.0])])
+        self.assertEqual(once, twice)
+
+
+class Dormancy(unittest.TestCase):
+
+    def test_one_entry_per_cut_off_per_set(self):
+        _, target, hypernet, trainer, images = ready()
+        record = dormancy(hypernet, target, trainer, {"held_out": images},
+                          reference_code(hypernet))
+        self.assertEqual(set(record), {
+            "dormant_0.01_held_out", "dormant_0.025_held_out",
+            "dormant_0.1_held_out", "units_held_out"})
+        self.assertGreater(record["units_held_out"], 0)
+
+    def test_fractions_stay_between_zero_and_one(self):
+        _, target, hypernet, trainer, images = ready()
+        record = dormancy(hypernet, target, trainer, {"set": images},
+                          reference_code(hypernet))
+        for threshold in (0.01, 0.025, 0.1):
+            value = record[f"dormant_{threshold}_set"]
+            self.assertGreaterEqual(value, 0.0)
+            self.assertLessEqual(value, 1.0)
+
+    def test_same_code_gives_the_same_answer(self):
+        _, target, hypernet, trainer, images = ready()
+        code = reference_code(hypernet)
+        first = dormancy(hypernet, target, trainer, {"set": images}, code)
+        second = dormancy(hypernet, target, trainer, {"set": images}, code)
+        self.assertEqual(first, second)
+
+    def test_batching_does_not_change_the_answer(self):
+        _, target, hypernet, trainer, images = ready(size=10)
+        code = reference_code(hypernet)
+        whole = dormancy(hypernet, target, trainer, {"set": images}, code, batch_size=64)
+        split = dormancy(hypernet, target, trainer, {"set": images}, code, batch_size=3)
+        self.assertEqual(whole, split)
+
+
 class MeasuringChangesNothing(unittest.TestCase):
 
     def test_model_is_bit_identical_afterwards(self):
@@ -247,9 +393,17 @@ class MeasuringChangesNothing(unittest.TestCase):
         state = snapshot(hypernet, trainer)
         template = {name: value.clone() for name, value in trainer.buffer_template.items()}
         ranks(hypernet, target, trainer, {"set": images}, reference_code(hypernet))
+        dormancy(hypernet, target, trainer, {"set": images}, reference_code(hypernet))
         self.assertTrue(unchanged(hypernet, state))
         for name, value in template.items():
             self.assertTrue(torch.equal(value, trainer.buffer_template[name]), name)
+
+    def test_dormancy_leaves_no_hooks_on_the_target(self):
+        """A hook left behind would fire during the next task's training."""
+        _, target, hypernet, trainer, images = ready()
+        dormancy(hypernet, target, trainer, {"set": images}, reference_code(hypernet))
+        for child in target.modules():
+            self.assertEqual(len(child._forward_hooks), 0)
 
     def test_no_gradients_are_left_behind(self):
         """A measurement that leaves gradients would corrupt the next update."""

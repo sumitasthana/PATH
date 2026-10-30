@@ -1,9 +1,9 @@
 """Cheap plasticity indicators, read at a task boundary.
 
-Three measurements live here: how far the weights moved, how large they are,
-and how many directions the features use. None of them trains, forks or needs
-labels, so the whole set rides along with a stream run for the cost of one
-weight generation and a few forward passes.
+Four measurements live here: how far the weights moved, how large they are,
+how many directions the features use, and how many units have gone quiet. None
+of them trains, forks or needs labels, so the whole set rides along with a
+stream run for the cost of one weight generation and a few forward passes.
 
 The adapter plasticity study in `reference/adapter-plasticity-study` reports a
 list of cheap plasticity indicators and finds that the plainest of them, how
@@ -35,9 +35,9 @@ data. The generator trunk is Linear and ReLU only, with no dropout and no batch
 normalisation, so train and eval mode make no difference to what it produces
 and this module does not touch module modes.
 
-The rank measurements read the features of the network the reference code
-generates, for the same reason: it asks what kind of network this generator now
-writes, with nothing else allowed to vary.
+The rank and dormancy measurements read the network the reference code
+generates, for the same reason: they ask what kind of network this generator
+now writes, with nothing else allowed to vary.
 
 Typical use, once per task boundary:
 
@@ -180,4 +180,113 @@ def ranks(hypernet, target, trainer, image_sets, code, *, batch_size=64):
         record[f"effective_rank_{name}"] = effective_rank(matrix)
         record[f"srank_{name}"] = srank(matrix)
         record[f"images_{name}"] = int(matrix.shape[0])
+    return record
+
+
+# -- how many units have stopped responding ----------------------------------
+
+# Sokar et al. 2023 report several cut-offs rather than one, and the adapter
+# study keeps all three, so the same three are kept here.
+THRESHOLDS = (0.01, 0.025, 0.1)
+
+
+def activation_sites(module, run):
+    """Total absolute activation per unit at every ReLU call `run` makes.
+
+    A site is one call, not one module. Torchvision's ResNet blocks build a
+    single `nn.ReLU` and call it three times, so hooking modules and keying by
+    name would fold three different places in the network into one. Calls
+    happen in a fixed order for a fixed architecture, so the position of a call
+    identifies it, and the same position means the same place on every batch.
+
+    `run` may push several batches through. The sums accumulate across all of
+    them, so the result covers the whole image set and not just the last batch.
+
+    Totals are returned rather than means. Every unit in a site is summed over
+    the same number of values, and `dormant_fraction` divides each site by its
+    own mean, so that number cancels and never needs carrying around.
+    """
+    sums, position = [], [0]
+
+    def hook(_module, _inputs, output):
+        index = position[0]
+        values = output.detach().float().abs()
+        # Unit means channel for a convolution and neuron for a linear layer,
+        # which is dimension 1 either way. Everything else is summed over.
+        total = values.sum(dim=[0] + list(range(2, values.dim())))
+        if index == len(sums):
+            sums.append(total)
+        else:
+            sums[index] += total
+        position[0] = index + 1
+
+    handles = [child.register_forward_hook(hook)
+               for child in module.modules() if isinstance(child, torch.nn.ReLU)]
+    try:
+        run(lambda: position.__setitem__(0, 0))
+    finally:
+        for handle in handles:
+            handle.remove()
+    return sums
+
+
+def dormant_fraction(sums, thresholds=THRESHOLDS):
+    """The share of units that have gone quiet, at each cut-off.
+
+    Sokar et al. 2023. A unit's score is its mean absolute activation divided
+    by the mean over all units in the same site. The per-unit division by the
+    number of values cancels between the two, so `sums` holds totals and the
+    scores come out the same. A score of 1 means an
+    ordinary unit and a score near 0 means one that has stopped contributing.
+    Scoring within a site matters: sites differ in scale by orders of
+    magnitude, and a single network-wide mean would mark whole quiet layers as
+    dormant and whole loud ones as healthy.
+
+    A site whose units are all exactly zero has no mean to divide by. Every
+    unit there has stopped responding, so the whole site counts as dormant.
+    """
+    flagged = {threshold: 0 for threshold in thresholds}
+    units = 0
+    for total in sums:
+        units += total.numel()
+        if total.mean() <= 0:
+            for threshold in thresholds:
+                flagged[threshold] += total.numel()
+            continue
+        score = total / total.mean()
+        for threshold in thresholds:
+            flagged[threshold] += int((score <= threshold).sum())
+    record = {f"dormant_{threshold}": flagged[threshold] / units
+              for threshold in thresholds}
+    record["units"] = units
+    return record
+
+
+@torch.no_grad()
+def dormancy(hypernet, target, trainer, image_sets, code, *, batch_size=64):
+    """Dormant-unit fractions on each fixed image set.
+
+    Same inputs and the same reasoning as `ranks`: the network the reference
+    code generates, clean batch-normalisation statistics, evaluation mode,
+    fixed image sets. Nothing is changed and nothing is left behind.
+    """
+    weights = hypernet.weights_from_code(code)
+    modes = hypernet.training, target.training
+    hypernet.eval()
+    target.eval()
+    record = {}
+    try:
+        for name, images in image_sets.items():
+            def run(reset, images=images):
+                for start in range(0, len(images), batch_size):
+                    reset()
+                    _features_and_logits(hypernet, target, trainer, None,
+                                         images[start:start + batch_size].to(trainer.device),
+                                         weights=weights,
+                                         buffers=trainer.buffer_template)
+            for key, value in dormant_fraction(activation_sites(target, run)).items():
+                record[f"{key}_{name}"] = value
+    finally:
+        hypernet.train(modes[0])
+        target.train(modes[1])
     return record
