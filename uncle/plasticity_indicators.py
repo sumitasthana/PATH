@@ -1,9 +1,14 @@
 """Cheap plasticity indicators, read at a task boundary.
 
-Four measurements live here: how far the weights moved, how large they are,
-how many directions the features use, and how many units have gone quiet. None
-of them trains, forks or needs labels, so the whole set rides along with a
-stream run for the cost of one weight generation and a few forward passes.
+Five measurements live here: how far the weights moved, how large they are,
+how many directions the features use, how many units have gone quiet, and how
+much one update moves the loss. None of them trains or forks, so the whole set
+rides along with a stream run for the cost of one weight generation and a few
+forward passes.
+
+The first four are read once at a task boundary. The fifth rides on the
+training loop itself, through the trainer's own step callback, and so is the
+one measurement here that needs the task it is watching.
 
 The adapter plasticity study in `reference/adapter-plasticity-study` reports a
 list of cheap plasticity indicators and finds that the plainest of them, how
@@ -46,9 +51,17 @@ Typical use, once per task boundary:
     ...                                          # learn a task
     record = weight_change(flatten(hypernet, code), start)
     record.update(ranks(hypernet, target, trainer, image_sets, code))
+    record.update(dormancy(hypernet, target, trainer, image_sets, code))
+
+And once per task, around the learning itself:
+
+    rows, watch = loss_progress_recorder(hypernet, target, trainer, task)
+    trainer.learn(task, protected, on_step=watch)
 """
 
 import torch
+from torch.func import functional_call
+from torch.nn.functional import cross_entropy
 
 from .probe import _features_and_logits, effective_rank
 
@@ -290,3 +303,77 @@ def dormancy(hypernet, target, trainer, image_sets, code, *, batch_size=64):
         hypernet.train(modes[0])
         target.train(modes[1])
     return record
+
+
+# -- how much one update actually moved the loss ------------------------------
+
+# The adapter study samples this every tenth update rather than every update.
+# One extra forward pass in ten is about 5 percent added to stream time; every
+# update would be closer to 50 percent, for a curve that looks the same.
+LOSS_PROGRESS_EVERY = 10
+
+
+def loss_progress(hypernet, target, trainer, task, record,
+                  *, every=LOSS_PROGRESS_EVERY):
+    """How far one update moved the loss on its own batch, as a fraction.
+
+    Elsayed and Mahmood 2024. Take the batch the update was computed from, run
+    it through the network again now that the update has landed, and compare.
+    A fraction of 0.02 means the update cut this batch's loss by 2 percent.
+    Falling progress at a fixed learning rate is the plainest sign of a model
+    that has become hard to move.
+
+    `record` is one `on_step` record from `UnCLe.learn`. Its `loss` field is
+    the combined loss, task plus the weighted protection term, and the
+    protection term cannot be recomputed here without the pre-task snapshot.
+    So `task_loss` is the before value and cross entropy is the after value:
+    the same quantity on both sides.
+
+    Buffers are cloned before the forward pass. The network is still in
+    training mode here, where batch normalisation normalises by this batch's
+    own statistics and writes its running statistics back. Normalising by batch
+    statistics is what we want, since that is how the before value was
+    computed, but the write-back would corrupt the task's real buffers. The
+    clone takes the write and is thrown away.
+
+    Returns None on the steps that are not sampled, and on step 0, which has no
+    update behind it. A step whose before value is exactly zero also returns
+    None: there is no fraction of zero.
+    """
+    step = record.get("step", 0)
+    if step == 0 or step % every or "images" not in record:
+        return None
+    before = record["task_loss"]
+    if before == 0:
+        return None
+    buffers = {name: value.clone()
+               for name, value in trainer.task_buffers[task].items()}
+    scores = functional_call(target,
+                             (hypernet.weights_for(task), buffers),
+                             (record["images"].to(trainer.device),),
+                             strict=True)
+    after = float(cross_entropy(scores, record["labels"].to(trainer.device)))
+    return {"step": step, "epoch": record["epoch"], "loss_before": before,
+            "loss_after": after, "loss_progress": (before - after) / before}
+
+
+def loss_progress_recorder(hypernet, target, trainer, task,
+                           *, every=LOSS_PROGRESS_EVERY):
+    """A list to read afterwards, and the `on_step` callback that fills it.
+
+    Pass the callback as `on_step` to `UnCLe.learn`. The trainer already runs
+    callbacks under `no_grad`, inside a forked random number generator, and
+    puts module training modes back afterwards, so nothing here can reach the
+    run being measured.
+
+        rows, watch = loss_progress_recorder(hypernet, target, trainer, task)
+        trainer.learn(task, protected, on_step=watch)
+    """
+    rows = []
+
+    def watch(record):
+        row = loss_progress(hypernet, target, trainer, task, record, every=every)
+        if row is not None:
+            rows.append(row)
+
+    return rows, watch

@@ -11,13 +11,16 @@ import sys
 import unittest
 
 import torch
+from torch.utils.data import TensorDataset
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from uncle.config import Config
 from uncle.hypernet import HyperNetwork, build_target
-from uncle.plasticity_indicators import (activation_sites, dormancy, dormant_fraction,
-                                         features, flatten, ranks, reference_code,
-                                         srank, weight_change)
+from uncle import plasticity_indicators
+from uncle.plasticity_indicators import (LOSS_PROGRESS_EVERY, activation_sites, dormancy,
+                                         dormant_fraction, features, flatten,
+                                         loss_progress, loss_progress_recorder, ranks,
+                                         reference_code, srank, weight_change)
 from uncle.probe import effective_rank, snapshot, unchanged
 from uncle.trainer import UnCLe
 
@@ -418,6 +421,164 @@ class MeasuringChangesNothing(unittest.TestCase):
         start = flatten(hypernet, reference_code(hypernet))
         self.assertFalse(start["target"].requires_grad)
         self.assertFalse(start["generator"].requires_grad)
+
+
+def fake_tasks(config, names, size=32):
+    """Image tensors shaped like the real dataset, with labels in range."""
+    torch.manual_seed(0)
+    tasks = {}
+    for name in names:
+        images = torch.randn(size, config.input_channels,
+                             config.input_size, config.input_size)
+        labels = torch.randint(0, config.classes_per_task, (size,))
+        tasks[name] = {"train": TensorDataset(images, labels),
+                       "test": TensorDataset(images, labels)}
+    return tasks
+
+
+def learner():
+    """A trainer with one task's worth of real data, ready to learn it."""
+    config, target, hypernet = small_model()
+    tasks = fake_tasks(config, ["0"])
+    return config, target, hypernet, UnCLe(hypernet, config, target, tasks)
+
+
+def with_fake_forward(hypernet, target, trainer, record):
+    """Run `loss_progress` with the forward pass replaced by fixed logits.
+
+    Returns the row and the buffers the forward pass was handed. The fixed
+    logits make the after value the same every time, so a test can state the
+    arithmetic exactly instead of asserting on a trained network.
+    """
+    seen = []
+
+    def spy(module, state, args, **kwargs):
+        seen.append(state[1])
+        return torch.zeros(len(args[0]), 4)
+
+    real = plasticity_indicators.functional_call
+    plasticity_indicators.functional_call = spy
+    try:
+        row = loss_progress(hypernet, target, trainer, "0", record, every=1)
+    finally:
+        plasticity_indicators.functional_call = real
+    return row, seen
+
+
+def ready_to_spy():
+    """A learner with task 0 registered and one stand-in buffer to watch."""
+    _, target, hypernet, trainer = learner()
+    hypernet.add_task("0")
+    trainer.task_buffers["0"] = {"fake": torch.ones(3)}
+    return target, hypernet, trainer
+
+
+def sampled_record(**changes):
+    """One `on_step` record that passes every skip rule."""
+    record = {"step": 1, "epoch": 1, "task_loss": 1.0, "loss": 5.0,
+              "images": torch.zeros(2, 1, 1, 1),
+              "labels": torch.zeros(2, dtype=torch.long)}
+    record.update(changes)
+    return record
+
+
+class LossProgress(unittest.TestCase):
+    """The arithmetic and the sampling rule, with no training involved."""
+
+    def test_step_zero_is_skipped(self):
+        """Step zero reports the state before any update, so nothing moved yet."""
+        self.assertIsNone(loss_progress(None, None, None, "0", {"step": 0}, every=1))
+
+    def test_unsampled_steps_are_skipped(self):
+        """Sampling is the whole reason this is cheap."""
+        record = {"step": 7, "epoch": 1, "task_loss": 1.0,
+                  "images": torch.zeros(1), "labels": torch.zeros(1)}
+        self.assertIsNone(loss_progress(None, None, None, "0", record, every=10))
+
+    def test_a_record_without_a_batch_is_skipped(self):
+        """Epoch and step-zero records carry no batch to run again."""
+        record = {"step": 10, "epoch": 1, "task_loss": 1.0}
+        self.assertIsNone(loss_progress(None, None, None, "0", record, every=10))
+
+    def test_a_zero_before_value_is_skipped(self):
+        """There is no fraction of zero, so the row would be meaningless."""
+        record = {"step": 10, "epoch": 1, "task_loss": 0.0,
+                  "images": torch.zeros(1), "labels": torch.zeros(1)}
+        self.assertIsNone(loss_progress(None, None, None, "0", record, every=10))
+
+    def test_the_fraction_matches_the_two_losses(self):
+        """The reported fraction must be the drop divided by the starting loss."""
+        _, target, hypernet, trainer = learner()
+        rows, watch = loss_progress_recorder(hypernet, target, trainer, "0", every=1)
+        trainer.learn("0", [], on_step=watch)
+        self.assertTrue(rows)
+        for row in rows:
+            self.assertAlmostEqual(
+                row["loss_progress"],
+                (row["loss_before"] - row["loss_after"]) / row["loss_before"], places=6)
+
+    def test_the_before_value_leaves_the_protection_term_out(self):
+        """The after value is a bare cross entropy, so the before value must be too.
+
+        The record's `loss` field adds the weighted protection term, which this
+        function cannot recompute. Using it would report a drop that is mostly
+        the two terms disagreeing rather than the update doing work.
+        """
+        target, hypernet, trainer = ready_to_spy()
+        row, _ = with_fake_forward(hypernet, target, trainer,
+                                   sampled_record(task_loss=1.0, loss=5.0))
+        self.assertEqual(row["loss_before"], 1.0)
+
+    def test_the_default_matches_the_adapter_study(self):
+        """Every tenth update is the adapter study's own sampling rate."""
+        self.assertEqual(LOSS_PROGRESS_EVERY, 10)
+
+
+class LossProgressRecorder(unittest.TestCase):
+
+    def test_rows_land_on_the_sampled_steps_only(self):
+        """One row every `every` updates, numbered by the update it followed."""
+        _, target, hypernet, trainer = learner()
+        rows, watch = loss_progress_recorder(hypernet, target, trainer, "0", every=2)
+        trainer.learn("0", [], on_step=watch)
+        self.assertEqual([row["step"] for row in rows], [2, 4])
+
+    def test_an_update_usually_lowers_its_own_batch_loss(self):
+        """A reading that never moves would mean the pass is measuring nothing."""
+        _, target, hypernet, trainer = learner()
+        rows, watch = loss_progress_recorder(hypernet, target, trainer, "0", every=1)
+        trainer.learn("0", [], on_step=watch)
+        self.assertTrue(any(row["loss_progress"] > 0 for row in rows))
+
+    def test_watching_does_not_change_the_run(self):
+        """The measurement rides along, so the learning must come out identical."""
+        _, _, plain, trainer = learner()
+        quiet = trainer.learn("0", [])
+        quiet_weights = flatten(plain, reference_code(plain))
+
+        _, target, hypernet, trainer = learner()
+        _, watch = loss_progress_recorder(hypernet, target, trainer, "0", every=1)
+        watched = trainer.learn("0", [], on_step=watch)
+        watched_weights = flatten(hypernet, reference_code(hypernet))
+
+        self.assertEqual(quiet, watched)
+        torch.testing.assert_close(quiet_weights["generator"],
+                                   watched_weights["generator"], rtol=0, atol=0)
+
+    def test_the_live_buffers_are_not_handed_to_the_forward_pass(self):
+        """Training mode writes batch statistics back, so a clone must take the write.
+
+        The small CPU backbone has no batch normalisation, so nothing would go
+        wrong here even if the live buffers were passed. The check is on the
+        argument itself, which is the only place the mistake would show on a
+        model that does have it.
+        """
+        target, hypernet, trainer = ready_to_spy()
+        _, seen = with_fake_forward(hypernet, target, trainer, sampled_record())
+
+        self.assertEqual(len(seen), 1)
+        self.assertIsNot(seen[0], trainer.task_buffers["0"])
+        self.assertIsNot(seen[0]["fake"], trainer.task_buffers["0"]["fake"])
 
 
 if __name__ == "__main__":
