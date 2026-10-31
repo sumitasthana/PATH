@@ -296,7 +296,7 @@ def runtime_signature(config):
 
 
 def run_job(plan, job, tasks, storage, *, device='cuda', progress=True,
-            stop_requested=lambda: False, on_boundary=None):
+            stop_requested=lambda: False, on_boundary=None, observer=None):
     """Run one job. A stop returns only after its resume state is verified in R2."""
     complete = storage.completed_report(job)
     if complete is not None:
@@ -381,6 +381,11 @@ def run_job(plan, job, tasks, storage, *, device='cuda', progress=True,
         if on_boundary:
             on_boundary(job, pointer)
             restore_rng(rng)
+        if observer is not None:
+            # Numbered by tasks learned, so epoch saves land on a number that
+            # is already written and cost nothing.
+            observer.boundary(trainer, len(seen), seen[-1] if seen else None)
+            restore_rng(rng)
         segment_started = time.monotonic()
         stopped = not complete and stop_requested()
         if stopped:
@@ -413,7 +418,8 @@ def run_job(plan, job, tasks, storage, *, device='cuda', progress=True,
 
             active = run_request(trainer, action, task, protected, active, record, boundary,
                 forget_interval=plan['forget_checkpoint_interval'],
-                evaluation_interval=plan['forget_evaluation_interval'])
+                evaluation_interval=plan['forget_evaluation_interval'],
+                on_step=None if observer is None else observer.step)
             after = score(trainer, list(h.task_codes))
             if action == 'learn':
                 seen.append(task)

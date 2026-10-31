@@ -350,11 +350,18 @@ def loss_progress(hypernet, target, trainer, task, record,
         return None
     buffers = {name: value.clone()
                for name, value in trainer.task_buffers[task].items()}
-    scores = functional_call(target,
-                             (hypernet.weights_for(task), buffers),
-                             (record["images"].to(trainer.device),),
-                             strict=True)
-    after = float(cross_entropy(scores, record["labels"].to(trainer.device)))
+    # The forward pass is guarded here rather than by the caller, because this
+    # is the only place that touches the model. UnCLe.learn already wraps its
+    # callbacks this way; the study's own loop does not, and a measurement that
+    # consumed randomness would shift every batch that followed it.
+    devices = (list(range(torch.cuda.device_count()))
+               if trainer.device.type == "cuda" else [])
+    with torch.random.fork_rng(devices=devices), torch.no_grad():
+        scores = functional_call(target,
+                                 (hypernet.weights_for(task), buffers),
+                                 (record["images"].to(trainer.device),),
+                                 strict=True)
+        after = float(cross_entropy(scores, record["labels"].to(trainer.device)))
     return {"step": step, "epoch": record["epoch"], "loss_before": before,
             "loss_after": after, "loss_progress": (before - after) / before}
 
@@ -484,3 +491,70 @@ def progress_summary(rows):
     return {"loss_progress_mean": sum(values) / len(values) if values else None,
             "loss_progress_curve": [[row["step"], row["loss_progress"]]
                                     for row in rows]}
+
+
+# -- riding along with a stream run ------------------------------------------
+
+def fixed_image_sets(datasets, *, count=256, seed=REFERENCE_SEED):
+    """One fixed tensor of images per named dataset, the same at every boundary.
+
+    The adapter plasticity study first measured rank and dormant units on the
+    current task's images, then had to redo the whole analysis on fixed sets,
+    because that confused "the representation of this data changed" with "the
+    representation changed". Starting where that correction ended costs nothing.
+
+    Images are drawn without replacement from a generator seeded here, so two
+    runs, two orders and two seeds all read the same pictures and only the
+    model differs.
+    """
+    chosen = {}
+    for name, dataset in datasets.items():
+        stream = torch.Generator().manual_seed(seed)
+        picked = torch.randperm(len(dataset), generator=stream)[:count]
+        chosen[name] = torch.stack([dataset[int(index)][0] for index in picked])
+    return chosen
+
+
+class StreamObserver:
+    """Attaches the whole indicator set to a stream run, as a passenger.
+
+    The run owns two hooks. `step` is called after every update while a task is
+    being learned, and feeds the loss progress curve. `boundary` is called
+    wherever the run saves its state, and writes one line per task boundary.
+
+    `boundary` is called more often than once per task, because the run also
+    saves at epoch boundaries and at the start of each request. That is
+    harmless: boundaries are numbered by how many tasks have been learned, and
+    a number already in the file is returned from immediately, before anything
+    is measured. The first call at each number is the one that lands, and it is
+    always the save that follows a completed task.
+
+    The log cannot be built before the run starts, because the run builds the
+    model. It is built on the first `boundary` call instead, which happens
+    before the first update.
+    """
+
+    def __init__(self, path, image_sets, *, study, order, seed,
+                 every=LOSS_PROGRESS_EVERY):
+        self.path, self.image_sets, self.every = path, image_sets, every
+        self.labels = {"study": study, "order": order, "seed": seed}
+        self.log = None
+        self.rows = []
+
+    def boundary(self, trainer, t, task):
+        """Write this boundary, if it is not already written. Returns the row."""
+        if self.log is None:
+            self.log = BoundaryLog(self.path, trainer.hypernet, trainer.target,
+                                   trainer, self.image_sets, **self.labels)
+        row = self.log.record(t, task, progress_rows=self.rows)
+        if row is not None:
+            # The curve belongs to the task that just finished, not the next one.
+            self.rows = []
+        return row
+
+    def step(self, trainer, record):
+        """Sample the loss progress of one update. Most calls do nothing."""
+        row = loss_progress(trainer.hypernet, trainer.target, trainer,
+                            record["task"], record, every=self.every)
+        if row is not None:
+            self.rows.append(row)

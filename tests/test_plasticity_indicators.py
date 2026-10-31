@@ -532,6 +532,48 @@ class LossProgress(unittest.TestCase):
                                    sampled_record(task_loss=1.0, loss=5.0))
         self.assertEqual(row["loss_before"], 1.0)
 
+    def test_the_measurement_consumes_no_randomness(self):
+        """The study's own loop does not guard its callbacks, so this one must.
+
+        The real network draws no random numbers in a forward pass, so no
+        ordinary run would show a missing guard. A stand-in that does draw one
+        makes the guard the only thing standing between the measurement and
+        every batch that follows it.
+        """
+        target, hypernet, trainer = ready_to_spy()
+        seen = []
+
+        def greedy(module, state, args, **kwargs):
+            torch.rand(1)
+            return torch.zeros(len(args[0]), 4)
+
+        real = plasticity_indicators.functional_call
+        plasticity_indicators.functional_call = greedy
+        try:
+            before = torch.get_rng_state()
+            loss_progress(hypernet, target, trainer, "0", sampled_record(), every=1)
+            seen.append(torch.get_rng_state())
+        finally:
+            plasticity_indicators.functional_call = real
+        self.assertTrue(torch.equal(before, seen[0]))
+
+    def test_the_measurement_builds_no_graph(self):
+        """A graph held through a ResNet50 forward pass is real memory."""
+        target, hypernet, trainer = ready_to_spy()
+        enabled = []
+
+        def watcher(module, state, args, **kwargs):
+            enabled.append(torch.is_grad_enabled())
+            return torch.zeros(len(args[0]), 4)
+
+        real = plasticity_indicators.functional_call
+        plasticity_indicators.functional_call = watcher
+        try:
+            loss_progress(hypernet, target, trainer, "0", sampled_record(), every=1)
+        finally:
+            plasticity_indicators.functional_call = real
+        self.assertEqual(enabled, [False])
+
     def test_the_default_matches_the_adapter_study(self):
         """Every tenth update is the adapter study's own sampling rate."""
         self.assertEqual(LOSS_PROGRESS_EVERY, 10)

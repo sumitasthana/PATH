@@ -78,12 +78,16 @@ def score(trainer, tasks):
 
 
 def run_request(trainer, action, task, protected, active, record, boundary,
-                *, forget_interval=20, evaluation_interval=20):
+                *, forget_interval=20, evaluation_interval=20, on_step=None):
     """boundary(active) must persist state before returning or requesting a stop.
 
     Model and task buffers are saved by the caller. active contains the original
     protection snapshot, Adam state, loader/noise generator state, and counters.
     Learning saves at epoch boundaries; an interrupted epoch is replayed.
+
+    on_step(trainer, row) sees every learning update, with the batch tensors
+    that record rows leave out. Unlike boundary, it is not wrapped in anything:
+    a callback that reads the model must guard its own randomness.
     """
     h, config = trainer.hypernet, trainer.config
     resumed = active is not None
@@ -172,6 +176,11 @@ def run_request(trainer, action, task, protected, active, record, boundary,
                         'epoch': epoch + 1, 'loss': loss.item(), 'task_loss': task_loss.item(),
                         'protection_loss': preservation.item(), 'indices': indices.tolist(),
                         'input_sha256': _hash_named([('images', images), ('labels', labels)])})
+                    if on_step is not None:
+                        on_step(trainer, {'task': task, 'step': active['step'],
+                                          'epoch': epoch + 1,
+                                          'task_loss': task_loss.item(),
+                                          'images': images, 'labels': labels})
                     bar.update(1)
                     bar.set_postfix_str(f'epoch {epoch+1}/{config.epochs}, loss {loss.item():.3f}')
                 active['epoch'] = epoch + 1
