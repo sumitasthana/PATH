@@ -695,5 +695,35 @@ class Boundaries(unittest.TestCase):
         self.assertTrue(self.path.exists())
 
 
+class WrittenRecordsRead(unittest.TestCase):
+    """The writer and the reporting have to agree about every key name.
+
+    Both halves are hand-written, so a key renamed on one side and not the
+    other would pass both sets of tests and produce an empty column. This is
+    the only check that runs a real record through both.
+    """
+
+    def test_a_real_record_flattens_into_the_long_table(self):
+        from uncle.indicator_report import long_table, read_rows
+
+        config, target, hypernet, trainer, images = ready()
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "seed_0.jsonl"
+            log = BoundaryLog(path, hypernet, target, trainer,
+                              {"in_stream": images}, study="test",
+                              order="order_01", seed=0)
+            log.record(0)
+            nudge(hypernet)
+            log.record(1, task="3", progress_rows=[{"step": 10, "loss_progress": 0.5}])
+
+            flat = long_table(read_rows(path))
+
+        found = {(row["measure"], row["image_set"]) for row in flat}
+        for pair in (("delta_w_target", ""), ("effective_rank", "in_stream"),
+                     ("srank", "in_stream"), ("dormant_0.01", "in_stream"),
+                     ("loss_progress_mean", "")):
+            self.assertIn(pair, found)
+
+
 if __name__ == "__main__":
     unittest.main()
