@@ -40,6 +40,11 @@ PER_IMAGE_SET = ("effective_rank", "srank", "images", "units",
 # such as the loss progress curve, is left out by its type instead.
 IDENTITY = ("study", "order", "seed", "t", "task")
 
+# Panel order in the figures: nearest the training data first, furthest last.
+# Alphabetical order would put the different dataset in the middle, which is
+# the one panel a reader compares the other two against.
+NEAR_TO_FAR = ("in_stream", "probe", "eurosat")
+
 
 def read_rows(*paths):
     """Every boundary line from one or more run files, in the order written."""
@@ -124,6 +129,11 @@ def endpoints(flat):
     return summary
 
 
+def _panel_order(name):
+    """Known image sets in reading order, anything else after them by name."""
+    return (NEAR_TO_FAR.index(name) if name in NEAR_TO_FAR else len(NEAR_TO_FAR), name)
+
+
 def curves(flat, folder, *, prefix="fig_"):
     """One figure per measure: value against task position, one line per run.
 
@@ -139,13 +149,14 @@ def curves(flat, folder, *, prefix="fig_"):
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
+    from matplotlib.ticker import MaxNLocator
 
     folder = Path(folder)
     folder.mkdir(parents=True, exist_ok=True)
     written = []
     for measure in sorted({row["measure"] for row in flat}):
         picked = [row for row in flat if row["measure"] == measure]
-        sets = sorted({row["image_set"] for row in picked})
+        sets = sorted({row["image_set"] for row in picked}, key=_panel_order)
         figure, axes = plt.subplots(1, len(sets), figsize=(4 * len(sets), 3.4),
                                     sharey=True, squeeze=False)
         for axis, image_set in zip(axes[0], sets):
@@ -156,6 +167,8 @@ def curves(flat, folder, *, prefix="fig_"):
                           marker="o", markersize=3, label=run)
             axis.set_title(image_set or measure, fontsize=9)
             axis.set_xlabel("tasks learned")
+            # Tasks are counted, so half a task is not a tick a reader can use.
+            axis.xaxis.set_major_locator(MaxNLocator(integer=True))
         axes[0][0].set_ylabel(measure)
         axes[0][-1].legend(fontsize=7)
         figure.tight_layout()
