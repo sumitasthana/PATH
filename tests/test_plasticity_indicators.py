@@ -20,7 +20,7 @@ from uncle.config import Config
 from uncle.hypernet import HyperNetwork, build_target
 from uncle import plasticity_indicators
 from uncle.plasticity_indicators import (LOSS_PROGRESS_EVERY, BoundaryLog, activation_sites,
-                                         dormancy, dormant_fraction, features, flatten,
+                                         angle, dormancy, dormant_fraction, features, flatten,
                                          indicator_key, loss_progress, loss_progress_recorder,
                                          progress_summary, ranks, reference_code, srank,
                                          weight_change)
@@ -131,6 +131,108 @@ class WeightChange(unittest.TestCase):
         record = weight_change(*(flatten(hypernet, reference_code(hypernet)),) * 2)
         self.assertGreater(record["norm_target"], 0.0)
         self.assertGreater(record["norm_generator"], 0.0)
+
+    def test_the_angle_is_zero_against_itself(self):
+        """The t = 0 row reads zero degrees, and never NaN.
+
+        A vector against itself can give a cosine a hair above 1, and the arc
+        cosine of that is NaN. The boundary record refuses to write NaN, so
+        this would stop a run at its first boundary.
+        """
+        _, _, hypernet = small_model()
+        start = flatten(hypernet, reference_code(hypernet))
+        record = weight_change(start, start)
+        self.assertEqual(record["angle_target"], 0.0)
+        self.assertEqual(record["angle_generator"], 0.0)
+
+    def test_a_pure_shrink_moves_the_distance_but_not_the_angle(self):
+        """The case the angle exists for, on the real generator.
+
+        `nudge` steps on the sum of squares, whose gradient is the parameter
+        itself, so every parameter is multiplied by the same factor. The
+        weights genuinely move and `delta_w` says so. Nothing turns, and only
+        the angle can say that.
+        """
+        _, _, hypernet = small_model()
+        code = reference_code(hypernet)
+        start = flatten(hypernet, code)
+        nudge(hypernet, size=0.01)
+        record = weight_change(flatten(hypernet, code), start)
+        self.assertGreater(record["delta_w_generator"], 0.001)
+        self.assertLess(record["angle_generator"], 0.001)
+
+
+class Angle(unittest.TestCase):
+
+    def test_a_right_angle_reads_ninety_degrees(self):
+        here = torch.tensor([1.0, 0.0, 0.0])
+        self.assertAlmostEqual(angle(here, torch.tensor([0.0, 1.0, 0.0])), 90.0)
+
+    def test_the_opposite_direction_reads_one_eighty(self):
+        here = torch.tensor([1.0, 2.0, 3.0])
+        self.assertAlmostEqual(angle(here, -here), 180.0, places=3)
+
+    def test_two_opposite_vectors_do_not_raise(self):
+        """Without the clamp this pair stops a run at a boundary.
+
+        Two unit vectors cannot be more than 2 apart on paper. In floating
+        point they can, by one step in the last digit, and `asin` of anything
+        past 1 raises rather than returning. This exact vector against its own
+        negative is one of the pairs where that happens, so the clamp is not
+        decoration.
+        """
+        here = torch.tensor([-0.8646355867385864, 0.2989608347415924,
+                             0.41921865940093994, -0.0798543244600296,
+                             0.9264108538627625, 0.8156775236129761,
+                             0.49518901109695435, -0.16431698203086853])
+        apart = (here.double() / here.double().norm()
+                 - (-here).double() / (-here).double().norm()).norm()
+        self.assertGreater(float(apart), 2.0, "this pair no longer overshoots, "
+                                              "so it no longer tests the clamp")
+        self.assertAlmostEqual(angle(here, -here), 180.0, places=3)
+
+    def test_growing_without_turning_reads_zero(self):
+        """This is the whole reason the angle is recorded beside the distance.
+
+        These weights travelled a long way: the distance is 4 times the
+        starting size. Nothing turned, and only the angle can say so.
+        """
+        began = torch.tensor([1.0, 2.0, 3.0])
+        here = began * 5
+        self.assertAlmostEqual(angle(here, began), 0.0)
+        moved = weight_change({"target": here, "generator": here},
+                              {"target": began, "generator": began})
+        self.assertAlmostEqual(moved["delta_w_target"], 4.0, places=5)
+
+    def test_a_bigger_turn_reads_a_bigger_angle(self):
+        """Ordering has to hold, or the number says nothing about how far it turned."""
+        began = torch.tensor([1.0, 0.0])
+        small = angle(torch.tensor([1.0, 0.1]), began)
+        large = angle(torch.tensor([1.0, 0.5]), began)
+        self.assertGreater(large, small)
+        self.assertGreater(small, 0.0)
+
+    def test_a_long_sum_is_added_in_double_precision(self):
+        """Float32 cannot see this angle at the size the real vectors are.
+
+        A ResNet50's weight vector has about 25 million entries. Adding that
+        many products in float32 drifts far enough to report a cosine above 1,
+        which is not a cosine. The drift is near 3e-3 while a one percent move
+        turns the vector by about 5e-5 of a cosine, so the cheap sum buries the
+        signal. This checks the sum is not done in float32, on a vector long
+        enough for the difference to show.
+        """
+        torch.manual_seed(0)
+        began = torch.randn(8_000_000)
+        here = began + 0.01 * torch.randn(8_000_000)
+
+        cheap = float(torch.dot(here, began) / (here.norm() * began.norm()))
+        self.assertGreater(cheap, 1.0, "float32 should overshoot here; if it "
+                                       "does not, this test proves nothing")
+        # The real one stays a cosine, so the arc cosine is defined without
+        # the clamp doing the work.
+        self.assertGreater(angle(here, began), 0.0)
+        self.assertLess(angle(here, began), 1.0)
 
     def test_task_code_movement_is_excluded(self):
         """Training a task code alone must not register as generator movement.

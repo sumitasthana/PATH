@@ -28,6 +28,13 @@ starting vector's norm, which is the adapter study's
 dW = ||W - W0||_F / ||W0||_F. Relative distances can be compared between the
 two, and against that study's numbers.
 
+A distance alone cannot say what kind of move it was. Weights that double in
+size without turning travel a long way, and weights that turn without growing
+can travel the same distance. So the angle between the two vectors is recorded
+beside the distance, in degrees, and the size of each vector beside both. The
+three together separate growing from turning, which the adapter study's single
+number leaves mixed.
+
 The target weights are read through one fixed reference code that belongs to no
 task. Holding the input constant is the whole point. A task's own code moves
 while the task is being learned, so weights generated from it mix two causes:
@@ -59,6 +66,7 @@ The pieces are also callable on their own, which is how the tests use them.
 """
 
 import json
+import math
 from pathlib import Path
 
 import torch
@@ -107,18 +115,49 @@ def flatten(hypernet, code):
             "generator": generator.detach().float().cpu()}
 
 
+def angle(here, began):
+    """The angle between two weight vectors, in degrees.
+
+    Distance and size together still leave one thing unsaid. Weights that
+    double in size without turning at all travel a long way, and weights that
+    turn without growing may travel the same distance. Those are different
+    things happening to a network, and `delta_w` alone cannot tell them apart.
+    This is the part it cannot see.
+
+    The dot product is taken in double precision, which is not fussiness. A
+    ResNet50's weight vector has about 25 million entries, and a float32 dot
+    product over that many terms accumulates enough rounding error to read a
+    cosine of 1.003, which is not a cosine at all. The error is near 3e-3 while
+    a one percent move turns the vector by about 5e-5 of a cosine, so the
+    cheaper sum hides exactly the signal this measurement exists to find.
+
+    The angle is taken from the distance between the two unit vectors rather
+    than from the arc cosine of their dot product. Both are the same angle on
+    paper. They are not the same in floating point: near zero degrees the arc
+    cosine throws away about half the digits it is given, and near zero degrees
+    is where this measurement is expected to spend its whole life. The same
+    form also makes a vector against itself read exactly zero, which is what
+    the t = 0 row has to say, and keeps the arc sine away from the NaN the
+    boundary record refuses to write.
+    """
+    here, began = here.double(), began.double()
+    apart = float((here / here.norm() - began / began.norm()).norm())
+    return 2 * math.degrees(math.asin(min(apart / 2, 1.0)))
+
+
 def weight_change(now, start):
-    """Relative distance travelled, and current size, for both vectors.
+    """Relative distance travelled, current size, and direction, for both vectors.
 
     `start` is a `flatten` result from the boundary this run counts from,
     normally t = 0. Comparing a vector with itself gives exactly zero, which is
-    what the t = 0 row should read.
+    what the t = 0 row should read, for the distance and for the angle.
     """
     record = {}
     for part in ("target", "generator"):
         here, began = now[part], start[part]
         record[f"norm_{part}"] = float(here.norm())
         record[f"delta_w_{part}"] = float((here - began).norm() / began.norm())
+        record[f"angle_{part}"] = angle(here, began)
     return record
 
 
