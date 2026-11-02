@@ -7,6 +7,17 @@ from pathlib import Path, PurePosixPath
 import re
 import uuid
 
+try:
+    # Network trouble while a response body is being read: a timed out read, a
+    # dropped connection, a body that ended early.
+    from botocore.exceptions import HTTPClientError, IncompleteReadError
+    STREAM_FAILURES = (HTTPClientError, IncompleteReadError)
+except ImportError:
+    STREAM_FAILURES = ()
+
+#: How many times to read an object back before giving up.
+ATTEMPTS = 3
+
 
 def sha256(path):
     digest = hashlib.sha256()
@@ -68,7 +79,8 @@ class R2Store:
             for item in page.get('Contents', []):
                 yield item['Key']
 
-    def verify(self, key, expected_sha256, expected_size):
+    def _read_back(self, key, expected_size):
+        """Stream the object once, returning its digest and byte count."""
         response = self.client.get_object(Bucket=self.bucket, Key=_key(key))
         body = response['Body']
         digest, size = hashlib.sha256(), 0
@@ -83,7 +95,25 @@ class R2Store:
             body.close()
             if bar:
                 bar.close()
-        if size != expected_size or digest.hexdigest() != expected_sha256:
+        return digest.hexdigest(), size
+
+    def verify(self, key, expected_sha256, expected_size):
+        """Read the object back, retrying when the connection stalls part way.
+
+        botocore's own retries cover sending the request, not the body that
+        arrives afterwards: a read that times out mid-stream raises straight
+        through. That ended a whole training session on 2 November 2026 while
+        checking a saved checkpoint, so start the read again instead. Reading
+        changes nothing, so a repeat is always safe.
+        """
+        for attempt in range(ATTEMPTS):
+            try:
+                digest, size = self._read_back(key, expected_size)
+                break
+            except STREAM_FAILURES:
+                if attempt == ATTEMPTS - 1:
+                    raise
+        if size != expected_size or digest != expected_sha256:
             raise ValueError(f'R2 file verification failed: {key}')
 
     def upload(self, path, key, *, overwrite=False):

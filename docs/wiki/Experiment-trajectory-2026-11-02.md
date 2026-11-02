@@ -239,3 +239,27 @@ where the signal and the method's error are the same size.
    stream as well as at its ends, and it needs no new stream run.
 3. Report the indicators as a change from boundary one, not boundary zero, or report both. Most of
    what boundary zero contributes is the random initialisation and the one-off move away from it.
+
+## Seed 2 attempt: stopped by a stalled upload
+
+Two faults showed up before any result did.
+
+**The dataset path was wrong in notebook 36.** `DATA_ROOT` pointed at `/content/data`, but the
+downloader only fetches Tiny ImageNet when the folder itself is named `tiny-imagenet-200`, because
+it unzips into the parent. Every other notebook uses the full path; this one had drifted. Fixed in
+the notebook.
+
+**The run then died on a read timeout to R2.** Settings as intended: seed 2, order 01, eight
+tasks, 240 minute budget with a 15 minute reserve, on an A100 40GB. Boundary 0 was measured at
+20:41:42 on the fresh generator. Saves at 20:43:57, 20:46:26 and 20:48:41 all reported "still on
+task 1 of 8". About eight and a half minutes in, during task 1, a save raised
+`ReadTimeoutError: Read timeout on endpoint URL`.
+
+The upload itself had gone through. The failure was in reading the file back to check it. The
+retry settings on the R2 client cover sending a request, not the body that arrives afterwards, so
+one stalled read ended the session. The record kept one boundary and no boundary models.
+
+Fixed in `uncle/storage.py`: the read-back now starts again, up to three times, before giving up.
+Reading changes nothing, so a repeat is safe. `tests/test_storage.py` covers it.
+
+No seed 2 numbers exist. The run has to be started again from the beginning.

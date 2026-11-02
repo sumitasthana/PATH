@@ -132,6 +132,28 @@ class StorageTests(unittest.TestCase):
             self.assertLess(client.uploads.index('lesson/checkpoint.pt'), len(client.uploads) - 1)
             self.assertEqual(json.loads(client.objects['lesson/report.json'][0])['status'], 'complete')
 
+    def test_verify_retries_a_read_that_times_out_part_way(self):
+        # The upload itself succeeded; only reading it back stalled. The old code
+        # let that kill the run, so check the read is simply started again.
+        from botocore.exceptions import ReadTimeoutError
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'checkpoint.pt'
+            path.write_bytes(b'model')
+            client = Files()
+            reads = []
+
+            def flaky_get_object(Bucket, Key):
+                reads.append(Key)
+                if len(reads) == 1:
+                    raise ReadTimeoutError(endpoint_url=None)
+                return {'Body': io.BytesIO(client.objects[Key][0])}
+
+            client.get_object = flaky_get_object
+            store = R2Store(client, 'test')
+            store.upload(path, 'lesson/checkpoint.pt')
+            self.assertEqual(reads, ['lesson/checkpoint.pt'] * 2)
+
+
     def test_unsafe_keys_and_endpoints_rejected(self):
         store = R2Store(Files(), 'test')
         for key in ('../model', '/model', 'a/../model', 'a\\model', 'C:/model', 'a//model'):
