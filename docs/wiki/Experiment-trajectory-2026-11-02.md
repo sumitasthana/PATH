@@ -262,4 +262,6 @@ one stalled read ended the session. The record kept one boundary and no boundary
 Fixed in `uncle/storage.py`: the read-back now starts again, up to three times, before giving up.
 Reading changes nothing, so a repeat is safe. `tests/test_storage.py` covers it.
 
-No seed 2 numbers exist. The run has to be started again from the beginning.
+No seed 2 indicator numbers exist beyond boundary zero. The run does not start over: the
+boundary zero record and its baseline reached R2, and the three saves during task 1 were all
+verified, so a new session resumes inside task 1.
