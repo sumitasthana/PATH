@@ -58,7 +58,7 @@ class ArchiveTests(unittest.TestCase):
         expected = {'Home.md', '_Sidebar.md', 'Experiment-trajectory.md',
             'Concepts-and-processes.md', 'Model-diagnostics.md', 'Weekly-Updates.md',
             'An-Unlearning-Framework-for-Continual-Learning.md',
-            'How-unlearning-works-here.md'}
+            'How-Unlearning-Works.md'}
         expected.update(path.name for path in (ROOT / 'docs/wiki').glob('Experiment-trajectory-*.md'))
         expected.update(f"Weekly-Updates-{path.stem.removeprefix('WEEKLY_UPDATES_')}.md"
                         for path in (ROOT / 'docs').glob('WEEKLY_UPDATES_*.md'))

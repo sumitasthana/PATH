@@ -22,7 +22,7 @@ PAGE = Path('docs/wiki/Experiment-trajectory.md')
 # heading, which is what stops an unrelated file being pushed over a wiki page.
 # The heading text itself is free: these pages get retitled.
 EXTRA_PAGES = ['Weekly-Updates.md', 'Weekly-Updates-*.md',
-               'How-unlearning-works-here.md']
+               'How-Unlearning-Works.md']
 LOGS = ROOT / 'outputs/wiki_publication'
 
 

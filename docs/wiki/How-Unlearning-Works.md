@@ -1,14 +1,9 @@
-# How unlearning works here
+# How unlearning works
 
 Unlearning a task is a short training run. It teaches the hypernetwork to turn
 that task's code into junk, while a second term in the loss holds every other
 task's weights where they already were. No images from the forgotten task are
 used. The code for the task is all the procedure needs.
-
-For the general ideas behind this (what machine unlearning is, what a
-preservation loss is, how forgetting is measured), see the
-[concepts FAQ](https://github.com/sumitasthana/PATH/wiki/Concepts-and-processes).
-This page is only about what the code in this repository actually does.
 
 ## The pieces involved
 
@@ -36,10 +31,10 @@ Each step does the following.
    output, before the per-layer scaling is applied.
 2. Draw fresh Gaussian noise of the same shape, 10 draws by default, and
    average the squared distance between the raw output and each draw. This is
-   the forget term.
+   the **forget term**.
 3. For every protected task, generate its weights now and compare them with the
    same task's weights from the snapshot, squared distance again. This is the
-   preservation term.
+   **preservation term**.
 4. Add them: `loss = gamma * forget_term + preserve_term`, with gamma at 0.01
    by default. One backward pass, one Adam step on the generator weights only.
 

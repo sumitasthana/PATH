@@ -7,7 +7,7 @@ repository links redirect; old `github.io/CARK` pages do not.
 
 - [Experiment trajectory](https://github.com/sumitasthana/PATH/wiki/Experiment-trajectory): latest findings and experiment records by date.
 - [Weekly updates](https://github.com/sumitasthana/PATH/wiki/Weekly-Updates): what we measured each week, what it means, and what is next.
-- [How unlearning works here](https://github.com/sumitasthana/PATH/wiki/How-unlearning-works-here): what a forget request does in this code, step by step.
+- [How unlearning works](https://github.com/sumitasthana/PATH/wiki/How-Unlearning-Works): what a forget request does in this code, step by step.
 - [Concepts and processes](https://github.com/sumitasthana/PATH/wiki/Concepts-and-processes): what the model does and how to read its results.
 - [Model diagnostics](https://github.com/sumitasthana/PATH/wiki/Model-diagnostics): inspect weights, gradients, and Fisher scores.
 - [Anchor paper](https://github.com/sumitasthana/PATH/wiki/An-Unlearning-Framework-for-Continual-Learning): the paper we are reproducing.

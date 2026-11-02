@@ -129,8 +129,8 @@ def render(registry, traces, gradients, norms):
         for path in sorted((ROOT / "docs").glob("WEEKLY_UPDATES_*.md"))})
     # Written by hand in docs/wiki, like the dated records, so it is read from
     # where it already lives rather than copied out of docs.
-    pages["How-unlearning-works-here.md"] = (
-        ROOT / "docs/wiki/How-unlearning-works-here.md").read_text(encoding="utf-8")
+    pages["How-Unlearning-Works.md"] = (
+        ROOT / "docs/wiki/How-Unlearning-Works.md").read_text(encoding="utf-8")
     pages["Model-diagnostics.md"] = (
         (ROOT / "docs/MODEL_DIAGNOSTICS.md").read_text(encoding="utf-8")
         .replace("(../notebooks/04_gradient_diagnostics.ipynb)",
@@ -142,7 +142,7 @@ def render(registry, traces, gradients, norms):
     entries = [
         ("Experiment trajectory", "Experiment-trajectory", "latest findings and experiment records by date"),
         ("Weekly updates", "Weekly-Updates", "what we measured each week, what it means, and what is next"),
-        ("How unlearning works here", "How-unlearning-works-here",
+        ("How unlearning works", "How-Unlearning-Works",
          "what a forget request does in this code, step by step"),
         ("Concepts and processes", "Concepts-and-processes", "what the model does and how to read its results"),
         ("Model diagnostics", "Model-diagnostics", "inspect weights, gradients, and Fisher scores"),
