@@ -24,15 +24,20 @@ class PublicationTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 publication.remove_checkout(temporary_root, temporary_root)
 
+    def extra_names(self):
+        """One concrete filename per published extra-page pattern, in copy order."""
+        return [pattern.replace('*', '27OCT2026') for pattern in publication.EXTRA_PAGES]
+
     def write_extra_pages(self, source):
         """The hand-written pages published beside the record, with valid content.
 
         The heading text is deliberately not the page name. These pages get
         retitled by hand, and a retitle must not stop the publication.
         """
-        for page in publication.EXTRA_PAGES:
-            (source / page).parent.mkdir(parents=True, exist_ok=True)
-            (source / page).write_text('# A title someone changed\n\nAn answer.\n')
+        for name in self.extra_names():
+            page = source / publication.PAGE.parent / name
+            page.parent.mkdir(parents=True, exist_ok=True)
+            page.write_text('# A title someone changed\n\nAn answer.\n')
 
     def test_publication_copies_only_record_and_svg_evidence(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -49,7 +54,7 @@ class PublicationTests(unittest.TestCase):
             wiki.mkdir()
             (wiki / 'Home.md').write_text('Keep this page')
             copied = publication.copy_record(source, wiki)
-            extras = [page.name for page in publication.EXTRA_PAGES]
+            extras = self.extra_names()
             self.assertEqual(copied, ['Experiment-trajectory.md', dated, *extras,
                                       'figures/2026-10-04/chart.svg'])
             self.assertIn('Results.', (wiki / dated).read_text())
@@ -67,14 +72,14 @@ class PublicationTests(unittest.TestCase):
             (source / publication.PAGE).parent.mkdir(parents=True)
             (source / publication.PAGE).write_text('# Experiment trajectory\n\nNew index.\n')
             self.write_extra_pages(source)
-            spoiled = next(iter(publication.EXTRA_PAGES))
-            (source / spoiled).write_text('An unrelated document')
+            spoiled = self.extra_names()[0]
+            (source / publication.PAGE.parent / spoiled).write_text('An unrelated document')
             wiki.mkdir()
             (wiki / publication.PAGE.name).write_text('Existing index')
             with self.assertRaises(ValueError):
                 publication.copy_record(source, wiki)
             self.assertEqual((wiki / publication.PAGE.name).read_text(), 'Existing index')
-            self.assertFalse((wiki / spoiled.name).exists())
+            self.assertFalse((wiki / spoiled).exists())
 
     def test_bad_record_is_rejected_before_replacing_wiki_page(self):
         with tempfile.TemporaryDirectory() as directory:

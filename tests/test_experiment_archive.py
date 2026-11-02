@@ -57,8 +57,11 @@ class ArchiveTests(unittest.TestCase):
         pages = wiki.render(self.registry, self.traces, self.gradients, self.norms)
         expected = {'Home.md', '_Sidebar.md', 'Experiment-trajectory.md',
             'Concepts-and-processes.md', 'Model-diagnostics.md', 'Weekly-Updates.md',
-            'An-Unlearning-Framework-for-Continual-Learning.md'}
+            'An-Unlearning-Framework-for-Continual-Learning.md',
+            'How-unlearning-works-here.md'}
         expected.update(path.name for path in (ROOT / 'docs/wiki').glob('Experiment-trajectory-*.md'))
+        expected.update(f"Weekly-Updates-{path.stem.removeprefix('WEEKLY_UPDATES_')}.md"
+                        for path in (ROOT / 'docs').glob('WEEKLY_UPDATES_*.md'))
         self.assertEqual(set(pages), expected)
         for name, text in pages.items():
             self.assertEqual((ROOT / "docs" / "wiki" / name).read_text(encoding="utf-8"), text, name)

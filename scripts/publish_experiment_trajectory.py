@@ -17,10 +17,12 @@ ROOT = Path(__file__).resolve().parents[1]
 REPOSITORY = 'https://github.com/sumitasthana/PATH.git'
 WIKI = 'https://github.com/sumitasthana/PATH.wiki.git'
 PAGE = Path('docs/wiki/Experiment-trajectory.md')
-# Other hand-written pages to publish beside the record. Each must start with a
-# markdown heading, which is what stops an unrelated file being pushed over a
-# wiki page. The heading text itself is free: these pages get retitled.
-EXTRA_PAGES = [Path('docs/wiki/Weekly-Updates.md')]
+# Other pages to publish beside the record, as glob patterns so a new weekly
+# page travels without editing this list. Each must start with a markdown
+# heading, which is what stops an unrelated file being pushed over a wiki page.
+# The heading text itself is free: these pages get retitled.
+EXTRA_PAGES = ['Weekly-Updates.md', 'Weekly-Updates-*.md',
+               'How-unlearning-works-here.md']
 LOGS = ROOT / 'outputs/wiki_publication'
 
 
@@ -49,11 +51,12 @@ def copy_record(source, wiki):
         if not dated_text.startswith('# Experiment trajectory: ') or '\u2014' in dated_text:
             raise ValueError(f'The dated experiment page failed its prose check: {path.name}')
         records[path.name] = dated_text
-    for page in EXTRA_PAGES:
-        extra_text = (source / page).read_text(encoding='utf-8')
-        if not extra_text.startswith('# ') or '\u2014' in extra_text:
-            raise ValueError(f'The page failed its heading or prose check: {page.name}')
-        records[page.name] = extra_text
+    for pattern in EXTRA_PAGES:
+        for page in sorted((source / PAGE.parent).glob(pattern)):
+            extra_text = page.read_text(encoding='utf-8')
+            if not extra_text.startswith('# ') or '\u2014' in extra_text:
+                raise ValueError(f'The page failed its heading or prose check: {page.name}')
+            records[page.name] = extra_text
     for name, content in records.items():
         (wiki / name).write_text(content, encoding='utf-8')
     names = list(records)

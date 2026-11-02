@@ -4,6 +4,7 @@ import argparse
 import csv
 import json
 import math
+import re
 import shutil
 from pathlib import Path
 
@@ -100,12 +101,36 @@ def render(registry, traces, gradients, norms):
     link = lambda title, slug: f"[{title}]({base}/wiki/{slug})"
     pages = {
         "Experiment-trajectory.md": (ROOT / "docs/wiki/Experiment-trajectory.md").read_text(encoding="utf-8"),
-        "Weekly-Updates.md": (ROOT / "docs/WEEKLY_UPDATES.md").read_text(encoding="utf-8"),
         "Concepts-and-processes.md": (ROOT / "docs/CONCEPTS.md").read_text(encoding="utf-8"),
         "An-Unlearning-Framework-for-Continual-Learning.md": (ROOT / "docs/ANCHOR_PAPER.md").read_text(encoding="utf-8"),
     }
     pages.update({path.name: path.read_text(encoding="utf-8")
                   for path in sorted((ROOT / "docs/wiki").glob("Experiment-trajectory-*.md"))})
+
+    # The weekly index and its per-week pages link each other by relative
+    # filename. That works inside docs/ but not on the wiki, which is flat and
+    # has no .md files. So each week becomes its own wiki page and both link
+    # shapes are rewritten to wiki addresses.
+    def for_wiki(text):
+        text = re.sub(r"\]\(WEEKLY_UPDATES_([A-Z0-9]+)\.md\)",
+                      rf"]({base}/wiki/Weekly-Updates-\1)", text)
+        # A bare filename reads as a filename. On the wiki the date column
+        # beside it already says which week this is.
+        text = re.sub(r"\[WEEKLY_UPDATES_[A-Z0-9]+\.md\]", "[Read the update]", text)
+        text = text.replace("](WEEKLY_UPDATES.md)", f"]({base}/wiki/Weekly-Updates)")
+        return text.replace("(wiki/Experiment-trajectory.md)",
+                            f"({base}/wiki/Experiment-trajectory)")
+
+    pages["Weekly-Updates.md"] = for_wiki(
+        (ROOT / "docs/WEEKLY_UPDATES.md").read_text(encoding="utf-8"))
+    pages.update({
+        f"Weekly-Updates-{path.stem.removeprefix('WEEKLY_UPDATES_')}.md":
+            for_wiki(path.read_text(encoding="utf-8"))
+        for path in sorted((ROOT / "docs").glob("WEEKLY_UPDATES_*.md"))})
+    # Written by hand in docs/wiki, like the dated records, so it is read from
+    # where it already lives rather than copied out of docs.
+    pages["How-unlearning-works-here.md"] = (
+        ROOT / "docs/wiki/How-unlearning-works-here.md").read_text(encoding="utf-8")
     pages["Model-diagnostics.md"] = (
         (ROOT / "docs/MODEL_DIAGNOSTICS.md").read_text(encoding="utf-8")
         .replace("(../notebooks/04_gradient_diagnostics.ipynb)",
@@ -117,6 +142,8 @@ def render(registry, traces, gradients, norms):
     entries = [
         ("Experiment trajectory", "Experiment-trajectory", "latest findings and experiment records by date"),
         ("Weekly updates", "Weekly-Updates", "what we measured each week, what it means, and what is next"),
+        ("How unlearning works here", "How-unlearning-works-here",
+         "what a forget request does in this code, step by step"),
         ("Concepts and processes", "Concepts-and-processes", "what the model does and how to read its results"),
         ("Model diagnostics", "Model-diagnostics", "inspect weights, gradients, and Fisher scores"),
         ("Anchor paper", "An-Unlearning-Framework-for-Continual-Learning", "the paper we are reproducing"),
