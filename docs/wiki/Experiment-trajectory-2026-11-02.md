@@ -24,7 +24,8 @@ data it does.** That removes the explanation offered on 1 November, where the fa
 | `eurosat` | 4.0041 | 2.1648 | -1.8393 | 46 percent |
 
 Three image sets, one of them from a different dataset entirely, all falling by 45 to 46
-percent. The two Tiny ImageNet sets track each other closely at both ends, and EuroSAT sits
+percent. **Seed 1, below, does not reproduce this agreement**; its three sets fall by 35, 35 and
+15 percent. The two Tiny ImageNet sets track each other closely at both ends, and EuroSAT sits
 lower throughout, which is the domain gap rather than a different behaviour.
 
 srank falls as well, and it separates the two datasets: `in_stream` 226 to 200 and `probe` 227
@@ -40,8 +41,8 @@ Dormant units rise everywhere, by about the same amount on all three sets.
 | 0.1 | 0.2901 to 0.3630 | 0.2900 to 0.3626 | 0.3008 to 0.3685 |
 
 About a sixteenth of all units went quiet over the stream at every threshold. The two Tiny
-ImageNet sets agree to three decimal places, which is close enough to be worth checking against
-a second seed, though the sets are built from disjoint tasks and the statistic is coarse.
+ImageNet sets agree to three decimal places. Seed 1 agrees with seed 0 on dormancy, so this is
+the one indicator here that reproduced.
 
 ### What this contradicts
 
@@ -112,11 +113,129 @@ training starts.
 - **The contradiction rests on one seed against three.** The probe result has three seeds; this
   has one. Seeds 1 and 2 are needed before the disagreement is stated as a result.
 
+## The second indicator run, seed 1
+
+Notebook 36, same study, same order, `SEED` changed to 1. Started 2 November at 16:01 and
+completed at 18:16, runtime clock. Two hours 15 minutes on an NVIDIA A100-SXM4-40GB, against one
+hour 22 minutes for seed 0. The per-task times are 13:21, 15:57, 21:45, 16:02, 16:23, 15:30,
+17:03 and 16:30, so the whole run was slower rather than one task stalling. Nothing about the run
+differed except the seed, so this is the machine, not the method.
+
+Status complete, nine boundaries recorded. This run carried the angle, and it kept a model at
+boundaries 2, 4 and 6, the first use of the code added in `9b746a4`.
+
+| Position in the order | 1st | 2nd | 3rd | 4th | 5th | 6th | 7th | 8th |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Task | 3 | 0 | 9 | 5 | 17 | 1 | 7 | 14 |
+| Accuracy, percent | 34.8 | 42.6 | 48.8 | 32.8 | 50.2 | 54.4 | 44.0 | 45.8 |
+
+Mean 44.17 percent, against 39.20 for seed 0.
+
+### The starting level is set by the initialisation, not by anything learned
+
+Boundary zero is a fresh generator that has seen no data. The two seeds disagree there by a large
+amount.
+
+| Image set | Effective rank at t = 0, seed 0 | Seed 1 |
+| --- | ---: | ---: |
+| `in_stream` | 7.4249 | 4.5626 |
+| `probe` | 7.3057 | 4.5691 |
+| `eurosat` | 4.0041 | 2.6302 |
+
+Seed 0 starts 63 percent higher on the two Tiny ImageNet sets. No training has happened. So the
+absolute value of effective rank at the reference code is a property of the random
+initialisation. A single number such as "effective rank 4.0" carries no meaning on its own, and
+two studies that report different levels may differ only in their seeds.
+
+### The size of the fall is not stable either
+
+| Image set | Seed 0, t = 0 to t = 8 | Seed 1 |
+| --- | ---: | ---: |
+| `in_stream` | 7.4249 to 4.0169, down 45.9 percent | 4.5626 to 2.9708, down 34.9 percent |
+| `probe` | 7.3057 to 4.0473, down 44.6 percent | 4.5691 to 2.9684, down 35.0 percent |
+| `eurosat` | 4.0041 to 2.1648, down 45.9 percent | 2.6302 to 2.2345, down 15.0 percent |
+
+Both seeds fall. The direction holds. The size does not: 46 against 35 percent on `in_stream`,
+and 46 against 15 percent on EuroSAT.
+
+**This removes a claim made earlier on this page.** The three image sets of seed 0 all fell by 45
+to 46 percent, and that agreement was called internal corroboration. Seed 1 does not reproduce
+it. Its three sets fall by 35, 35 and 15 percent. The two Tiny ImageNet sets still track each
+other closely, which is expected because they are built the same way from the same dataset.
+EuroSAT does not track them. With one seed the three-way agreement looked like a signal; with two
+it looks like a coincidence of seed 0.
+
+Seed 1 is also not monotone. Its `in_stream` rank goes 4.56, 3.38, 4.18, 3.63, 3.34, 3.27, 3.16,
+2.97, 2.97. It falls on the first task, rises above its own second reading on the third, then
+falls again. Seed 0 falls almost monotonically. So the shape of the curve is not stable across
+seeds either.
+
+### Almost all of the movement happens on the first task
+
+| Measurement | Share of the whole stream's change that happens on task 1 |
+| --- | ---: |
+| Dormant units at 0.01, `in_stream`, seed 0 | 80 percent |
+| Dormant units at 0.01, `in_stream`, seed 1 | 83 percent |
+| Angle of the generated target weights, seed 1 | 90 percent |
+| Effective rank, `in_stream`, seed 0 | 34 percent |
+| Effective rank, `in_stream`, seed 1 | 74 percent |
+
+Dormancy rises from about 0.16 to about 0.22 on the first task and then sits nearly flat for the
+remaining seven. The generated weights turn 19.32 of their 21.56 degrees on the first task and
+then barely turn again.
+
+The generator itself behaves differently. Its angle grows steadily across the whole stream: 1.83,
+3.15, 4.02, 4.72, 5.43, 6.03, 6.47, 6.85 degrees. So the generator keeps moving while what it
+writes at the reference code stops moving. That is new and was not visible before the angle was
+recorded.
+
+A reasonable reading is that the first task moves the generator out of its random starting region
+and into a region where it writes trained-looking weights, and that most of what these indicators
+report is that one event. Later tasks move the generator further without changing much of what it
+produces at a neutral code. This is an interpretation of two runs, not a result.
+
+### Lower rank came with better accuracy
+
+Seed 1 ends with `in_stream` effective rank 2.97 and mean accuracy 44.17 percent. Seed 0 ends with
+rank 4.02 and mean accuracy 39.20 percent. The seed with less of the quantity being read as
+capacity performed better.
+
+Two points are not a trend, and the two runs differ in many ways at once. But this is the only
+direct comparison available between the proxy and performance, and it points the opposite way to
+the reading the proxy is usually given.
+
+### The angle recovery from the norms is correct
+
+Seed 0 has no angle column, so its start-to-end angle was recovered from its recorded norms by the
+law of cosines. Seed 1 records both, which allows the method to be checked against the truth on
+the same run.
+
+| | Recovered from the norms | Measured directly | Error |
+| --- | ---: | ---: | ---: |
+| Generator | 6.835 degrees | 6.852 degrees | 0.25 percent |
+| Generated target | 21.542 degrees | 21.559 degrees | 0.08 percent |
+
+The recovery is sound end to end, as argued on this page, and the recovered figures for seed 0,
+6.81 and 22.39 degrees, stand. The same recovery remains unusable for the task-by-task steps,
+where the signal and the method's error are the same size.
+
+### What the two runs together still cannot say
+
+- **Two seeds, not three.** Seed 2 has not been run. A spread from two points is weak.
+- **Still no control for movement alone.** Nothing yet shows whether a generator moved the same
+  distance by any means would narrow the same way.
+- **The disagreement with the direct probe is untested on this seed.** The probe has not been run
+  on seed 1. The boundary models at 2, 4 and 6 now exist for it.
+- **The slower runtime is unexplained.** It has no effect on the numbers, but it is unaccounted
+  for.
+
 ## Next decision
 
-1. Run seeds 1 and 2 of `indicator_stream_v1`, about three hours of A100. They record the angle
-   directly and they keep a model at boundaries 2, 4 and 6, added in commit `9b746a4`.
-2. With three seeds, decide whether the rank and dormancy changes clear their own floor, and
-   whether the disagreement with the direct probe survives.
-3. Seed 0 kept no mid-stream models, because its job finished before `9b746a4`. Probing it at
-   two, four and six tasks would need a fresh run under a new study name.
+1. Run seed 2 of `indicator_stream_v1`, about two hours of A100. Three seeds is the minimum for a
+   spread, and seeds 0 and 1 already disagree enough that the third will decide whether anything
+   except the direction of the fall survives.
+2. Run the direct plasticity probe on seed 1 at boundaries 2, 4 and 6, using the models this run
+   kept. That is the first test of whether the proxies and the probe disagree in the middle of a
+   stream as well as at its ends, and it needs no new stream run.
+3. Report the indicators as a change from boundary one, not boundary zero, or report both. Most of
+   what boundary zero contributes is the random initialisation and the one-off move away from it.
