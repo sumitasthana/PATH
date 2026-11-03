@@ -156,7 +156,8 @@ two studies that report different levels may differ only in their seeds.
 | `eurosat` | 4.0041 to 2.1648, down 45.9 percent | 2.6302 to 2.2345, down 15.0 percent |
 
 Both seeds fall. The direction holds. The size does not: 46 against 35 percent on `in_stream`,
-and 46 against 15 percent on EuroSAT.
+and 46 against 15 percent on EuroSAT. **Seed 2, below, explains why**: the size of the fall
+is set by where the run started.
 
 **This removes a claim made earlier on this page.** The three image sets of seed 0 all fell by 45
 to 46 percent, and that agreement was called internal corroboration. Seed 1 does not reproduce
@@ -229,39 +230,148 @@ where the signal and the method's error are the same size.
 - **The slower runtime is unexplained.** It has no effect on the numbers, but it is unaccounted
   for.
 
+## The third indicator run, seed 2, and what three seeds say
+
+Notebook 36, same study and order, `SEED` changed to 2. This run was done in two Colab
+sessions. The log kept here covers the second, which ran on 2 November from 23:15 to 23:46 and
+finished the last two tasks in 31 minutes 19 seconds, on an NVIDIA A100-SXM4-40GB. The first
+session's times were not kept, so **the total runtime for seed 2 is not recorded** and is not
+guessed here.
+
+Status complete, nine boundaries. Boundary models were kept at 2, 4 and 6; the first two were
+copied by the earlier session and the third by this one.
+
+Resuming does not affect the measurements. Boundary 0 is stored in a separate baseline file that
+a resumed session downloads, so distance and angle are still measured from the true starting
+weights. Seed 2's end-to-end figures line up with seed 1's, which is the check that this worked.
+
+One measurement has a gap. `loss_progress_mean` is missing at boundaries 1 and 6, because those
+are tasks a session picked up nearly finished and completed with fewer than ten training updates
+left to sample. Boundary 6 took 57 seconds. This costs nothing, because the measure is not
+interpretable in this experiment anyway.
+
+| Position in the order | 1st | 2nd | 3rd | 4th | 5th | 6th | 7th | 8th |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Task | 3 | 0 | 9 | 5 | 17 | 1 | 7 | 14 |
+| Accuracy, percent | 32.0 | 48.2 | 48.6 | 48.0 | 46.4 | 44.4 | 47.8 | 41.8 |
+
+Mean 44.65 percent, against 44.17 for seed 1 and 39.20 for seed 0.
+
+### The main result: effective rank converges, and the fall is mostly the starting point
+
+Three seeds make a sharper statement possible than two did.
+
+| Seed | Effective rank at t = 0 | At t = 8 | Fall |
+| --- | ---: | ---: | ---: |
+| 1 | 4.5626 | 2.9708 | 34.9 percent |
+| 0 | 7.4249 | 4.0169 | 45.9 percent |
+| 2 | 9.1852 | 3.5510 | 61.3 percent |
+
+Two things stand out, and they are the same thing seen from two sides.
+
+**The runs start far apart and finish close together.** They are 4.62 apart at boundary 0 and
+1.05 apart at boundary 8. The spread shrinks by a factor of 4.4. On EuroSAT it shrinks by a
+factor of 22.8: from 1.99 apart to 0.09 apart.
+
+**The size of the fall is ordered by the starting value.** Sort the runs by where they began and
+the falls come out in the same order. This holds on all three image sets:
+
+| Image set | Lowest start | Middle start | Highest start |
+| --- | --- | --- | --- |
+| `in_stream` | 4.56 falls 34.9 percent | 7.42 falls 45.9 percent | 9.19 falls 61.3 percent |
+| `probe` | 4.57 falls 35.0 percent | 7.31 falls 44.6 percent | 9.20 falls 61.2 percent |
+| `eurosat` | 2.63 falls 15.0 percent | 4.00 falls 45.9 percent | 4.62 falls 53.5 percent |
+
+Taken together: **effective rank at the reference code ends up in the same narrow band whatever
+it started at, so the fall mostly measures where the run began rather than what training did to
+it.** Reporting the fall credits training with a difference that the random initialisation
+supplied.
+
+Three runs ordering correctly has about a one in six chance, and the three image sets are not
+independent of each other, so the ordering on its own is moderate evidence. The shrinking spread
+does not depend on ordering and is the stronger form of the same point.
+
+This supersedes the 1 November reading of the fall as a possible loss of capacity, and it
+explains the instability recorded for seed 1: the falls differ between seeds because the starting
+points differ, not because the runs behaved differently.
+
+### The convergence belongs to effective rank alone
+
+srank and dormant units do not converge. Their spread at boundary 8 is as wide as at boundary 0,
+or wider.
+
+| Measure, `in_stream` | Spread at t = 0 | At t = 8 | Spread shrinks by |
+| --- | ---: | ---: | ---: |
+| Effective rank | 4.6226 | 1.0461 | 4.4 times |
+| srank | 19 | 25 | 0.8 times, so it widened |
+| Dormant units at 0.01 | 0.0101 | 0.0205 | 0.5 times, so it widened |
+
+So this is a property of how effective rank is computed, not a general fact about the model
+settling down. Any critique built on it has to name effective rank specifically.
+
+### Dormant units are the indicator that reproduces
+
+| Seed | Dormant at t = 0 | At t = 8 | Rise | Share of the rise on task 1 |
+| --- | ---: | ---: | ---: | ---: |
+| 0 | 0.1639 | 0.2299 | 0.0660 | 80.4 percent |
+| 1 | 0.1594 | 0.2421 | 0.0827 | 83.0 percent |
+| 2 | 0.1538 | 0.2216 | 0.0678 | 78.3 percent |
+
+About seven units in every hundred go quiet across the stream, and about four fifths of that
+happens while the first task is learned. Three runs agree on both the size and the timing. This
+is the one indicator here whose numbers could be reported.
+
+### The angle, on the two runs that recorded it
+
+| | Seed 1 | Seed 2 |
+| --- | ---: | ---: |
+| Generator turn at t = 8 | 6.852 degrees | 6.525 degrees |
+| Generated target turn at t = 8 | 21.559 degrees | 19.711 degrees |
+| Share of the generator's turn on task 1 | 26.8 percent | 26.5 percent |
+| Share of the target's turn on task 1 | 89.6 percent | 88.9 percent |
+
+The two runs agree to within half a percentage point on both shares. **The generator keeps
+turning steadily to the end while what it writes at the reference code stops turning after the
+first task.** That holds on both runs that can test it. Seed 0 recorded no angle.
+
+`delta_w` for the generator reads 0.1196, 0.1200 and 0.1142 across the three seeds, against a
+norm that grows under one percent. Almost all of the movement is a turn rather than growth, on
+every run.
+
+### Rank and accuracy are unrelated
+
+| Seed | Effective rank at t = 8 | Mean final accuracy |
+| --- | ---: | ---: |
+| 1 | 2.9708 | 44.17 percent |
+| 2 | 3.5510 | 44.65 percent |
+| 0 | 4.0169 | 39.20 percent |
+
+The run with the highest final rank has the worst accuracy, and the middle rank has the best.
+Three points cannot establish an absence, and the runs differ in many ways at once. But this is
+the only direct comparison available between the proxy and performance, and it gives the usual
+reading of the proxy no support.
+
+### What three seeds still cannot say
+
+- **No control for movement alone.** Nothing yet shows what a generator moved the same distance
+  in a random direction would do. Until that is run, the convergence could be a property of
+  movement rather than of learning.
+- **The probe has not been run part-way through a stream.** Seeds 1 and 2 both kept models at
+  boundaries 2, 4 and 6 for exactly this, and it has not been done.
+- **One class order.** Everything here is order 01. A different order has not been tried with
+  the indicators.
+- **The disagreement with the direct probe rests on seed 0's rank fall against the probe's three
+  seeds.** The probe has not been re-run against seeds 1 and 2.
+
 ## Next decision
 
-1. Run seed 2 of `indicator_stream_v1`, about two hours of A100. Three seeds is the minimum for a
-   spread, and seeds 0 and 1 already disagree enough that the third will decide whether anything
-   except the direction of the fall survives.
-2. Run the direct plasticity probe on seed 1 at boundaries 2, 4 and 6, using the models this run
-   kept. That is the first test of whether the proxies and the probe disagree in the middle of a
-   stream as well as at its ends, and it needs no new stream run.
-3. Report the indicators as a change from boundary one, not boundary zero, or report both. Most of
-   what boundary zero contributes is the random initialisation and the one-off move away from it.
-
-## Seed 2 attempt: stopped by a stalled upload
-
-Two faults showed up before any result did.
-
-**The dataset path was wrong in notebook 36.** `DATA_ROOT` pointed at `/content/data`, but the
-downloader only fetches Tiny ImageNet when the folder itself is named `tiny-imagenet-200`, because
-it unzips into the parent. Every other notebook uses the full path; this one had drifted. Fixed in
-the notebook.
-
-**The run then died on a read timeout to R2.** Settings as intended: seed 2, order 01, eight
-tasks, 240 minute budget with a 15 minute reserve, on an A100 40GB. Boundary 0 was measured at
-20:41:42 on the fresh generator. Saves at 20:43:57, 20:46:26 and 20:48:41 all reported "still on
-task 1 of 8". About eight and a half minutes in, during task 1, a save raised
-`ReadTimeoutError: Read timeout on endpoint URL`.
-
-The upload itself had gone through. The failure was in reading the file back to check it. The
-retry settings on the R2 client cover sending a request, not the body that arrives afterwards, so
-one stalled read ended the session. The record kept one boundary and no boundary models.
-
-Fixed in `uncle/storage.py`: the read-back now starts again, up to three times, before giving up.
-Reading changes nothing, so a repeat is safe. `tests/test_storage.py` covers it.
-
-No seed 2 indicator numbers exist beyond boundary zero. The run does not start over: the
-boundary zero record and its baseline reached R2, and the three saves during task 1 were all
-verified, so a new session resumes inside task 1.
+1. Run the random-direction control. Move a fresh generator the same distance the stream moves
+   it, 0.118 of its own size, in a direction that has nothing to do with learning, then read the
+   indicators. If effective rank converges to the same band, the convergence is about movement
+   and not about learning, and the indicator says nothing about plasticity at all. This is the
+   one experiment that decides what the three seeds mean. It needs no stream run.
+2. Run the direct plasticity probe at boundaries 2, 4 and 6 on seeds 1 and 2, using the models
+   those runs kept. That tests whether the proxies and the probe disagree in the middle of a
+   stream as well as at its ends.
+3. Leave effective rank's absolute level out of any write-up. Report the endpoint, the spread
+   across seeds, and dormant units, which is the only indicator here that reproduced.
