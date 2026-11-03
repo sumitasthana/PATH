@@ -105,18 +105,99 @@ reading there. Closing that gap needs EuroSAT at about forty repetitions and its
 **Two probe points.** Seeds 1 and 2 kept models at boundaries 2, 4 and 6 for exactly this, and
 those have not been probed. Loading a boundary file is code notebook 38 does not have.
 
-**The movement control is still missing.** The 2 November record showed that effective rank
-converges to the same narrow band whatever it started at. Until a generator is moved the same
-distance, 0.118 of its own size, in a direction unrelated to learning, the fall could be a
-property of movement rather than of learning. That experiment needs no training run and is still
-the one that decides what all of this means.
+**The movement control was still missing when this section was written.** It was run the same
+day, and the next section reports it.
+
+## The random-direction control: the fall is not a property of movement
+
+### Why this run exists
+
+Effective rank falls across a stream and the direct probe does not. Two explanations fit that.
+Either the fall records something about what learning did, or it records only that the generator
+moved, in which case moving it anywhere would do the same and the indicator says nothing about
+learning at all.
+
+The control separates them. It rebuilds the generator each stream started from, from the seed
+alone, with no download and no training. It then pushes that generator by hand the same
+distances the stream travelled, read from the stream's own record, but in directions chosen by
+nothing, and reads the same indicators on the same images.
+
+### The run
+
+Notebook 39, study `indicator_stream_v1`, order 01, seeds 0, 1 and 2, label `control1`.
+147 measurements, 7.0 minutes in total. Nothing trains, so this is forward passes only.
+
+Two kinds of random direction, because "a random direction" is ambiguous. The **global** arm
+spreads the move evenly over the whole generator, which concentrates it in the largest tensors.
+The **layerwise** arm moves every tensor by the same fraction of its own size, which is closer to
+what training does. Both travel the same total distance. Three draws at each boundary, so the
+spread of the draws is reported beside each number.
+
+Two checks guard the result. The rebuilt generator was compared against the numbers the stream
+recorded at boundary 0 before anything was measured, and on all three seeds and all three image
+sets the gap was 0.00 percent. Every move was checked against the distance it was asked for, and
+the worst was 0.39 percent out.
+
+### The result
+
+Effective rank on the `probe` images at boundary 8, with the stream's own distance applied in a
+random direction instead of the direction learning chose.
+
+| Seed | Fresh | Stream at t = 8 | Stream fall | Random, global | Random, layerwise | Share of the fall, global | Share, layerwise |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 0 | 7.3057 | 4.0473 | 44.6 percent | 7.4453 | 7.3495 | -4.3 percent | -1.3 percent |
+| 1 | 4.5691 | 2.9684 | 35.0 percent | 4.3312 | 4.9343 | 14.9 percent | -22.8 percent |
+| 2 | 9.1953 | 3.5702 | 61.2 percent | 7.3133 | 7.9582 | 33.5 percent | 22.0 percent |
+
+Dormant units at threshold 0.01, on the same images.
+
+| Seed | Fresh | Stream rise | Random rise, global | Random rise, layerwise |
+| --- | ---: | ---: | ---: | ---: |
+| 0 | 0.1639 | +0.0660 | +0.0001 | -0.0011 |
+| 1 | 0.1588 | +0.0831 | +0.0031 | -0.0032 |
+| 2 | 0.1531 | +0.0680 | +0.0085 | +0.0051 |
+
+### What it says
+
+**Dormancy is learning's doing, almost entirely.** The stream raises dormant units by 0.066 to
+0.083 on every seed. The same distance in a random direction raises them by at most 0.0085, and
+on two seeds one arm moves them down. Random movement reproduces between nothing and a ninth of
+the rise.
+
+**Most of the rank fall is learning's doing as well, but not all of it.** On seed 0 random
+movement reproduces none of the fall: both arms end above where the generator started, and the
+change is inside the spread of the three draws. On seed 1 neither arm reproduces the fall
+either, and the two arms disagree in sign, which is what no effect looks like at three draws. On
+seed 2 both arms do fall, by 20.5 and 13.5 percent, which is a fifth to a third of the stream's
+61.2 percent, and the global arm's fall is well outside its draw spread.
+
+**Seed 2 is the one that started highest.** Its fresh rank is 9.1953 against 7.3057 and 4.5691.
+The 2 November record already found that the size of the fall is set by the random starting
+point, and that rank converges to the same narrow band whatever it started from. The control
+fits that: a generator that starts high has further to converge, so even a direction chosen by
+nothing drags it part of the way down. A generator that starts near the band does not move.
+
+**The timing is the clearest part.** Seed 2's stream loses 38 percent of its rank at boundary 1
+alone, where the distance travelled is only 0.0303. Random movement over that identical distance
+leaves it at 9.0623 and 9.2109, which is where it started. Whatever the stream does in its first
+task, distance does not explain it.
+
+### What this does not establish
+
+Three draws per point is thin, and the spreads are wide, up to 1.9 rank units on seed 2. The
+control rules out "the fall is only movement" on seeds 0 and 1 and leaves seed 2 partly open. It
+does not identify what about learning's direction causes the fall.
+
+Only boundary 8 is summarised above. The full curve was measured at every boundary and is in R2
+under `uncle/random_direction/indicator_stream_v1/order_01/control1.jsonl`.
 
 ## Next decision
 
-1. Run the random-direction control. It is cheap, it needs no stream, and it decides whether
-   the rank fall measures learning at all.
-2. Probe seeds 1 and 2 at boundaries 2, 4 and 6, which turns three points into nine and shows
+1. Probe seeds 1 and 2 at boundaries 2, 4 and 6, which turns three points into nine and shows
    whether the two sides disagree in the middle of a stream as well as at its ends.
+2. Decide whether seed 2's partial movement effect needs more draws. Raising repetitions from
+   three to ten costs about twenty minutes and would say whether a fifth to a third is real.
 3. Leave correlation claims out of any write-up until there are more than three runs. The
-   result that stands today is the direction: the probe does not fall, and both indicators say
-   it did.
+   results that stand today are the direction and the control: the probe does not fall, both
+   indicators say it did, and moving the generator the same distance in a direction unrelated to
+   learning does not reproduce what they report.
