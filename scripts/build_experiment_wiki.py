@@ -131,14 +131,12 @@ def render(registry, traces, gradients, norms):
     # where it already lives rather than copied out of docs.
     pages["How-Unlearning-Works.md"] = (
         ROOT / "docs/wiki/How-Unlearning-Works.md").read_text(encoding="utf-8")
-    pages["Model-diagnostics.md"] = (
+    # Every ../ link out of docs points at a repository file. Rewriting them by
+    # shape rather than one at a time means a new link travels on its own.
+    pages["Model-diagnostics.md"] = re.sub(
+        r"\(\.\./([^)]+)\)", rf"({base}/blob/main/\1)",
         (ROOT / "docs/MODEL_DIAGNOSTICS.md").read_text(encoding="utf-8")
-        .replace("(../notebooks/04_gradient_diagnostics.ipynb)",
-                 f"({base}/blob/main/notebooks/04_gradient_diagnostics.ipynb)")
-        .replace("(../uncle/research_diagnostic.py)",
-                 f"({base}/blob/main/uncle/research_diagnostic.py)")
-        .replace("(PLAN.md)", f"({base}/blob/main/docs/PLAN.md)")
-    )
+        .replace("(PLAN.md)", f"({base}/blob/main/docs/PLAN.md)"))
     entries = [
         ("Experiment trajectory", "Experiment-trajectory", "latest findings and experiment records by date"),
         ("Weekly updates", "Weekly-Updates", "what we measured each week, what it means, and what is next"),

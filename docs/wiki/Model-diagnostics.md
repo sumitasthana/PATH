@@ -77,7 +77,21 @@ The code can do steps 1 to 4 as separate pieces. The
 [`04_gradient_diagnostics.ipynb`](https://github.com/sumitasthana/PATH/blob/main/notebooks/04_gradient_diagnostics.ipynb)
 notebook records gradients, Adam updates, and before/after changes during a
 forgetting run. The [inspection functions](https://github.com/sumitasthana/PATH/blob/main/uncle/research_diagnostic.py)
-read live weights and gradients and calculate diagonal Fisher. We still need
-one runner that loads the E08 checkpoint, chooses and records the Fisher
-examples, and performs the matched recovery tests in step 5. No E08 Fisher or
-recovery result has been measured yet.
+read live weights and gradients and calculate diagonal Fisher.
+
+Step 5 has been built and run. The recovery probe in
+[`24_recovery_probe.ipynb`](https://github.com/sumitasthana/PATH/blob/main/notebooks/24_recovery_probe.ipynb), prepared by
+[`recovery_setup.py`](https://github.com/sumitasthana/PATH/blob/main/uncle/recovery_setup.py), gives the forgotten model
+and a fresh start the same images and the same update budget. It ran on two
+tasks across two seeds and found no recovery advantage. A model holding the
+forgotten task's own code and BatchNorm statistics never relearned that task
+faster than a model starting from nothing, and the contrast that isolates the
+BatchNorm statistics stayed inside the tie threshold. What the probe did find
+is a split that follows the task code: arms keeping the forgotten code spend
+tens of steps unable to respond at all, while arms given a new code start
+immediately. The dated records and their limits are in the
+[experiment trajectory](https://github.com/sumitasthana/PATH/wiki/Experiment-trajectory).
+
+Fisher is the part still not done. No E08 Fisher has been measured. The only
+Fisher work in the archive is a numerical check on a four-feature linear
+model, and that check does not test Fisher attribution on the real model.

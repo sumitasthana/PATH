@@ -64,7 +64,8 @@ unlearning methods. Neither shows up in accuracy at the end of a run.
 - **Notebooks:** the [notebook guide](notebooks/README.md) separates current
   experiments, CPU reports, and historical notebooks.
 
-The proposed recovery measurements still need an experiment runner.
+The recovery measurements have been run and found no recovery advantage. Fisher
+scores on the E08 checkpoint are the part still outstanding.
 
 ## Publish the HTML report
 
