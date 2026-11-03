@@ -191,10 +191,36 @@ does not identify what about learning's direction causes the fall.
 Only boundary 8 is summarised above. The full curve was measured at every boundary and is in R2
 under `uncle/random_direction/indicator_stream_v1/order_01/control1.jsonl`.
 
+## What each indicator is now worth
+
+Every indicator the plan asked for has been measured on `indicator_stream_v1`, seeds 0, 1 and 2,
+order 01. The direct probe is the reference they are judged against, because it trains an unseen
+task on the same model and counts the score, which is what the word plasticity means. The probe
+ends at 1.021, 1.078 and 1.086 of where it started.
+
+| Indicator | What it did | Read on its own it says | Against the probe |
+| --- | --- | --- | --- |
+| Effective rank | Falls 35.0, 44.6 and 61.2 percent | Severe loss of plasticity | **Wrong.** Also mostly an artifact: the three seeds start at 4.57, 7.31 and 9.20 and converge to one narrow band, so the size of each fall is set by its random starting point |
+| srank | Falls about 11 percent on the in-stream and probe images, 32 percent on EuroSAT | Mild loss, larger on an unrelated domain | **Wrong in the same direction, but far less loudly.** Its spread across seeds widens rather than narrowing, so it is not driven by the convergence that drives effective rank |
+| Dormant units | Rises 0.0660, 0.0831 and 0.0680 at threshold 0.01 | Units are dying, so capacity is being lost | **Wrong.** The random control shows the rise is genuinely caused by the direction training takes, not by movement, so it is a real effect that is not plasticity |
+| Weight change | Reaches about 0.12 of the generator's own size by boundary 8 | Nothing on its own; it is a predictor, not a verdict | **Untested here.** It was the adapter study's strongest predictor of the probe ratio, but across three seeds it does not order with the probe ratio, and three points cannot tell a real relationship from none |
+| Loss progress | Rises from 0.1397 at t = 1 to 0.2160 at t = 8 | Learning is getting easier, not harder | **Not readable in this design.** It is measured on the task being learned, and the eight tasks differ, so the change mixes the task with the position in the stream. It also has gaps at boundaries 1 and 6 |
+
+Random-label fitting, the fifth indicator in the adapter study's table, has not been measured in
+this architecture at all.
+
+Two conclusions follow. The direct probe says there is no plasticity loss here. Three of the
+four readable indicators say there is, and the fourth cannot be read, so on this architecture the
+indicators do not track plasticity.
+
 ## Next decision
 
 1. Probe seeds 1 and 2 at boundaries 2, 4 and 6, which turns three points into nine and shows
-   whether the two sides disagree in the middle of a stream as well as at its ends.
+   whether the two sides disagree in the middle of a stream as well as at its ends. Notebook 40
+   does this. It measures five points, 0, 2, 4, 6 and 8, and re-measures the two endpoints in the
+   same session as the middle ones, because the probe's spread across sessions is wider than its
+   spread inside one and a borrowed endpoint would put a session difference in the middle of the
+   curve. 330 probe runs, about 3.3 hours, half of that per seed.
 2. Decide whether seed 2's partial movement effect needs more draws. Raising repetitions from
    three to ten costs about twenty minutes and would say whether a fifth to a third is real.
 3. Leave correlation claims out of any write-up until there are more than three runs. The
