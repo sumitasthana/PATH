@@ -205,13 +205,49 @@ ends at 1.021, 1.078 and 1.086 of where it started.
 | Dormant units | Rises 0.0660, 0.0831 and 0.0680 at threshold 0.01 | Units are dying, so capacity is being lost | **Wrong.** The random control shows the rise is genuinely caused by the direction training takes, not by movement, so it is a real effect that is not plasticity |
 | Weight change | Reaches about 0.12 of the generator's own size by boundary 8 | Nothing on its own; it is a predictor, not a verdict | **Untested here.** It was the adapter study's strongest predictor of the probe ratio, but across three seeds it does not order with the probe ratio, and three points cannot tell a real relationship from none |
 | Loss progress | Rises from 0.1397 at t = 1 to 0.2160 at t = 8 | Learning is getting easier, not harder | **Not readable in this design.** It is measured on the task being learned, and the eight tasks differ, so the change mixes the task with the position in the stream. It also has gaps at boundaries 1 and 6 |
+| Random-label fitting | Final training loss falls 0.6957, 0.7606 and 0.6443, against floors of 0.2900, 0.4225 and 0.1845. All three clear | More capacity to change, not less | **Right.** It is the only indicator that agrees with the probe, and it agrees on every seed |
 
-Random-label fitting, the fifth indicator in the adapter study's table, has not been measured in
-this architecture at all.
+### Random-label fitting, the one that gets it right
 
-Two conclusions follow. The direct probe says there is no plasticity loss here. Three of the
-four readable indicators say there is, and the fourth cannot be read, so on this architecture the
-indicators do not track plasticity.
+It was measured on 20 and 21 October by notebook 29, not by the indicator stream, and it was
+missing from earlier versions of this table. The numbers above were recomputed from the saved
+runs in `uncle/plasticity_probe/paired_generalization_v2/order_01/partial.jsonl`, 189 random-label
+runs out of 756, under notebook 29's own rule: keep the learning rate with the lowest final
+training loss, then average over repetitions.
+
+Two thousand images from Tiny ImageNet task 8 are given fixed wrong labels, drawn once from seed
+1020 so every probe point sees the same wrong labels, and the model is trained on them for 600
+steps, about nineteen passes. Random labels carry no pattern, so the only way to fit them is to
+memorise each image. Lower final loss means more raw capacity to change.
+
+| Seed | Loss at t = 0 | At t = 8 | Change | Noise floor |
+| --- | ---: | ---: | ---: | ---: |
+| 0 | 1.3667 | 0.6710 | -0.6957 | 0.2900 |
+| 1 | 1.5435 | 0.7829 | -0.7606 | 0.4225 |
+| 2 | 1.3097 | 0.6653 | -0.6443 | 0.1845 |
+
+Chance loss for ten classes is ln(10) = 2.303, and every reading sits well below it, so the model
+really did memorise rather than run out of budget. An earlier attempt on 17 October was void for
+exactly that reason: the model memorised nothing, so the number measured the budget and not the
+model. The fix was fewer images and more passes over them, and 21 October is the first valid run.
+
+Three caveats. It was measured on study `paired_generalization_v2`, not on `indicator_stream_v1`,
+so it carries the same across-study gap that notebook 38 closed for the probe. That gap matters
+less here than it did there, because the direct probe ran in the same notebook on the same
+models, so these two are matched to each other even though neither is matched to the indicator
+stream. It uses five repetitions at t = 0 and only two at t = 8, which is why the floors are wide.
+And it is the `full` arm only.
+
+### What follows
+
+The direct probe says there is no plasticity loss here. Effective rank, srank and dormant units
+all say there is. Loss progress cannot be read. Random-label fitting says there is not, and it is
+the only one of the five that matches the direct measurement.
+
+That ordering is worth stating plainly, because it is the reverse of the adapter study's. There,
+random-label loss was the weakest predictor of the probe ratio, at -0.25 and -0.67, while
+effective rank and dormant units were middling and weight change was strongest. Here the
+indicator the adapter study ranked near the bottom is the only one that gets the answer right.
 
 ## Next decision
 
