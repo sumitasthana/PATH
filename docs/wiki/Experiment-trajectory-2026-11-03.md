@@ -209,7 +209,7 @@ Read one at a time, three of these say plasticity was lost and three say it was 
 | Dormant units | Rises 0.0660, 0.0831 and 0.0680 at threshold 0.01 | **Plasticity loss.** More units stop responding to anything, which is read as capacity dying | Points the other way. The control puts movement alone at 0.0085 at most, so the rise comes from the direction training takes. Real effect; not what the probe measures |
 | Loss progress | Rises from 0.1397 at t = 1 to 0.2160 at t = 8 | **No plasticity loss.** Each task's loss falls further late in the stream than early, which reads as learning getting easier | Not readable in this design. It is measured on the task being learned, and the eight tasks differ, so the change mixes the task with the position in the stream. It also has gaps at boundaries 1 and 6 |
 | Weight change | Reaches about 0.12 of the generator's own size by boundary 8 | **No verdict either way.** It has no direction that means loss. It is a predictor of the probe, not an indicator of damage | Not tested here. Three seeds cannot separate a real relationship from none |
-| Curvature | Not measured | | The remaining gap on the measurement side |
+| Curvature | Mean Hessian eigenvalue at five points. Raw readings rise at the end on all three seeds, by 21, 7.0 and 2.1 times | **No verdict.** The rise clears a floor built from both ends on one seed of three, does not hold a shape across the stream, does not repeat across the three step sizes, and tracks the rise in the loss itself | Not readable in this design. 5 directions per point is not enough: the spread at t = 8 is 17 to 46 times the spread at t = 0. Divided by the loss at the point, no seed rises |
 | New-task learning speed | Not measured. The probe scores after a fixed 250 steps rather than counting steps to a threshold | | The other remaining gap |
 
 ### Random-label fitting, the one that agrees
@@ -379,3 +379,104 @@ this measurement; the `full` arm only; and the rate is chosen on the same traini
 then reported, which is the standard definition of the measure but makes the number a
 best-achievable fit rather than a held-out score. The same rule runs at both points, so the
 comparison between the points is fair.
+
+## Curvature: measured, and not readable as it stands
+
+Notebook 42 measured the curvature of the loss surface at five points on the stream, on the same
+models as everything else on this page. It was the last named gap on the measurement side.
+
+### The run
+
+At each point the generator is loaded, the indicators' fixed task code is attached, and the loss
+is read on the same 256 held-out images from task 2 that the indicators use. Then a random
+direction is drawn, the generator is moved a small distance along it and the loss is read again,
+and it is moved the same distance the other way and read a third time. Curvature along that
+direction is `2 * ((L_plus + L_minus) / 2 - L0) / r**2`. Stepping both ways cancels the slope, so
+what is left is the bend. Averaged over random directions this is the mean eigenvalue of the
+Hessian, which is the overall bend of the surface, not its sharpest direction.
+
+Three step sizes, 0.001, 0.003 and 0.01 of the generator's own length. Five random directions at
+each. Five points for seeds 1 and 2, two for seed 0, which kept no middle models. 180
+measurements, nothing trained.
+
+### The result, at the smallest step
+
+| Seed | t | Loss at the point | Mean curvature | Spread | vs t = 0 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 0 | 0 | 68.55 | 0.03391 | 0.0107 | 1.00 |
+| 0 | 8 | 1786.36 | 0.7159 | 0.194 | 21.1 |
+| 1 | 0 | 1089.62 | 0.243 | 0.0757 | 1.00 |
+| 1 | 2 | 7840.80 | 1.381 | 1.07 | 5.68 |
+| 1 | 4 | 12443.04 | 3.529 | 1.64 | 14.5 |
+| 1 | 6 | 13487.95 | 0.926 | 1.45 | 3.81 |
+| 1 | 8 | 8363.18 | 1.704 | 1.32 | 7.01 |
+| 2 | 0 | 42.74 | 0.01065 | 0.00263 | 1.00 |
+| 2 | 2 | 249.11 | 0.0258 | 0.0186 | 2.42 |
+| 2 | 4 | 463.57 | 0.08593 | 0.0519 | 8.07 |
+| 2 | 6 | 478.65 | 0.126 | 0.0432 | 11.8 |
+| 2 | 8 | 1140.99 | 0.02237 | 0.121 | 2.10 |
+
+The notebook printed all three endpoints as sharper at the end, which it reads as plasticity
+loss. That print uses a noise floor built from the spread at t = 0 only, which is how the other
+measurements on this page build theirs. For this measurement that is the wrong floor, because the
+spread does not stay the same along the stream. It grows by 18, 17 and 46 times.
+
+### Rebuilding the floor from both ends
+
+A floor that uses the spread at both points, `1.96 * sqrt((s0**2 + st**2) / 5)`:
+
+| Seed | Change | Floor from t = 0 only | Floor from both ends | Clears by |
+| --- | ---: | ---: | ---: | ---: |
+| 0 | +0.682 | 0.0133 | 0.170 | 4.0 |
+| 1 | +1.461 | 0.0939 | 1.159 | 1.3 |
+| 2 | +0.0117 | 0.00326 | 0.106 | does not clear |
+
+So one seed clears clearly, one clears narrowly, and one does not clear at all. That is a weaker
+statement than three out of three.
+
+### Three further problems
+
+The three step sizes do not agree, and not in one direction. Seed 0 at t = 8 reads 0.716, 0.426
+and 0.272 as the step grows. Seed 1 at t = 6 reads 0.926, 1.592 and 2.027, which goes the other
+way. Seed 2 at t = 8 reads 0.0224, 0.194 and 0.118. A step that is simply too large makes the
+number drift one way. A number that moves both ways is noise.
+
+The middle points do not trace a line. Seed 1 runs 0.24, 1.38, 3.53, 0.93, 1.70. Seed 2 runs
+0.011, 0.026, 0.086, 0.126, 0.022. Neither is a slow climb into a sharper place.
+
+The loss at the measurement point rises by about as much as the curvature does. Seed 0's loss
+goes up 26 times while its curvature goes up 21 times. Seed 1's goes up 7.7 times against 7.0.
+Cross-entropy curvature carries the scale of the loss with it, so curvature divided by loss is
+worth a look:
+
+| Seed | Curvature / loss at t = 0 | At t = 8 | Ratio |
+| --- | ---: | ---: | ---: |
+| 0 | 4.95e-4 | 4.01e-4 | 0.81 |
+| 1 | 2.23e-4 | 2.04e-4 | 0.91 |
+| 2 | 2.49e-4 | 0.20e-4 | 0.08 |
+
+Divided by the loss, no seed rises. This is a diagnostic, not a proof: it says the raw rise and
+the loss rise move together, which is what a scale effect looks like.
+
+One more thing the table makes plain. The loss at these points reaches 12443. Chance loss for ten
+classes is 2.303. The measurement sits at a fixed reference task code on a held-out task, which is
+the same point the other indicators read, so it is consistent with them. But it is a long way from
+anywhere the model was trained to be, and curvature there is not obviously the curvature the
+literature means when it says a continually trained model ends up in a sharp place.
+
+### What this says
+
+Curvature is measured and the answer is that it is not readable in this design. The raw numbers
+rise. The rise survives a proper floor on one seed of three, does not hold a shape across the
+stream, does not repeat across step sizes, and tracks the loss scale closely enough that the scale
+is a live explanation for it.
+
+That is a result about the measurement, not about the model. It does not join effective rank,
+srank and dormant units, and it does not join the probe. It sits on its own, saying that with 5
+directions per point and 3 seeds there is not enough signal here to say anything.
+
+What would make it readable: many more directions per point, say 50 instead of 5, which costs
+forward passes and no training; a measurement point nearer a trained solution rather than a fixed
+reference code; and the top Hessian eigenvalue rather than the mean, which is what most of the
+sharpness literature actually reports and which needs Hessian-vector products and a power
+iteration.
