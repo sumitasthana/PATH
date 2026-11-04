@@ -124,3 +124,10 @@ Older pages preserve historical interpretations and plans. They are not instruct
 ## Keeping the record current
 
 Add new results to the page for their reporting date, then update this index's latest findings. Preserve failed and interrupted attempts, actual settings, evidence, and limitations. Publish the index and dated pages together on Wednesdays and Saturdays at 6 p.m. America/New_York, or when explicitly requested.
+
+**The probe does not sag in the middle either.** Notebook 40 probed seeds 1 and 2 at t = 0, 2, 4,
+6 and 8 on `indicator_stream_v1`, eleven repetitions per point. Every point on both seeds is at
+or above its starting value, and no point falls below its floor. Seed 1 rises steadily to 1.121;
+seed 2 peaks at t = 4 at 1.066 and drifts back inside its floor by t = 8. The two-point design
+was not hiding a dip. Ratios repeat across sittings only to about one floor, so read them as
+roughly 1 rather than as precise numbers.
