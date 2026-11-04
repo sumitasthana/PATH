@@ -191,23 +191,24 @@ does not identify what about learning's direction causes the fall.
 Only boundary 8 is summarised above. The full curve was measured at every boundary and is in R2
 under `uncle/random_direction/indicator_stream_v1/order_01/control1.jsonl`.
 
-## What each indicator is now worth
+## What each measurement showed
 
 Every indicator the plan asked for has been measured on `indicator_stream_v1`, seeds 0, 1 and 2,
 order 01. The direct probe is the reference they are judged against, because it trains an unseen
 task on the same model and counts the score, which is what the word plasticity means. The probe
 ends at 1.021, 1.078 and 1.086 of where it started.
 
-| Indicator | What it did | Read on its own it says | Against the probe |
+| Measurement | What it did | Read on its own it says | Compared with the probe |
 | --- | --- | --- | --- |
-| Effective rank | Falls 35.0, 44.6 and 61.2 percent | Severe loss of plasticity | **Wrong.** Also mostly an artifact: the three seeds start at 4.57, 7.31 and 9.20 and converge to one narrow band, so the size of each fall is set by its random starting point |
-| srank | Falls about 11 percent on the in-stream and probe images, 32 percent on EuroSAT | Mild loss, larger on an unrelated domain | **Wrong in the same direction, but far less loudly.** Its spread across seeds widens rather than narrowing, so it is not driven by the convergence that drives effective rank |
-| Dormant units | Rises 0.0660, 0.0831 and 0.0680 at threshold 0.01 | Units are dying, so capacity is being lost | **Wrong.** The random control shows the rise is genuinely caused by the direction training takes, not by movement, so it is a real effect that is not plasticity |
-| Weight change | Reaches about 0.12 of the generator's own size by boundary 8 | Nothing on its own; it is a predictor, not a verdict | **Untested here.** It was the adapter study's strongest predictor of the probe ratio, but across three seeds it does not order with the probe ratio, and three points cannot tell a real relationship from none |
-| Loss progress | Rises from 0.1397 at t = 1 to 0.2160 at t = 8 | Learning is getting easier, not harder | **Not readable in this design.** It is measured on the task being learned, and the eight tasks differ, so the change mixes the task with the position in the stream. It also has gaps at boundaries 1 and 6 |
-| Random-label fitting | Final training loss falls 0.6957, 0.7606 and 0.6443, against floors of 0.2900, 0.4225 and 0.1845. All three clear | More capacity to change, not less | **Right.** It is the only indicator that agrees with the probe, and it agrees on every seed |
+| Direct probe | Ends at 1.021, 1.078 and 1.086 of where it started | Capacity to learn a new task held, and rose a little | This is the reference the others are compared with. It trains an unseen task on the same model and counts the score |
+| Effective rank | Falls 35.0, 44.6 and 61.2 percent | Severe loss of plasticity | Points the other way. The size of each fall also tracks where that seed started: the three seeds begin at 4.57, 7.31 and 9.20 and end in one narrow band |
+| srank | Falls about 11 percent on the in-stream and probe images, 32 percent on EuroSAT | Mild loss, larger on an unrelated domain | Points the other way, by much less. Its spread across seeds widens rather than narrowing, so the convergence that shapes effective rank does not appear to shape it |
+| Dormant units | Rises 0.0660, 0.0831 and 0.0680 at threshold 0.01 | Units are going quiet, so capacity is being lost | Points the other way. The random control puts the rise at most 0.0085 under movement alone, so the rise comes from the direction training takes. It is a real effect; what it measures is not what the probe measures |
+| Weight change | Reaches about 0.12 of the generator's own size by boundary 8 | Nothing on its own; it is a predictor, not a verdict | Not tested here. It was the adapter study's strongest predictor, but across three seeds it does not order with the probe ratio, and three points cannot separate a real relationship from none |
+| Loss progress | Rises from 0.1397 at t = 1 to 0.2160 at t = 8 | Learning is getting easier, not harder | Not readable in this design. It is measured on the task being learned, and the eight tasks differ, so the change mixes the task with the position in the stream. It also has gaps at boundaries 1 and 6 |
+| Random-label fitting | Final training loss falls 0.6957, 0.7606 and 0.6443, against floors of 0.2900, 0.4225 and 0.1845. All three clear | More capacity to change, not less | Agrees, on all three seeds. Measured on a different training run of the same study design, so it is not yet matched to the models above |
 
-### Random-label fitting, the one that gets it right
+### Random-label fitting, the one that agrees
 
 It was measured on 20 and 21 October by notebook 29, not by the indicator stream, and it was
 missing from earlier versions of this table. The numbers above were recomputed from the saved
