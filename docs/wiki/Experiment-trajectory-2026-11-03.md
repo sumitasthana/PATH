@@ -264,3 +264,61 @@ indicator the adapter study ranked near the bottom is the only one that gets the
    results that stand today are the direction and the control: the probe does not fall, both
    indicators say it did, and moving the generator the same distance in a direction unrelated to
    learning does not reproduce what they report.
+
+## The probe curve: five points instead of two
+
+Notebook 38 probed only the start and the end of the stream. That leaves one shape unmeasured:
+the probe could fall during the stream and recover by the end, and two points would miss it.
+Notebook 40 probes seeds 1 and 2 at t = 0, 2, 4, 6 and 8, same study, same protocol, eleven
+repetitions at every point, label `curve1`. Seed 0 is absent because its stream kept no middle
+models.
+
+### The result
+
+Seed 1, probe task 2, spread of the eleven repetitions at t = 0 is 3.27, floor 2.73:
+
+| t | Accuracy | Change | Ratio | Reading |
+| ---: | ---: | ---: | ---: | --- |
+| 0 | 55.67 | +0.00 | 1.000 | baseline |
+| 2 | 57.75 | +2.07 | 1.037 | inside the floor |
+| 4 | 59.25 | +3.58 | 1.064 | higher than at t = 0 |
+| 6 | 59.64 | +3.96 | 1.071 | higher than at t = 0 |
+| 8 | 62.42 | +6.75 | 1.121 | higher than at t = 0 |
+
+Seed 2, probe task 2, spread 3.67, floor 3.07:
+
+| t | Accuracy | Change | Ratio | Reading |
+| ---: | ---: | ---: | ---: | --- |
+| 0 | 56.71 | +0.00 | 1.000 | baseline |
+| 2 | 57.65 | +0.95 | 1.017 | inside the floor |
+| 4 | 60.44 | +3.73 | 1.066 | higher than at t = 0 |
+| 6 | 59.75 | +3.04 | 1.054 | inside the floor |
+| 8 | 58.29 | +1.58 | 1.028 | inside the floor |
+
+No middle point falls below its floor on either seed. The dip the two-point design could have
+hidden is not there.
+
+### What it says and what it does not
+
+The probe does not sag during the stream. Every point on both seeds is at or above its starting
+value, and the two points that are clear of the floor on seed 1 and the one on seed 2 are all
+above. So the indicators fall while the probe is flat or rising at every point measured, not only
+at the ends.
+
+Seed 1 rises steadily. Seed 2 peaks at t = 4 and drifts back inside its floor by t = 8. With one
+seed each way, the shape between the ends is not established; only the absence of a fall is.
+
+### How it compares with notebook 38
+
+Notebook 38 measured the same two seeds at the same two ends, in a different sitting.
+
+| Seed | t = 0, nb 38 | t = 0, nb 40 | t = 8, nb 38 | t = 8, nb 40 |
+| --- | ---: | ---: | ---: | ---: |
+| 1 | 54.53 | 55.67 | 58.80 | 62.42 |
+| 2 | 55.27 | 56.71 | 60.00 | 58.29 |
+
+The accuracies repeat to within 1.1 to 3.6 points, which is about one floor. The ratios differ
+more: seed 1 gives 1.078 then 1.121, seed 2 gives 1.086 then 1.028. That is expected, because a
+ratio divides two noisy numbers and carries both errors. Both sittings agree on the sign and on
+the verdict. Neither shows a fall. A ratio from a single sitting should be read as roughly 1,
+not as a precise number.
