@@ -200,13 +200,13 @@ ends at 1.021, 1.078 and 1.086 of where it started.
 
 | Measurement | What it did | Read on its own it says | Compared with the probe |
 | --- | --- | --- | --- |
-| Direct probe | Ends at 1.021, 1.078 and 1.086 of where it started | Capacity to learn a new task held, and rose a little | This is the reference the others are compared with. It trains an unseen task on the same model and counts the score |
+| Direct probe | Ends at 1.021, 1.078 and 1.086 of where it started, and does not dip at t = 2, 4 or 6 | Capacity to learn a new task held, and rose a little | This is the reference the others are compared with. It trains an unseen task on the same model and counts the score |
 | Effective rank | Falls 35.0, 44.6 and 61.2 percent | Severe loss of plasticity | Points the other way. The size of each fall also tracks where that seed started: the three seeds begin at 4.57, 7.31 and 9.20 and end in one narrow band |
 | srank | Falls about 11 percent on the in-stream and probe images, 32 percent on EuroSAT | Mild loss, larger on an unrelated domain | Points the other way, by much less. Its spread across seeds widens rather than narrowing, so the convergence that shapes effective rank does not appear to shape it |
 | Dormant units | Rises 0.0660, 0.0831 and 0.0680 at threshold 0.01 | Units are going quiet, so capacity is being lost | Points the other way. The random control puts the rise at most 0.0085 under movement alone, so the rise comes from the direction training takes. It is a real effect; what it measures is not what the probe measures |
 | Weight change | Reaches about 0.12 of the generator's own size by boundary 8 | Nothing on its own; it is a predictor, not a verdict | Not tested here. It was the adapter study's strongest predictor, but across three seeds it does not order with the probe ratio, and three points cannot separate a real relationship from none |
 | Loss progress | Rises from 0.1397 at t = 1 to 0.2160 at t = 8 | Learning is getting easier, not harder | Not readable in this design. It is measured on the task being learned, and the eight tasks differ, so the change mixes the task with the position in the stream. It also has gaps at boundaries 1 and 6 |
-| Random-label fitting | Final training loss falls 0.6957, 0.7606 and 0.6443, against floors of 0.2900, 0.4225 and 0.1845. All three clear | More capacity to change, not less | Agrees, on all three seeds. Measured on a different training run of the same study design, so it is not yet matched to the models above |
+| Random-label fitting | Final training loss falls 0.5953, 0.7902 and 0.6310, against floors of 0.2672, 0.2580 and 0.2017. All three clear, by 2.2 to 3.1 times | More capacity to change, not less | Agrees, on all three seeds, on these same models. October's separate training run gave the same direction and sizes within 0.1 |
 
 ### Random-label fitting, the one that agrees
 
@@ -322,3 +322,56 @@ more: seed 1 gives 1.078 then 1.121, seed 2 gives 1.086 then 1.028. That is expe
 ratio divides two noisy numbers and carries both errors. Both sittings agree on the sign and on
 the verdict. Neither shows a fall. A ratio from a single sitting should be read as roughly 1,
 not as a precise number.
+
+## Random-label fitting, now on the indicator models
+
+The result above was measured in October on `paired_generalization_v2`, a different training
+run from the one everything else on this page uses. Notebook 41 repeats it on
+`indicator_stream_v1`, the models the indicators, the matched probe and the random-direction
+control were all read from. Method unchanged: task 8, labels drawn once from seed 1020, 2,000
+images, 600 steps, rates 1e-4, 3e-4 and 1e-3, the rate with the lowest final training loss kept.
+Two changes: five repetitions at both probe points instead of five and two, and the `full` arm
+only. 90 runs, 121.1 minutes, which matches the 2.0 hours estimated from October's per-run time.
+
+### The result
+
+Final training loss on 2,000 images with shuffled labels. Lower means the model memorised more
+of them, so lower means more capacity to change.
+
+| Seed | t = 0 | t = 8 | Change | Floor | Margin | Verdict |
+| ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| 0 | 1.3339 | 0.7386 | -0.5953 | 0.2672 | 2.2x | no loss, more capacity to change |
+| 1 | 1.4759 | 0.6857 | -0.7902 | 0.2580 | 3.1x | no loss, more capacity to change |
+| 2 | 1.3921 | 0.7611 | -0.6310 | 0.2017 | 3.1x | no loss, more capacity to change |
+
+Mean change -0.6721, spread across seeds 0.1037. Chance loss for ten classes is ln(10) = 2.303,
+and every mean sits well below it, so the probe memorised rather than measuring its own budget.
+
+### Against October
+
+| Seed | October change | October floor | Here | Floor here |
+| ---: | ---: | ---: | ---: | ---: |
+| 0 | -0.6957 | 0.2900 | -0.5953 | 0.2672 |
+| 1 | -0.7606 | 0.4225 | -0.7902 | 0.2580 |
+| 2 | -0.6443 | 0.1845 | -0.6310 | 0.2017 |
+
+Same direction on every seed, every one clear of its floor, and the sizes land within 0.1 of
+each other on two seeds and 0.03 on the third. Two separately trained sets of models from one
+study design give the same answer.
+
+Seed 1's floor fell from 0.4225 to 0.2580. That was the reason for running five repetitions at
+t = 8 instead of two, and it worked: the October floor was wide because the later point had only
+two repetitions to build it from.
+
+### What this closes
+
+Random-label fitting is now measured on the same models as everything else on this page. The
+"different training run" caveat on its row is gone. On one set of models, with one set of
+seeds: the direct probe says capacity held, random-label fitting agrees, and effective rank,
+srank and dormant units all point the other way.
+
+What it does not close: two probe points only, so nothing says what happens between them for
+this measurement; the `full` arm only; and the rate is chosen on the same training loss that is
+then reported, which is the standard definition of the measure but makes the number a
+best-achievable fit rather than a held-out score. The same rule runs at both points, so the
+comparison between the points is fair.
