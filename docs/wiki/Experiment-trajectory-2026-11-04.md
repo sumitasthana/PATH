@@ -115,7 +115,7 @@ So the learned arm measured the bend of a surface that does not correspond to an
 stream produced. Its rows are discarded. The reference arm is unaffected: its rows were
 already measured the only way they can be, and they are kept.
 
-#### The correction, built but not yet run
+#### The correction
 
 Run 3 gives each arm the statistics that belong to it, the clean template for the reference
 arm and `trainer.task_buffers[LEARNED_TASK]` for the learned arm, which the checkpoints
@@ -129,7 +129,7 @@ learned is more than fifty times chance. That is the check that would have stopp
 within its first minute of the learned arm.
 
 Run 3 costs the learned arm only, 600 measurements, on the same nine model files already
-needed. It has not been run yet.
+needed.
 
 ## What is still open
 
@@ -140,3 +140,97 @@ properly rather than dropping.
 The largest Hessian eigenvalue rather than the mean. Most of the sharpness literature
 reports the largest. It needs Hessian-vector products and a power iteration, and it is a
 separate notebook.
+
+## Curvature, run 3: the learned arm, measured properly
+
+Run 3 remeasured the learned arm on the statistics that belong to it. 600 measurements, no
+new downloads.
+
+### The fix is confirmed by the losses alone
+
+| Seed | t | Loss, run 2 | Loss, run 3 |
+| --- | ---: | ---: | ---: |
+| 0 | 8 | 18,070 | 2.4403 |
+| 1 | 2 | 41,196,425 | 2.4780 |
+| 1 | 8 | 55,298,938 | 2.0607 |
+| 2 | 2 | 102,770,726 | 1.5634 |
+| 2 | 8 | 127,400,100 | 2.1156 |
+
+Chance for a ten-class task is 2.303. The run 3 losses sit around it, which is where a
+partly forgotten task belongs.
+
+They can be checked against something the runs recorded for themselves. Each source run
+saved `final_accuracies`, and task 3 ends the stream at 34.8 percent on seed 1 and 32.0
+percent on seed 2, against 10 percent for chance. A cross-entropy near 2.06 and 2.12 is what
+those accuracies look like. So the arm is now standing on a real model, and run 2's rows
+were the artifact they appeared to be.
+
+One thing to note rather than explain away: seed 1's loss on task 3 falls from 2.478 at
+boundary 2 to 2.061 at boundary 8, so it gets better at an old task as the stream goes on,
+while seed 2 gets worse, 1.563 to 2.116. Two seeds, opposite directions, so this is variance
+and not a finding.
+
+### The result
+
+| Seed | t | Loss | Mean curvature | Spread | vs first | Curvature / loss |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 0 | 8 | 2.4403 | 4.043e-4 | 4.91e-4 | | 1.657e-4 |
+| 1 | 2 | 2.4780 | 4.287e-4 | 4.56e-4 | 1.000 | 1.730e-4 |
+| 1 | 8 | 2.0607 | 4.554e-4 | 6.27e-4 | 1.062 | 2.210e-4 |
+| 2 | 2 | 1.5634 | 1.299e-4 | 5.22e-4 | 1.000 | 0.831e-4 |
+| 2 | 8 | 2.1156 | 1.907e-4 | 5.14e-4 | 1.467 | 0.901e-4 |
+
+Neither seed moves. Seed 1 changes by 2.67e-5 against a floor of 2.402e-4; seed 2 by 6.07e-5
+against 2.269e-4. Both are well inside their floors, so both are no finding.
+
+Two things stand out before the comparison. The curvature at a trained code is three to four
+orders of magnitude smaller than at the reference code: 1.3e-4 to 4.6e-4 here against 0.015
+to 4.07 there. And the spread between directions is larger than the mean at every point, so
+individual directions scatter around zero.
+
+### Why no finding is informative here
+
+A floor wider than the change usually means the run was too small to say anything. Here it
+does not, because the question is whether the rise the reference arm found also appears at a
+trained code, and that rise is large.
+
+| Seed | Smallest rise this arm could detect | What the reference arm reported | That rise would clear the floor by |
+| --- | ---: | ---: | ---: |
+| 1 | 1.56x | 6.50x | 9.8x |
+| 2 | 2.75x | 5.53x | 2.6x |
+
+So this arm has the power to see a rise the size the reference arm reported, on both seeds,
+and it does not see one. What it cannot rule out is a smaller change: anything under 1.56x
+on seed 1 and under 2.75x on seed 2 would be invisible here.
+
+### What runs 2 and 3 say together
+
+The reference arm, standing at a code belonging to no task where the loss runs into the
+thousands, finds the loss surface getting sharper along the stream by 13.7, 6.5 and 5.5
+times, clearing an honest floor on all three seeds.
+
+The learned arm, standing at a code the model trained with the statistics that go with it,
+finds nothing of the sort, and had enough power to find it.
+
+Read together, the sharpening is a property of the reference point rather than of the place
+the model settles. That also fits what dividing by the loss already suggested in the
+reference arm, where every seed fell once the loss scale was taken out. Two separate routes
+to the same conclusion: the rise in raw curvature tracks the rise in loss at a point the
+model was never trained to occupy, and it does not appear at a point it was.
+
+On the reading rule written down before run 1, curvature does not join effective rank, srank
+and dormant units. It goes with the direct probe and random-label fitting: no plasticity
+loss.
+
+### What this still does not establish
+
+Three seeds, and only two of them have two points on the learned arm. The learned arm
+follows one task, the first in the order, so a task learned later in the stream might behave
+differently. And this is the mean Hessian eigenvalue, not the largest, which is what most of
+the sharpness literature reports; that needs Hessian-vector products and a power iteration
+and is a separate notebook.
+
+A smaller sharpening at the learned point is not ruled out. Settling seed 2 down to its own
+measured change would need about 560 directions per point instead of 40, which is roughly
+2800 measurements on one radius and no new downloads. Seed 1 would need about 3200, which is
+not worth buying.
