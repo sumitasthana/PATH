@@ -198,7 +198,9 @@ order 01. The direct probe is the reference they are judged against, because it 
 task on the same model and counts the score, which is what the word plasticity means. The probe
 ends at 1.021, 1.078 and 1.086 of where it started.
 
-Read one at a time, three of these say plasticity was lost and three say it was not. The three that say it was not are the three that train something and count the result. The three that say it was are the three that read the weights or the activations and infer. Weight change gives no verdict on its own, which is what it was built to do.
+Read one at a time, the split is clean and it falls along one line. The two measurements that train something and count the result, the direct probe and random-label fitting, both say capacity held. The three that read the weights or the activations and infer, effective rank, srank and dormant units, all say it was lost. Weight change gives no verdict on its own, which is what it was built to do, and loss progress cannot be read in this design.
+
+Curvature is the one that sits on the line. Read raw it joins the three that infer. Divided by the loss at the same point, which is a scale cross-entropy curvature carries with it, it joins the two that train. Both readings come from the same numbers and this run does not settle which is right.
 
 | Measurement | What it did | Isolated inference | Compared with the probe |
 | --- | --- | --- | --- |
