@@ -57,7 +57,7 @@ low first reading is therefore a property of being first, not of task 3. The
 earlier reading that loss progress jumps over the first two tasks and then
 flattens stands. The fall at position 8 seen in `order_01` does not repeat here:
 position 8 reads 0.2182 there and 0.2905 in this run, so that end-of-stream dip
-is not established.
+is not established. The third order, recorded below, settles it: there is no dip.
 
 **The verdict on the row does not change.** Loss progress still does not fall
 across the stream, which is what the plasticity question asks. It is now readable
@@ -112,11 +112,119 @@ model moved.
 - The loss-progress gap at `order_01` seed 2, boundary 6, is still missing and is
   excluded from that task's mean.
 
-### Where it leaves the decision
+### Where it left the decision
 
 `order_03` puts task 5 at position 1, task 14 at position 4 and task 3 at
-position 8. It is now worth more than it was before this run, for two reasons
+position 8. It was worth more after this run than before it, for two reasons
 rather than one. It gives position 1 a third task, which turns two agreeing
 readings into three. And it gives a second measurement of how much the
-effective-rank fall varies with the order, which is the finding above and
-currently rests on a single pair.
+effective-rank fall varies with the order, which at that point rested on a single
+pair. It was run the same day, and the result is below.
+
+## The third task order, which completes the rotation
+
+### What was run
+
+Seed 0 of `order_03`, the same study, the same code, the same settings. It
+completed on an A100 in 1 hour 46 minutes and wrote
+`uncle/indicators/indicator_stream_v1/order_03/seed_0.jsonl`. Boundary models 2,
+4 and 6 were kept. Final accuracies: task 5 31.0, task 0 38.2, task 9 39.0,
+task 14 37.8, task 17 39.8, task 1 56.8, task 7 34.2, task 3 36.8.
+
+An earlier attempt the same day started on an L4 rather than an A100, saved its
+pre-training checkpoint, and stopped. The second attempt refused to resume it,
+because `run_job` compares the recorded GPU and software settings against the
+current ones and stops rather than continuing one run across two kinds of
+hardware. That checkpoint held 0.45 seconds of compute, no completed tasks and no
+measured boundaries, so it was deleted and the run started fresh. Nothing was
+lost. The guard is worth keeping in mind for any run that disconnects partway: a
+checkpoint holding real training should not be cleared to get past it.
+
+### Loss progress rises with the position, on all three tasks
+
+Each of the three moving tasks has now been measured at positions 1, 4 and 8.
+
+| Task | Position 1 | Position 4 | Position 8 | Spread |
+| ---: | ---: | ---: | ---: | ---: |
+| 3 | 0.1509 (`order_01`, three seeds) | 0.2777 (`order_02`) | 0.2869 (`order_03`) | 0.1361 |
+| 5 | 0.1426 (`order_03`) | 0.2493 (`order_01`, three seeds) | 0.2905 (`order_02`) | 0.1479 |
+| 14 | 0.1169 (`order_02`) | 0.1862 (`order_03`) | 0.2182 (`order_01`, three seeds) | 0.1013 |
+
+All three rise with the position, in the same order, with no exception. The five
+tasks that never moved give the noise floor:
+
+| Task | Position | `order_01`, three seeds | `order_02` | `order_03` | Largest gap |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 0 | 2 | 0.1868 | 0.2002 | 0.1992 | 0.0135 |
+| 9 | 3 | 0.2562 | 0.2668 | 0.2890 | 0.0327 |
+| 17 | 5 | 0.2758 | 0.2752 | 0.2719 | 0.0039 |
+| 1 | 6 | 0.2526 | 0.2396 | 0.2457 | 0.0130 |
+| 7 | 7 | 0.2457 | 0.2895 | 0.2989 | 0.0531 |
+
+The largest control gap is 0.0531. The three moving tasks span 0.1013 to 0.1479,
+which clears it by 1.9 to 2.8 times. **Loss progress is a property of the position
+in the stream, measured three times over.**
+
+There is a task offset as well as a position effect. Task 14 reads lower than
+tasks 3 and 5 at every position it was measured at. The position ordering holds
+inside each task regardless, which is what the crossed design was built to show.
+
+Two earlier readings are corrected by this. The end-of-stream dip seen in
+`order_01` is gone: position 8 is the highest reading for every one of the three
+tasks. That dip was task 14 sitting at position 8, and task 14 is the
+lowest-reading of the three. And the series is a rise over the first two positions
+followed by a flat stretch, with no fall anywhere, so the row's verdict of no
+plasticity loss is unchanged and now rests on a complete rotation.
+
+### The effective-rank fall is set by which task comes first
+
+This is the result that matters most, and it is not what the run was built for.
+Three runs now share seed 0, so all three start from the identical generator,
+reading effective rank 7.3057 on the probe images before any training. Same seed,
+same code, same images. Only the sequence differs.
+
+| Run | First task | Rank after task 1 | Rank at boundary 8 | Rank fall | srank fall | Generator moved | Mean final accuracy |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `order_03` | 5 | 6.3853 | 5.6552 | 22.6 percent | 4.8 percent | 0.1165 | 39.20 |
+| `order_01` | 3 | 6.2475 | 4.0473 | 44.6 percent | 11.0 percent | 0.1196 | 39.20 |
+| `order_02` | 14 | 2.4727 | 2.0635 | 71.8 percent | 38.8 percent | 0.1168 | 44.08 |
+
+The generator travels the same distance in all three, 0.1165 to 0.1196, a spread
+of 2.6 percent. The effective-rank fall spans 22.6 to 71.8 percent, a spread of
+3.2 times. The srank fall spans 4.8 to 38.8 percent, a spread of 8.1 times.
+
+Under `order_03` there is almost no compression to report at all. Effective rank
+drops once on the first task, from 7.3057 to 6.3853, then sits between 5.84 and
+6.07 for the rest of the stream and ends at 5.6552. srank goes from 227 to 216
+across eight tasks. A run that learns the same eight tasks, moves the same
+distance, and reaches the same mean accuracy as `order_01` seed 0 shows half its
+rank fall and less than half its srank fall.
+
+**Accuracy does not follow the fall.** `order_03` falls 22.6 percent and
+`order_01` seed 0 falls 44.6 percent, and both end at a mean final accuracy of
+39.20. `order_02` falls the furthest, 71.8 percent, and ends highest at 44.08. So
+among these three the indicator read as lost capacity is, if anything, pointing
+the wrong way.
+
+**Dormant units are the stable one.** Across all five runs the rise sits between
+33.3 and 43.2 percent, a spread of 1.3 times, against effective rank's 3.2 and
+srank's 8.1. Whatever dormant units measure, it survives a change of task order.
+Effective rank largely does not.
+
+### What this does not establish
+
+- One seed per new order. The three `order_01` seeds supply the noise floor for
+  the loss-progress tables. The rank comparison rests on three runs that share
+  seed 0 and differ only in order, which is the comparison it needs, but each of
+  the two new orders has been run once.
+- Why learning task 14 first collapses the rank reading, while tasks 3 and 5 first
+  do not, is not explained here. Task 14 ends lowest in `order_02` at 36.0 percent
+  and task 5 ends lowest in `order_03` at 31.0 percent, so reading task 14 as
+  simply the hard one does not survive. Nothing here tests the mechanism.
+- The share of the whole fall that lands on the first task is 32.5, 92.2 and 55.8
+  percent for `order_01`, `order_02` and `order_03`. It is large in all three and
+  does not order with anything else measured here.
+- Mean final accuracy over eight tasks is a coarse summary. It is used only to
+  show the fall does not track performance, not to rank the runs.
+- The loss-progress gap at `order_01` seed 2, boundary 6, is still missing and is
+  excluded from that task's mean.
