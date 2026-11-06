@@ -198,7 +198,7 @@ order 01. The direct probe is the reference they are judged against, because it 
 task on the same model and counts the score, which is what the word plasticity means. The probe
 ends at 1.021, 1.078 and 1.086 of where it started.
 
-Read one at a time, the split is clean and it falls along one line. The two measurements that train something and count the result, the direct probe and random-label fitting, both say capacity held. The three that read the weights or the activations and infer, effective rank, srank and dormant units, all say it was lost. Weight change gives no verdict on its own, which is what it was built to do, and loss progress cannot be read in this design.
+Read one at a time, the split is clean and it falls along one line. The measurements that train something and count the result, the direct probe and random-label fitting, both say capacity held. The three that read the weights or the activations and infer, effective rank, srank and dormant units, all say it was lost. Weight change gives no verdict on its own, which is what it was built to do, and loss progress cannot be read in this design.
 
 Curvature looked like it sat on the line and then came down on the training side. Read raw at the reference code it rises and joins the three that infer. But the rise tracks the rise in loss at that point, and at a code the model actually trained it is absent, on a measurement with enough power to have seen it. So the rise belongs to where it was measured, not to the model.
 
@@ -209,10 +209,10 @@ Curvature looked like it sat on the line and then came down on the training side
 | Effective rank | Falls 35.0, 44.6 and 61.2 percent | **Plasticity loss, severe.** A fall of this size is well past the point at which the literature calls a model saturated | Points the other way. The size of each fall also tracks where that seed started: 4.57, 7.31 and 9.20, ending in one narrow band |
 | srank | Falls about 11 percent on the in-stream and probe images, 32 percent on EuroSAT | **Plasticity loss, mild.** Larger on an unrelated domain than on the stream's own images | Points the other way, by much less. Its spread widens rather than narrowing, so the convergence that shapes effective rank does not appear to shape it |
 | Dormant units | Rises 0.0660, 0.0831 and 0.0680 at threshold 0.01 | **Plasticity loss.** More units stop responding to anything, which is read as capacity dying | Points the other way. The control puts movement alone at 0.0085 at most, so the rise comes from the direction training takes. Real effect; not what the probe measures |
-| Loss progress | Rises from 0.1397 at t = 1 to 0.2160 at t = 8 | **No plasticity loss.** Each task's loss falls further late in the stream than early, which reads as learning getting easier | Not readable in this design. It is measured on the task being learned, and the eight tasks differ, so the change mixes the task with the position in the stream. It also has gaps at boundaries 1 and 6 |
+| Loss progress | Rises from 0.1397 at t = 1 to 0.2160 at t = 8 | **No plasticity loss.** Each task's loss falls further late in the stream than early, which reads as learning getting easier | Not readable in this design. It is measured on the task being learned, and the eight tasks differ, so the change mixes the task with the position in the stream. It also has gaps at boundaries 1 and 6. The held-out version of the same question is the learning-speed row below |
 | Weight change | Reaches about 0.12 of the generator's own size by boundary 8 | **No verdict either way.** It has no direction that means loss. It is a predictor of the probe, not an indicator of damage | Not tested here. Three seeds cannot separate a real relationship from none |
 | Curvature | Mean Hessian eigenvalue, 40 directions per point, [runs 2 and 3](Experiment-trajectory-2026-11-04). At the reference code it rises 13.7, 6.5 and 5.5 times, clearing a both-ends floor on all three seeds. At a code the model trained it does not move at all, on an arm with the power to see a rise that size | **No plasticity loss.** The rise is real but belongs to the reference point, not to the model. It tracks the rise in loss at that point, and it is absent where the model actually settles | Agrees, by two separate routes. Dividing out the loss scale removes the rise on every seed, and the trained-code arm never shows it. The raw rise would disagree; the raw rise is the artifact |
-| New-task learning speed | Not measured. The probe scores after a fixed 250 steps rather than counting steps to a threshold | | The other remaining gap |
+| New-task learning speed | Steps to reach half of a fresh model's score on held-out task 2, read out of notebook 40's saved probe curves on 5 November, [record](Experiment-trajectory-2026-11-05). Seed 1 falls 61.2 to 36.5 steps, seed 2 55.6 to 45.1. Both clear a both-ends floor | **No plasticity loss.** The model learns an unseen task faster after eight tasks, not slower, which is the opposite of what a saturating model does | Agrees. It is the same fork-and-discard probe read earlier in its training, so it is not independent of the direct probe, but it answers the speed question the direct probe's fixed budget could not |
 
 ### Random-label fitting, the one that agrees
 
@@ -248,7 +248,8 @@ And it is the `full` arm only.
 ### What follows
 
 The direct probe says there is no plasticity loss here. Effective rank, srank and dormant units
-all say there is. Loss progress cannot be read. Random-label fitting says there is not, and it is
+all say there is. Loss progress cannot be read, and the held-out measurement that replaces it,
+new-task learning speed, says there is not. Random-label fitting says there is not, and it is
 the only one of the five that matches the direct measurement.
 
 That ordering is worth stating plainly, because it is the reverse of the adapter study's. There,
