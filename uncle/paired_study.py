@@ -382,9 +382,12 @@ def run_job(plan, job, tasks, storage, *, device='cuda', progress=True,
             on_boundary(job, pointer)
             restore_rng(rng)
         if observer is not None:
-            # Numbered by tasks learned, so epoch saves land on a number that
-            # is already written and cost nothing.
-            observer.boundary(trainer, len(seen), seen[-1] if seen else None)
+            # Numbered by operations finished, learn and forget alike, so
+            # epoch saves land on a number that is already written and cost
+            # nothing. Source jobs never forget, so their numbering is
+            # unchanged and old records stay comparable.
+            observer.boundary(trainer, len(seen) + len(forgotten),
+                              history[-1]['task'] if history else None)
             restore_rng(rng)
         segment_started = time.monotonic()
         stopped = not complete and stop_requested()

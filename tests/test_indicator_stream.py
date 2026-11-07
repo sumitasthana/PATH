@@ -100,11 +100,13 @@ class RidingAlong(unittest.TestCase):
         return run_job(self.plan, self.source, self.tasks, storage,
                        device="cpu", progress=False, observer=observer)
 
+    def make_observer(self, path):
+        return StreamObserver(path, fixed_image_sets({"in_stream": self.data}, count=4),
+                              study="test", order="order_01", seed=0, every=1)
+
     def observe(self):
         path = Path(self.folder.name) / "seed_0.jsonl"
-        observer = StreamObserver(path, fixed_image_sets({"in_stream": self.data}, count=4),
-                                  study="test", order="order_01", seed=0, every=1)
-        report = self.run_stream(observer)
+        report = self.run_stream(self.make_observer(path))
         rows = [json.loads(line) for line in
                 path.read_text(encoding="utf-8").splitlines()]
         return report, rows
@@ -147,6 +149,34 @@ class RidingAlong(unittest.TestCase):
                              [row["loss"] for row in second["trace"][1:]])
             self.assertEqual([row["input_sha256"] for row in first["trace"][1:]],
                              [row["input_sha256"] for row in second["trace"][1:]])
+
+    def test_an_unlearn_gets_its_own_boundary_number(self):
+        """Numbering by tasks learned alone would hide the unlearn entirely.
+
+        A forget step leaves `seen` untouched, so the save after it would carry
+        the number the last learned task already wrote, and the record would
+        skip the one state this run exists to measure.
+        """
+        root = Path(self.folder.name) / "chain"
+        root.mkdir()
+        storage = StudyStore(R2Store(Objects(), "test"), self.plan, root)
+        storage.prepare()
+        path = Path(self.folder.name) / "chain.jsonl"
+        run_job(self.plan, self.source, self.tasks, storage, device="cpu",
+                progress=False, observer=self.make_observer(path))
+        branch = next(job for job in jobs(self.plan) if job["kind"] == "unlearned")
+        # The branch starts from the same record, exactly as notebook 36 does,
+        # so its rows continue the stream's numbering and share its baseline.
+        run_job(self.plan, branch, self.tasks, storage, device="cpu",
+                progress=False, observer=self.make_observer(path))
+        rows = [json.loads(line) for line in
+                path.read_text(encoding="utf-8").splitlines()]
+        self.assertEqual([row["t"] for row in rows], [0, 1, 2, 3, 4])
+        # Row 3 is the unlearn: named for the task it forgot, and with nothing
+        # to say about loss progress, which only learning steps produce.
+        self.assertEqual(rows[3]["task"], "3")
+        self.assertIsNone(rows[3]["loss_progress_mean"])
+        self.assertEqual(rows[4]["task"], "15")
 
 
 if __name__ == "__main__":
