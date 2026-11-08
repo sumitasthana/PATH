@@ -133,6 +133,12 @@ comparison. Seeds 1 and 2 have 4.27 and 4.73.
 
 ## The indicators read healthier after an unlearn
 
+**Partly superseded on 8 November.** The weight-norm explanation flagged as
+open at the end of this section was tested and carries about two thirds of
+the rank and srank rise. The size claim below is withdrawn; the conclusion
+about the indicators stands, for a reason given in the
+[8 November record](Experiment-trajectory-2026-11-08).
+
 This is the first reading of the plasticity indicators on a model that has just
 been damaged. Every earlier reading was taken on a model that had only learned.
 
