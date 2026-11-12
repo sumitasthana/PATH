@@ -13,6 +13,7 @@ adapter identity at init, local-CE gradient mask) and the environment. Any faile
 Results: <ap_out>/<ap_run_name>.json after every task; per-task class-IL accuracies on the CIFAR-100 test
 split (or, with --validation v, on v% of each class held out from the training set: eval_split says which), A_t = mean over seen tasks, A_T (last) and A_bar (mean of A_t over t), as reported by LAE.
 """
+import hashlib
 import json
 import os
 import platform
@@ -24,6 +25,9 @@ import torch
 import torch.nn.functional as F
 
 from models.utils.continual_model import ContinualModel
+from models.ap_utils.plasticity import (ProbeRunner, RNGGuard, add_probe_args, check_data, data_manifest,
+                                        load_probe_data, probe_points, tensors_sha)
+from models.ap_utils.stream_metrics import StreamMetrics, add_metric_args
 
 
 def add_lae_args(parser):
@@ -32,6 +36,21 @@ def add_lae_args(parser):
     g.add_argument('--ap_run_name', type=str, default=None)
     g.add_argument('--ap_preset', type=str, default='unspecified')
     g.add_argument('--ap_class_order', type=int, default=1, choices=[1, 2, 3])
+    g.add_argument('--ap_t0_cache', type=str, default=None,
+                   help='Directory for cached t = 0 probe results, keyed by the exact t = 0 model (default <ap_out>/t0_cache).')
+    g.add_argument('--ap_head_lr', type=float, default=None,
+                   help='Learning rate of the linear head; default: the same as --lr (one Adam over head + adapter, '
+                        'the calibrated protocol). Set to decouple head and adapter learning rates.')
+    g.add_argument('--ap_joint_points', type=int, default=0,
+                   help='Joint (single-task) training only: number of evenly spaced measurement points over the run. '
+                        'Point k (k = 1..K) is taken after round(k * S / K) of the S updates and is recorded exactly '
+                        'like the end of task k in the continual runs (accuracy, dW, stream metrics, probes at '
+                        '--ap_probe_points, checkpoint). 0 = one point at the end.')
+    g.add_argument('--ap_ckpt_dir', type=str, default='',
+                   help='If set, save every trainable tensor (adapter + head) at t = 0 and after every task to '
+                        '<dir>/t<tt>.pt, so any probe or metric can be recomputed later. Empty = off.')
+    add_probe_args(parser)
+    add_metric_args(parser)
     return parser
 
 
@@ -62,11 +81,27 @@ class LaeLora(ContinualModel):
         add_lae_args(parser)
         return parser
 
+    def get_optimizer(self, params=None, lr=None):
+        """Calibrated protocol (no --ap_head_lr): Mammoth's optimizer over every parameter at --lr, unchanged.
+        With --ap_head_lr: Adam with two groups, head at --ap_head_lr and everything else at --lr."""
+        hlr = getattr(self.args, 'ap_head_lr', None)
+        if hlr is None or params is not None:
+            return super().get_optimizer(params=params, lr=lr)
+        head = {id(p) for p in self.net.head.parameters()}
+        rest = [p for p in self.net.parameters() if id(p) not in head]
+        return torch.optim.Adam([{'params': rest, 'lr': self.args.lr}, {'params': list(self.net.head.parameters()), 'lr': hlr}],
+                                lr=self.args.lr, weight_decay=self.args.optim_wd)
+
     # ------------------------------------------------------------------ training step
     def _offsets(self):
         if getattr(self.args, 'joint', 0):
             return 0, self.N_CLASSES
         return self.n_past_classes, self.n_seen_classes
+
+    def offsets_for_task(self, k):
+        if getattr(self.args, 'joint', 0):
+            return 0, self.N_CLASSES
+        return self.get_offsets(k)
 
     def observe(self, inputs, labels, not_aug_inputs, epoch=None):
         past, seen = self._offsets()
@@ -86,6 +121,15 @@ class LaeLora(ContinualModel):
             self._grad_checked = True
             self._save()
         self.opt.step()
+        if getattr(self, '_metrics', None) is not None:
+            self._step += 1
+            self._metrics.after_step(inputs, labels, past, seen, loss.item(), self._step)
+        if getattr(self, '_jp_at', None):
+            self._jp_step += 1
+            k = self._jp_at.get(self._jp_step)
+            if k is not None:
+                self._record_point(self._dataset, k, final=False)
+                self._save()
         return loss.item()
 
     # ------------------------------------------------------------------ bookkeeping
@@ -93,6 +137,19 @@ class LaeLora(ContinualModel):
         os.makedirs(self.args.ap_out, exist_ok=True)
         name = self.args.ap_run_name or f'lae_order{self.args.ap_class_order}_s{self.args.seed}'
         return os.path.join(self.args.ap_out, name + '.json')
+
+    def _ckpt(self, t):
+        """Write the trainable tensors (adapter + head) at point t. Read-only on the model: training is unchanged."""
+        d = getattr(self.args, 'ap_ckpt_dir', '')
+        if not d:
+            return None
+        os.makedirs(d, exist_ok=True)
+        state = {n: p.detach().cpu().clone() for n, p in self.net.named_parameters() if p.requires_grad}
+        path = os.path.join(d, f't{t:02d}.pt')
+        torch.save(dict(t=t, state=state, adapter=self.net.adapter,
+                        backbone_weights_sha256=self._rec.get('backbone_weights_sha256')), path + '.tmp')
+        os.replace(path + '.tmp', path)
+        return dict(file=os.path.basename(path), adapter_sha256=tensors_sha(self.net.adapter_parameters())[:32])
 
     def _save(self):
         self._rec['elapsed_min'] = (time.time() - self._rec['started']) / 60
@@ -117,7 +174,7 @@ class LaeLora(ContinualModel):
         keep = ['model', 'dataset', 'backbone', 'ap_adapter', 'ap_blocks', 'ap_targets', 'ap_lae_rank', 'ap_lora_r',
                 'ap_lora_alpha', 'ap_oft_block_size', 'ap_timm_model', 'lr', 'optimizer',
                 'optim_wd', 'n_epochs', 'batch_size', 'drop_last', 'seed', 'joint', 'validation', 'ap_class_order',
-                'ap_preset', 'permute_classes']
+                'ap_preset', 'permute_classes', 'ap_joint_points', 'ap_head_lr']
         cfg = {k: getattr(a, k, None) for k in keep}
         env = dict(python=sys.version.split()[0], torch=torch.__version__, timm=timm.__version__,
                    cuda=torch.version.cuda, gpu=torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'cpu',
@@ -133,8 +190,12 @@ class LaeLora(ContinualModel):
         n_ad = sum(p.numel() for p in self.net.adapter_parameters())
         expect = self.net.expected_params
         _check(rec, 'adapter_param_count', n_ad == expect, dict(found=n_ad, expected=expect, adapter=self.net.adapter))
-        n_frozen_trainable = sum(p.numel() for n, p in self.net.base_named_parameters() if p.requires_grad)
-        _check(rec, 'backbone_frozen', n_frozen_trainable == 0, n_frozen_trainable)
+        if self.net.adapter == 'full':
+            n_body = sum(p.numel() for p in self.net.body.parameters())
+            _check(rec, 'full_model_trainable', n_ad == n_body, dict(trainable=n_ad, backbone=n_body))
+        else:
+            n_frozen_trainable = sum(p.numel() for n, p in self.net.base_named_parameters() if p.requires_grad)
+            _check(rec, 'backbone_frozen', n_frozen_trainable == 0, n_frozen_trainable)
         dw0 = self._rel_dW()
         n_expect = len(self.net.blocks_adapted) * len(self.net.targets)
         _check(rec, 'adapted_matrix_count', self._n_adapted_matrices == n_expect,
@@ -144,19 +205,78 @@ class LaeLora(ContinualModel):
         _check(rec, 'head_init', abs(hw.std().item() - 0.001) < 2e-4 and self.net.head.bias.abs().max().item() == 0.0,
                dict(weight_std=hw.std().item()))
         rec['n_trainable_adapter'] = n_ad
+        rec['optimizer_groups'] = [dict(lr=g['lr'], n_params=sum(p.numel() for p in g['params'] if p.requires_grad))
+                                   for g in self.opt.param_groups]
         rec['eval_split'] = 'validation (held out from train)' if getattr(a, 'validation', None) else 'test'
         rec['n_tasks'] = dataset.N_TASKS
         import hashlib
-        w = torch.cat([p.detach().flatten().cpu().float() for n, p in self.net.base_named_parameters()])
+        base = self.net.body.named_parameters() if self.net.adapter == 'full' else self.net.base_named_parameters()
+        w = torch.cat([p.detach().flatten().cpu().float() for n, p in base])      # pretrained weights at init
         rec['backbone_weights_sha256'] = hashlib.sha256(w.numpy().tobytes()).hexdigest()
         rec['backbone_pretrained_cfg'] = {k: str(v) for k, v in dict(self.net.pretrained_cfg).items()
                                           if k in ('hf_hub_id', 'tag', 'architecture', 'url', 'file')}
         rec['backbone_n_params'] = int(w.numel())
 
+    # ------------------------------------------------------------------ plasticity probes
+    def _probe_cfg(self):
+        keys = ['ap_probes', 'ap_probe_lrs', 'ap_probe_head_lrs', 'ap_probe_head_lr', 'ap_probe_steps_nat',
+                'ap_probe_steps_rand', 'ap_rand_n', 'ap_probe_bs', 'ap_probe_seed', 'ap_probe_reps', 'ap_probe_reps_t0']
+        return {k: getattr(self.args, k) for k in keys}
+
+    def _probe_runner(self):
+        if not hasattr(self, '_runner'):
+            data = load_probe_data(self.args.ap_data_dir)
+            ok, detail = check_data(data)
+            _check(self._rec, 'probe_data_sizes', ok, detail)
+            self._rec['probe_data'] = data_manifest(data)
+            self._runner = ProbeRunner(self.args, self.net, self.device, data)
+        return self._runner
+
+    def _probe(self, t):
+        """Fork-and-discard measurement at point t; the stream model must be unchanged afterwards."""
+        reps = self.args.ap_probe_reps_t0 if t == 0 else self.args.ap_probe_reps
+        runner = self._probe_runner()
+        cache = None
+        if t == 0:
+            key = hashlib.sha256(json.dumps(dict(adapter=tensors_sha(self.net.adapter_parameters()),
+                                                 backbone=self._rec['backbone_weights_sha256'],
+                                                 cfg=self._probe_cfg()), sort_keys=True).encode()).hexdigest()[:20]
+            d = self.args.ap_t0_cache or os.path.join(self.args.ap_out, 't0_cache')
+            os.makedirs(d, exist_ok=True)
+            cache = os.path.join(d, f't0_{key}.json')
+            if os.path.exists(cache):
+                self._rec['probes']['0'] = dict(json.load(open(cache)), cached=True)
+                return
+        res, before, after = runner.measure(reps)
+        _check(self._rec, f'probe_discarded_t{t}', before == after, dict(adapter_sha_before=before[:16], adapter_sha_after=after[:16]))
+        res['cfg'] = self._probe_cfg()
+        self._rec['probes'][str(t)] = res
+        if cache:
+            _write_json(cache, res)
+
     def begin_task(self, dataset):
         if self.current_task == 0:
             self._init_record(dataset)
+            self._rec['probes'] = {}
+            self._rec['probe_points'] = sorted(probe_points(self.args))
+            self._metrics, self._step = (StreamMetrics(self), 0) if self.args.ap_metrics else (None, 0)
+            if self._metrics is not None:
+                self._rec['metrics_t0'] = self._metrics.measure(dataset, 0)
+            if 0 in probe_points(self.args):
+                self._probe(0)
+            ck = self._ckpt(0)
+            if ck:
+                self._rec['ckpt_t0'] = ck
         self._grad_checked = False
+        self._jp_at = None
+        K = getattr(self.args, 'ap_joint_points', 0)
+        if K:
+            if not getattr(self.args, 'joint', 0):
+                raise CheckFailed('--ap_joint_points requires --joint 1')
+            S = len(dataset.train_loader) * int(self.args.n_epochs)
+            self._jp_at = {int(round(k * S / K)): k for k in range(1, K)}     # point K = end of training
+            self._jp_step, self._dataset = 0, dataset
+            self._rec['joint_points'] = dict(K=K, total_updates=S, steps=sorted(self._jp_at))
         t = self.current_task + 1
         targets = np.asarray(dataset.train_loader.dataset.targets)
         past, seen = self._offsets()
@@ -169,15 +289,37 @@ class LaeLora(ContinualModel):
                dict(classes=np.nonzero(counts)[0].tolist(), counts=counts[past:seen].tolist()))
         self._save()
 
-    def end_task(self, dataset):
+    def _record_point(self, dataset, t, final):
+        """One measurement point: accuracy, dW, stream metrics, checkpoint, probes at --ap_probe_points."""
         from utils.evaluate import evaluate
-        t = self.current_task + 1
-        cil, til = evaluate(self, dataset)
+        if final:
+            cil, til = evaluate(self, dataset)
+        else:                                    # inside a task: leave every random-number state untouched
+            with RNGGuard():
+                cil, til = evaluate(self, dataset)
         row = dict(t=t, test_cil=cil, test_til=til, A_t=float(np.mean(cil)), rel_dW=self._rel_dW(),
                    scales=[float(p.item()) for n, p in self.net.body.named_parameters()
-                           if self.net.adapter == 'lae_kvlora' and 'scale' in n])
+                           if self.net.adapter == 'lae_kvlora' and 'scale' in n],
+                   adapter_sha256=tensors_sha(self.net.adapter_parameters())[:32])
+        if self.net.adapter == 'full':
+            row['rel_dW_all'] = self.net.rel_dW_all()
+        if self._metrics is not None:
+            row['loss_progress'] = self._metrics.take_loss_progress()
+            row['metrics'] = self._metrics.measure(dataset, t)
+        ck = self._ckpt(t)
+        if ck:
+            row['ckpt'] = ck
         self._rec['tasks'].append(row)
-        if t == dataset.N_TASKS:
+        if t in probe_points(self.args):
+            self._save()
+            self._probe(t)
+        return row
+
+    def end_task(self, dataset):
+        joint_k = getattr(self.args, 'ap_joint_points', 0) if getattr(self.args, 'joint', 0) else 0
+        t = joint_k if joint_k else self.current_task + 1
+        row = self._record_point(dataset, t, final=True)
+        if self.current_task + 1 == dataset.N_TASKS:
             self._rec['A_T'] = row['A_t']
             self._rec['A_bar'] = float(np.mean([r['A_t'] for r in self._rec['tasks']]))
             self._rec['complete'] = True

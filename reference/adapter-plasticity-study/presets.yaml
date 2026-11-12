@@ -117,6 +117,117 @@ step2b_lora_study:
     - {name: step2b_lora_order2_s2, ap_class_order: 2, seed: 2}
     - {name: step2b_lora_order3_s3, ap_class_order: 3, seed: 3}
 
+step3_oft_study:
+  description: "Step 3: OFT (exact Cayley, block size 48) on the study placement (qkv + proj, 12 blocks, 433,152 params), LR from its own validation search."
+  reference: {source: "no published number; compared with step1 (last LAE-anchored point)"}
+  mammoth:
+    dataset: seq-cifar100-lae
+    model: lae-lora
+    backbone: vit-lae
+    ap_timm_model: vit_base_patch16_224.augreg_in21k
+    ap_blocks: "0,1,2,3,4,5,6,7,8,9,10,11"
+    ap_targets: qkv,proj
+    optimizer: adam
+    lr: 0.0028125            # replaced by the selected LR
+    optim_wd: 0.0
+    n_epochs: 5
+    batch_size: 24
+    drop_last: 1
+    ap_adapter: oft
+    ap_oft_block_size: 48
+  runs:
+    - {name: step3_oft_order1_s1, ap_class_order: 1, seed: 1}
+    - {name: step3_oft_order2_s2, ap_class_order: 2, seed: 2}
+    - {name: step3_oft_order3_s3, ap_class_order: 3, seed: 3}
+
+step4_lora_20t:
+  description: "Step 4: step2b (PEFT LoRA, study placement) on 20 tasks x 5 classes, at the LR selected in step2b."
+  reference: {source: "no published number for this split"}
+  mammoth:
+    dataset: seq-cifar100-lae-20t
+    model: lae-lora
+    backbone: vit-lae
+    ap_timm_model: vit_base_patch16_224.augreg_in21k
+    ap_blocks: "0,1,2,3,4,5,6,7,8,9,10,11"
+    ap_targets: qkv,proj
+    optimizer: adam
+    lr: 0.0028125            # replaced by the selected LR
+    optim_wd: 0.0
+    n_epochs: 5
+    batch_size: 24
+    drop_last: 1
+    ap_adapter: lora
+    ap_lora_r: 8
+    ap_lora_alpha: 8.0
+  runs:
+    - {name: step4_lora20t_order1_s1, ap_class_order: 1, seed: 1}
+    - {name: step4_lora20t_order2_s2, ap_class_order: 2, seed: 2}
+    - {name: step4_lora20t_order3_s3, ap_class_order: 3, seed: 3}
+
+step4_oft_20t:
+  description: "Step 4: step3 (OFT, study placement) on 20 tasks x 5 classes, at the LR selected in step3."
+  reference: {source: "no published number for this split"}
+  mammoth:
+    dataset: seq-cifar100-lae-20t
+    model: lae-lora
+    backbone: vit-lae
+    ap_timm_model: vit_base_patch16_224.augreg_in21k
+    ap_blocks: "0,1,2,3,4,5,6,7,8,9,10,11"
+    ap_targets: qkv,proj
+    optimizer: adam
+    lr: 0.0028125            # replaced by the selected LR
+    optim_wd: 0.0
+    n_epochs: 5
+    batch_size: 24
+    drop_last: 1
+    ap_adapter: oft
+    ap_oft_block_size: 48
+  runs:
+    - {name: step4_oft20t_order1_s1, ap_class_order: 1, seed: 1}
+    - {name: step4_oft20t_order2_s2, ap_class_order: 2, seed: 2}
+    - {name: step4_oft20t_order3_s3, ap_class_order: 3, seed: 3}
+
+step5_full_20t:
+  description: "Step 5: full-model fine-tuning (no adapter; every ViT parameter trains) on 20 tasks x 5 classes, local cross-entropy and fresh Adam per task as in every other preset, LR from its own validation search. Setting 2 of the plasticity study."
+  reference: {source: "no published number for this split"}
+  mammoth:
+    dataset: seq-cifar100-lae-20t
+    model: lae-lora
+    backbone: vit-lae
+    ap_timm_model: vit_base_patch16_224.augreg_in21k
+    ap_adapter: full
+    ap_blocks: "0,1,2,3,4,5,6,7,8,9,10,11"
+    ap_targets: qkv,proj          # matrices on which dW and the metrics are measured (all weights train)
+    optimizer: adam
+    lr: 1.0e-5                    # replaced by the LR selected in the validation search
+    optim_wd: 0.0
+    n_epochs: 5
+    batch_size: 24
+    drop_last: 1
+  runs:
+    - {name: step5_full20t_order1_s1, ap_class_order: 1, seed: 1}
+
+plain_full:
+  description: "Plain (non-continual) training, full model: one task with all 100 classes, the same model, optimizer, batch size and LR as step 5 (5 epochs over the full training set = the same number of updates as the 20-task stream). Anchor: LAE's joint full fine-tuning."
+  reference: {source: "Gao et al. 2023, Table 1, Joint-FT (full fine-tuning on all classes; orig_in21k weights, their schedule)", A_T: 92.00, A_T_sd: 0.18}
+  mammoth:
+    dataset: seq-cifar100-lae-20t
+    model: lae-lora
+    backbone: vit-lae
+    ap_timm_model: vit_base_patch16_224.augreg_in21k
+    ap_adapter: full
+    ap_blocks: "0,1,2,3,4,5,6,7,8,9,10,11"
+    ap_targets: qkv,proj
+    optimizer: adam
+    lr: 1.0e-5                    # replaced by the LR selected in step 5
+    optim_wd: 0.0
+    n_epochs: 5
+    batch_size: 24
+    drop_last: 1
+    joint: 1
+  runs:
+    - {name: plain_full_s1, ap_class_order: 1, seed: 1}
+
 # Gate thresholds. A gate passes only if every listed condition holds.
 gates:
   gate1: {log: gate1_l2p.log, metric: final class-IL after task 10, target: 83.83, tol: 2.0,
@@ -129,3 +240,71 @@ gates:
            lr_search: {lrs: [3.0e-5, 1.0e-4, 3.0e-4, 1.0e-3, 0.0028125], validation: 10, order: 1, seed: 1}}
   step2b: {preset: step2b_lora_study, requires: [step2a], vs: step1, tol_A_T: 5.0,
            lr_search: {lrs: [3.0e-5, 1.0e-4, 3.0e-4, 1.0e-3, 0.0028125], validation: 10, order: 1, seed: 1}}
+  step3: {preset: step3_oft_study, requires: [step2b], vs: step1, tol_A_T: 5.0,
+          lr_search: {lrs: [3.0e-5, 1.0e-4, 3.0e-4, 1.0e-3, 0.0028125], validation: 10, order: 1, seed: 1}}
+  step4_lora: {preset: step4_lora_20t, requires: [step2b], lr_from: step2b}
+  step4_oft: {preset: step4_oft_20t, requires: [step3], lr_from: step3}
+  step5_full: {preset: step5_full_20t, requires: [step4_lora, step4_oft],
+               lr_search: {lrs: [1.0e-6, 3.0e-6, 1.0e-5, 3.0e-5, 1.0e-4, 3.0e-4], validation: 10, order: 1, seed: 1}}
+  plain_full: {preset: plain_full, requires: [step5_full], lr_from: step5_full, A_T: [88.0, 94.0],
+               rule: "all-class test accuracy after plain training near LAE Joint-FT 92.0 (different weights and schedule, so a band)"}
+
+# Study: LoRA vs OFT plasticity on 20 tasks x 5 classes (the step 4 setup), with probes and stream metrics.
+# Arms: each adapter at its validation-selected LR (1e-4, steps 2b and 3) plus higher-LR arms that pair the two
+# adapters at matched weight change dW (from the step 2b / 3 searches: LoRA 3e-4 ~ dW 0.12 with OFT 1e-4 ~ 0.16;
+# LoRA 1e-3 ~ 0.39 with OFT 3e-4 ~ 0.32). One batch = all arms on one class order, sized to stay under 15 h.
+study:
+  requires: [gate0, gate1, gate3, gate3b, step1, step2a, step2b, step3, step4_lora, step4_oft]
+  common:
+    dataset: seq-cifar100-lae-20t
+    model: lae-lora
+    backbone: vit-lae
+    ap_timm_model: vit_base_patch16_224.augreg_in21k
+    ap_blocks: "0,1,2,3,4,5,6,7,8,9,10,11"
+    ap_targets: qkv,proj
+    optimizer: adam
+    optim_wd: 0.0
+    n_epochs: 5
+    batch_size: 24
+    drop_last: 1
+    ap_metrics: 1
+    ap_probe_points: "0,5,10,20"
+    ap_probe_lrs: "1e-4,3e-4,1e-3,3e-3"
+    ap_probe_head_lrs: "3e-4,1e-3,3e-3,1e-2"
+    ap_probe_reps: 2
+    ap_probe_reps_t0: 5
+    ap_hess_iters: 40            # per power-iteration phase (lambda_1, then the shifted operator); residuals recorded
+  arms:
+    lora_lr1e-4: {ap_adapter: lora, ap_lora_r: 8, ap_lora_alpha: 8.0, lr: 1.0e-4}
+    lora_lr3e-4: {ap_adapter: lora, ap_lora_r: 8, ap_lora_alpha: 8.0, lr: 3.0e-4}
+    lora_lr1e-3: {ap_adapter: lora, ap_lora_r: 8, ap_lora_alpha: 8.0, lr: 1.0e-3}
+    oft_lr1e-4: {ap_adapter: oft, ap_oft_block_size: 48, lr: 1.0e-4}
+    oft_lr3e-4: {ap_adapter: oft, ap_oft_block_size: 48, lr: 3.0e-4}
+    # batch D: matched dW (LoRA 8e-4 aims at OFT 3e-4's dW 0.34; OFT 4e-4 aims at LoRA 1e-3's dW 0.41) and a high-dW
+    # positive control per adapter (LoRA 2e-3, OFT 1e-3). Run with --arms so the arms above are not rerun.
+    lora_lr8e-4: {ap_adapter: lora, ap_lora_r: 8, ap_lora_alpha: 8.0, lr: 8.0e-4}
+    oft_lr4e-4: {ap_adapter: oft, ap_oft_block_size: 48, lr: 4.0e-4}
+    lora_lr2e-3: {ap_adapter: lora, ap_lora_r: 8, ap_lora_alpha: 8.0, lr: 2.0e-3}
+    oft_lr1e-3: {ap_adapter: oft, ap_oft_block_size: 48, lr: 1.0e-3}
+    # setting 2: full-model continual learning at the step-5 LR and 3x it (a second dW point). Probe LRs lowered for
+    # full fine-tuning; Hessian on 32 examples (85M-parameter model). No checkpoints (344 MB each).
+    full_cl: {ap_adapter: full, lr_from: step5_full, ap_probe_lrs: "3e-6,1e-5,3e-5,1e-4", ap_hess_n: 32}
+    full_cl_x3: {ap_adapter: full, lr_from: step5_full, lr_scale: 3, ap_probe_lrs: "3e-6,1e-5,3e-5,1e-4", ap_hess_n: 32}
+    # full model with a fast head (SLCA "slow learner", Zhang et al. 2023: backbone LR 100x below the head's): the
+    # head-mechanism test of the adapter arms, repeated where every weight trains. Head 1e-3 = 100x the step-5 LR.
+    full_cl_fasthead: {ap_adapter: full, lr_from: step5_full, ap_head_lr: 1.0e-3, ap_probe_lrs: "3e-6,1e-5,3e-5,1e-4", ap_hess_n: 32}
+    # causal test of the head mechanism: adapter LR and head LR crossed (the calibrated arms share one LR for both).
+    # If the proxies follow the head LR and the probes follow the adapter's dW, the proxies read out the head.
+    hlr_lora_a1e-4_h1e-3: {ap_adapter: lora, ap_lora_r: 8, ap_lora_alpha: 8.0, lr: 1.0e-4, ap_head_lr: 1.0e-3}
+    hlr_lora_a1e-3_h1e-4: {ap_adapter: lora, ap_lora_r: 8, ap_lora_alpha: 8.0, lr: 1.0e-3, ap_head_lr: 1.0e-4}
+    # setting 1: plain (non-continual) training, one task with all 100 classes, the same updates as the stream;
+    # 20 evenly spaced measurement points (point k after k/20 of the updates = task k of the stream).
+    plain_lora_lr1e-4: {joint: 1, ap_joint_points: 20, ap_adapter: lora, ap_lora_r: 8, ap_lora_alpha: 8.0, lr: 1.0e-4}
+    plain_lora_lr1e-3: {joint: 1, ap_joint_points: 20, ap_adapter: lora, ap_lora_r: 8, ap_lora_alpha: 8.0, lr: 1.0e-3}
+    plain_oft_lr1e-4: {joint: 1, ap_joint_points: 20, ap_adapter: oft, ap_oft_block_size: 48, lr: 1.0e-4}
+    plain_full: {joint: 1, ap_joint_points: 20, ap_adapter: full, lr_from: step5_full,
+                 ap_probe_lrs: "3e-6,1e-5,3e-5,1e-4", ap_hess_n: 32}
+  batches:
+    A: {ap_class_order: 1, seed: 1}
+    B: {ap_class_order: 2, seed: 2}
+    C: {ap_class_order: 3, seed: 3}

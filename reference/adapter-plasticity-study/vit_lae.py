@@ -7,6 +7,9 @@ Frozen timm ViT-B/16 + one adapter + linear head. One backbone for every preset,
     one learnable scalar per K and per V initialised to 1.0, blocks --ap_blocks (LAE: 0-4).
 --ap_adapter lora: PEFT LoRA (r=--ap_lora_r, alpha=--ap_lora_alpha, no dropout) on --ap_targets of --ap_blocks.
 --ap_adapter oft:  PEFT OFT, exact Cayley (no Neumann series), block size --ap_oft_block_size, same placement.
+--ap_adapter full: no adapter; every backbone parameter trains (full-model fine-tuning). dW and the stream metrics
+    are computed on the same matrices the adapters modify (attn.qkv / attn.proj of --ap_blocks), against a copy of
+    their pretrained values; rel_dW_all() also gives dW over every backbone weight matrix.
 
 Backbone: --ap_timm_model, frozen, no pre-logits, feature = CLS token after the final LayerNorm.
 Head: linear, weights N(0, 0.001^2), bias 0 (LAE SimpleHead.weights_init). The 100-way head exists from the
@@ -62,6 +65,8 @@ def expected_adapter_params(adapter, blocks, targets, d, lora_r, kv_rank, oft_bl
         return nb * sum(lora_r * (shapes[t][0] + shapes[t][1]) for t in targets)
     if adapter == 'oft':
         return nb * sum((shapes[t][0] // oft_block) * oft_block * (oft_block - 1) // 2 for t in targets)
+    if adapter == 'full':
+        return None                      # every backbone parameter: counted from the model itself
     raise ValueError(adapter)
 
 
@@ -72,7 +77,7 @@ class VitLAE(MammothBackbone):
                  ap_oft_block_size: int = 48, ap_timm_model: str = 'vit_base_patch16_224.orig_in21k',
                  ap_pretrained: int = 1):
         super().__init__()
-        assert ap_adapter in ('lae_kvlora', 'lora', 'oft'), ap_adapter
+        assert ap_adapter in ('lae_kvlora', 'lora', 'oft', 'full'), ap_adapter
         img = 224
         if os.environ.get('AP_FAKE_DATA') == '1':          # CPU tests: tiny model, no download
             ap_timm_model, ap_pretrained, img = 'vit_tiny_patch16_224', 0, 32
@@ -87,7 +92,16 @@ class VitLAE(MammothBackbone):
         self.num_features = vit.num_features
         self.expected_params = expected_adapter_params(ap_adapter, self.blocks_adapted, self.targets,
                                                        vit.num_features, ap_lora_r, ap_lae_rank, ap_oft_block_size)
-        if ap_adapter == 'lae_kvlora':
+        if ap_adapter == 'full':
+            for p in vit.parameters():
+                p.requires_grad_(True)
+            self.body = vit
+            self.expected_params = sum(p.numel() for p in vit.parameters())
+            self._targets_full = [getattr(vit.blocks[b].attn, t) for b in self.blocks_adapted for t in self.targets]
+            for i, m in enumerate(self._targets_full):              # pretrained values of the measured matrices
+                self.register_buffer(f'_w0_{i}', m.weight.detach().clone(), persistent=False)
+            self._w0_all = [(n, p.detach().cpu().clone()) for n, p in vit.named_parameters() if p.ndim == 2]
+        elif ap_adapter == 'lae_kvlora':
             assert self.targets == ['qkv'], 'LAE KVLoRA adapts attn.qkv only'
             for b in self.blocks_adapted:
                 vit.blocks[b].attn.qkv = KVLoRAQKV(vit.blocks[b].attn.qkv, ap_lae_rank)
@@ -109,6 +123,24 @@ class VitLAE(MammothBackbone):
     def adapter_parameters(self):
         return [p for p in self.body.parameters() if p.requires_grad]
 
+    def metric_parameters(self):
+        """Parameters for gradient-alignment and Hessian metrics: the adapter for adapters; for the full model, the
+        attn.qkv / attn.proj weights of the adapted blocks (the matrices the adapters modify)."""
+        if self.adapter == 'full':
+            return [m.weight for m in self._targets_full]
+        return self.adapter_parameters()
+
+    @torch.no_grad()
+    def rel_dW_all(self):
+        """Full model only: ||W - W0||_F / ||W0||_F over every backbone weight matrix."""
+        cur = dict(self.body.named_parameters())
+        num = den = 0.0
+        for n, w0 in self._w0_all:
+            w = cur[n].detach().cpu().double()
+            num += (w - w0.double()).pow(2).sum().item()
+            den += w0.double().pow(2).sum().item()
+        return math.sqrt(num / den)
+
     def head_parameters(self):
         return list(self.head.parameters())
 
@@ -120,6 +152,11 @@ class VitLAE(MammothBackbone):
     @torch.no_grad()
     def weight_deltas(self):
         """(W_eff - W0, W0) in float64 for every adapted weight matrix."""
+        if self.adapter == 'full':
+            for i, m in enumerate(self._targets_full):
+                W0 = getattr(self, f'_w0_{i}').double()
+                yield m.weight.double() - W0, W0
+            return
         if self.adapter == 'lae_kvlora':
             for m in self.body.modules():
                 if isinstance(m, KVLoRAQKV):
