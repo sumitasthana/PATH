@@ -15,6 +15,7 @@ from torchvision import datasets, transforms
 
 from .config import Config
 from .streams import build_tasks as build_tiny_imagenet_tasks
+from .tasks import PARTITIONS
 
 PIXELS = 28 * 28
 
@@ -63,9 +64,14 @@ def build_tasks(config: Config) -> dict[str, dict[str, Dataset]]:
         # One Tiny ImageNet loader for the whole project, in streams.py. It
         # reads the archive where it lies and takes its tasks from the saved,
         # seed-42 partition, which is checked on every run.
+        # The split to read follows from how many classes a task has: ten gives
+        # the old 20 x 10 partition the paper rows were built on, twenty gives
+        # this study's 10 x 20 one. Letting the path default here instead would
+        # ask the ten-group file for tasks only the twenty-group file has.
         return build_tiny_imagenet_tasks(
             config,
             root=Path(config.data_root) / "tiny-imagenet-200",
+            partition_path=PARTITIONS[config.classes_per_task],
             download=True,
         )
     return _build_permuted_mnist(config)

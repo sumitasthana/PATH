@@ -19,15 +19,31 @@ TASK_COUNT = 200 // CLASSES_PER_TASK
 # A new file rather than an edit of task_partition.json, which holds the old
 # 20 x 10 split. Checkpoints and study plans from the earlier runs name that
 # file and hash it, so overwriting it would make those runs unreproducible.
-DEFAULT_PARTITION = Path(__file__).parent / "task_partition_10x20.json"
+#
+# Both splits stay readable, so the path and the group size are one fact and
+# not two. A file holds exactly one split, so the group size is read off the
+# path rather than passed alongside it, where the two could disagree.
+PARTITIONS = {
+    10: Path(__file__).parent / "task_partition.json",        # version 1
+    20: Path(__file__).parent / "task_partition_10x20.json",  # version 2
+}
+PARTITION_VERSIONS = {10: 1, 20: 2}
+DEFAULT_PARTITION = PARTITIONS[CLASSES_PER_TASK]
+
+_SPLIT_OF = {path.name: size for size, path in PARTITIONS.items()}
 
 
 def load_partition(root=DEFAULT_ROOT, path=DEFAULT_PARTITION, seed=42):
-    """Create once, then verify and reuse the saved 10 x 20 class assignment.
+    """Create once, then verify and reuse the saved class assignment.
 
     Sorted WordNet IDs are permuted with NumPy PCG64, independently of training
     randomness. Task IDs are zero-based. The list order defines local labels.
     A conflicting saved partition is an error, never silently overwritten.
+
+    Which split is built depends on the file name: `task_partition.json` is the
+    old 20 groups of ten and `task_partition_10x20.json` is this study's ten
+    groups of twenty. Any other name gets the current default, ten groups of
+    twenty, so a scratch path in a test still builds the study's split.
     """
     root = prepare_data(root)
     classes = sorted((root / "wnids.txt").read_text().split())
@@ -35,21 +51,22 @@ def load_partition(root=DEFAULT_ROOT, path=DEFAULT_PARTITION, seed=42):
         raise ValueError("This experiment requires 200 unique Tiny ImageNet classes")
     order = np.random.Generator(np.random.PCG64(seed)).permutation(200)
     shuffled = [classes[int(index)] for index in order]
-    # Version 2 is the ten-group split. Version 1 was 20 groups of ten and
-    # still lives in task_partition.json, so a stale file cannot be mistaken
-    # for this one even if the two paths are ever swapped by hand.
+    path = Path(path)
+    # Version 2 is the ten-group split. Version 1 is 20 groups of ten. The
+    # version number travels with the group size, so a stale file cannot be
+    # mistaken for the other one even if the two paths are swapped by hand.
+    group = _SPLIT_OF.get(path.name, CLASSES_PER_TASK)
     expected = {
-        "version": 2,
+        "version": PARTITION_VERSIONS[group],
         "seed": seed,
         "shuffle": "numpy.PCG64.permutation over sorted WordNet IDs",
         "task_id_base": 0,
-        "classes_per_task": CLASSES_PER_TASK,
+        "classes_per_task": group,
         "tasks": [
-            {"task_id": task_id, "wnids": shuffled[start:start + CLASSES_PER_TASK]}
-            for task_id, start in enumerate(range(0, 200, CLASSES_PER_TASK))
+            {"task_id": task_id, "wnids": shuffled[start:start + group]}
+            for task_id, start in enumerate(range(0, 200, group))
         ],
     }
-    path = Path(path)
     if path.exists():
         saved = json.loads(path.read_text(encoding="utf-8"))
         if saved != expected:
@@ -99,11 +116,14 @@ def build_task(task_id=1, root=DEFAULT_ROOT, partition_path=DEFAULT_PARTITION,
     Pixels remain in [0, 1], without augmentation or normalization. Worker count
     is zero for Windows/notebook compatibility. Neither split drops images.
     """
-    if not isinstance(task_id, int) or not 0 <= task_id < TASK_COUNT:
-        raise ValueError(f"task_id must be an integer from 0 through {TASK_COUNT - 1}")
     if batch_size < 1:
         raise ValueError("batch_size must be positive")
+    # The task count comes from the partition that was loaded, not from a
+    # constant, because the two saved splits have different counts.
     partition = load_partition(root, partition_path, seed)
+    count = len(partition["tasks"])
+    if not isinstance(task_id, int) or not 0 <= task_id < count:
+        raise ValueError(f"task_id must be an integer from 0 through {count - 1}")
     wnids = partition["tasks"][task_id]["wnids"]
     train = ClassTask(TinyImageNet(root, "train", ToTensor()), wnids, task_id)
     val = ClassTask(TinyImageNet(root, "val", ToTensor()), wnids, task_id)

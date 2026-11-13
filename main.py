@@ -88,7 +88,10 @@ def main() -> None:
     numbers = summary(history)
 
     print(f"\nRetain accuracy : {numbers['retain_accuracy']:.2f}%   (higher is better)")
-    print(f"Forget accuracy : {numbers['forget_accuracy']:.2f}%   (chance is 10%)")
+    # Chance follows the task size, so it is 10% for a ten-class task and 5%
+    # for the twenty-class tasks of the ten-group split.
+    chance = 100 / config.classes_per_task
+    print(f"Forget accuracy : {numbers['forget_accuracy']:.2f}%   (chance is {chance:g}%)")
     print(f"Mean spill      : {numbers['mean_spill']:.3f}    (lower is better)")
     print(f"Mean relapse    : {numbers['mean_relapse']:.3f}    (lower is better)")
 

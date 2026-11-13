@@ -46,6 +46,9 @@ CHANCE = 100.0 / 20
 def small_config(**overrides) -> Config:
     return Config(**{
         "dataset": "tiny_imagenet",
+        # Stated, not inherited: these runs read the ten-group split, so
+        # the tasks they build have twenty classes and CHANCE is 5 percent.
+        "classes_per_task": 20,
         "tasks": ("0", "1"),
         "requests": parse_sequence("L0 L1 U0"),
         "backbone": "cnn",

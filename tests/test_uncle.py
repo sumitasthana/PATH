@@ -9,6 +9,7 @@ Trivially learnable, which is the point. These check the machinery, not accuracy
 import sys
 from pathlib import Path
 
+import pytest
 import torch
 from torch import nn
 from torch.func import functional_call
@@ -366,7 +367,10 @@ def test_dataset_defaults_are_the_papers_stated_values():
     config = Config(**dataset_defaults("tiny_imagenet", 1))
     assert config.hidden == (128, 256, 512)
     assert config.code_dim == 32 and config.chunks == 200
-    assert config.classes_per_task == 20   # ten groups of twenty
+    # The paper rows name 20 tasks, so they are the old 20 x 10 split and a
+    # task has ten classes. Twenty tasks of twenty classes would be 400, which
+    # Tiny ImageNet does not have. The ten groups of twenty are study_defaults.
+    assert config.classes_per_task == 10
     assert config.learning_rate == 0.001
     assert config.gamma == 0.01 and config.noise_samples == 10
     assert (config.burn_in, config.burn_in_decay, config.burn_in_min) == (100, 0.9, 20)
@@ -382,6 +386,48 @@ def test_tiny_imagenet_tasks_come_from_the_saved_partition():
     assert build_from_partition.__module__ == "uncle.streams"
     assert not hasattr(sys.modules["uncle.data"], "_class_groups")
     assert not hasattr(sys.modules["uncle.data"], "_fetch_tiny_imagenet")
+
+
+def test_the_class_count_picks_the_saved_split_it_belongs_to():
+    """The partition file travels with `classes_per_task`, never apart from it.
+
+    These were two halves of one fact for a while: a global default path said
+    ten groups of twenty while the paper rows still asked for twenty tasks, so
+    `main.py --dataset tiny_imagenet` died asking a ten-group file for task 19.
+    Reading the path off the class count is what keeps both rows buildable.
+    """
+    from uncle.config import dataset_defaults, study_defaults
+    from uncle.tasks import PARTITIONS, load_partition
+
+    paper = Config(**dataset_defaults("tiny_imagenet", 1))
+    study = Config(**study_defaults("order_A"))
+
+    assert (paper.classes_per_task, len(paper.tasks)) == (10, 20)
+    assert (study.classes_per_task, len(study.tasks)) == (20, 10)
+
+    for config in (paper, study):
+        # Every class used, none twice, and the file holds every task the
+        # config names. This is the check that the failing run tripped over.
+        partition = load_partition(path=PARTITIONS[config.classes_per_task])
+        wnids = [w for group in partition["tasks"] for w in group["wnids"]]
+        assert len(wnids) == len(set(wnids)) == 200
+        assert len(partition["tasks"]) == len(config.tasks)
+        assert len(partition["tasks"][0]["wnids"]) == config.classes_per_task
+
+
+def test_a_task_cannot_have_more_classes_than_the_dataset():
+    """The bare default used to give Permuted MNIST twenty classes out of ten.
+
+    Nothing failed when it did: the head simply grew ten outputs that no label
+    could ever reach, and chance was reported at 5 percent instead of 10.
+    """
+    assert Config().classes_per_task == 10        # matches Permuted MNIST
+
+    with pytest.raises(ValueError):
+        Config(classes_per_task=20)               # Permuted MNIST has ten
+
+    # Fewer than the dataset holds is a deliberate speed knob, not a mistake.
+    assert Config(classes_per_task=4).classes_per_task == 4
 
 
 def test_task_codes_do_not_depend_on_request_order():

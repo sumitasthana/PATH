@@ -86,13 +86,16 @@ PROBE_TASK = "9"
 
 DATASETS = {
     "permuted_mnist": {
-        "channels": 1, "size": 28, "task_count": 10, "beta": 0.1,
+        "channels": 1, "size": 28, "classes": 10, "task_count": 10, "beta": 0.1,
         "classes_per_task": 10,
         "backbone": "resnet18", "sequences": PERMUTED_MNIST_SEQUENCES,
     },
     "tiny_imagenet": {
-        "channels": 3, "size": 64, "task_count": 20, "beta": 0.01,
-        "classes_per_task": 20,
+        # The paper rows: 20 tasks of 10 classes, the old saved split. This
+        # study's 10 tasks of 20 classes come from `study_defaults`, so the
+        # two counts here stay the pair that multiplies to 200.
+        "channels": 3, "size": 64, "classes": 200, "task_count": 20, "beta": 0.01,
+        "classes_per_task": 10,
         "backbone": "resnet50", "sequences": TINY_IMAGENET_SEQUENCES,
     },
 }
@@ -112,9 +115,9 @@ def dataset_defaults(dataset: str, sequence: int) -> dict:
     Sequence numbers are the rows of Table 4. The task list is sized to the
     sequence: Permuted MNIST names tasks 0-9, Tiny-ImageNet names 0-19. Those
     20 Tiny ImageNet tasks are the old 20 x 10 split in
-    uncle/task_partition.json, which the paper rows still need. This study's
-    nine-task orderings come from `study_defaults` instead, and `task_count`
-    stays at 20 here so the paper rows keep building.
+    uncle/task_partition.json, which the paper rows still need, so this returns
+    `classes_per_task` of 10 and a run built from it reads that file. This
+    study's nine-task orderings come from `study_defaults` instead.
     Everything here is a value the paper states, so a caller that overrides one
     is departing from the paper on purpose.
     """
@@ -143,7 +146,9 @@ def study_defaults(order: str) -> dict:
         "requests": parse_sequence(TINY_IMAGENET_ORDERS[order]),
         "beta": DATASETS["tiny_imagenet"]["beta"],
         "backbone": DATASETS["tiny_imagenet"]["backbone"],
-        "classes_per_task": DATASETS["tiny_imagenet"]["classes_per_task"],
+        # Not the DATASETS value, which is the paper rows' ten. Twenty is what
+        # picks the ten-group split this study is built on.
+        "classes_per_task": 20,
     }
 
 
@@ -166,13 +171,17 @@ class Config:
         PERMUTED_MNIST_SEQUENCES[1]
     )
 
-    # Tiny ImageNet only. The grouping lives in
-    # uncle/task_partition_10x20.json: the 200 WordNet IDs shuffled with seed
-    # 42 into ten disjoint groups of twenty, written once and verified on every
-    # run. Every class is used; nothing is dropped. Twenty classes per task
-    # also moves chance accuracy to 5 percent, from the 10 percent of the old
-    # 20 x 10 split.
-    classes_per_task: int = 20
+    # How many classes one task has. It is also what picks the Tiny ImageNet
+    # class grouping to read: twenty gives uncle/task_partition_10x20.json, the
+    # 200 WordNet IDs shuffled with seed 42 into ten disjoint groups of twenty,
+    # which is this study's split; ten gives the old uncle/task_partition.json
+    # of 20 groups of ten, which the paper rows were built on. Either way every
+    # class is used and nothing is dropped. The value also sets chance accuracy,
+    # 5 percent for twenty classes and 10 percent for ten.
+    #
+    # The default matches the default dataset, Permuted MNIST, which always has
+    # ten classes. `dataset_defaults` and `study_defaults` override it.
+    classes_per_task: int = 10
 
     backbone: str = "resnet18"        # "resnet18", "resnet50", or "cnn"
     seed: int = 0
@@ -231,8 +240,20 @@ class Config:
 
         if self.dataset not in DATASETS:
             raise ValueError(f"Unknown dataset: {self.dataset}")
+        # A task head has one output per class, so asking for more classes than
+        # the dataset has trains a head on labels that can never appear and
+        # reports chance at the wrong value, with nothing failing. A bare
+        # Config() inheriting Tiny ImageNet's twenty on ten-class MNIST is the
+        # case this catches. Fewer than the dataset has stays allowed: a short
+        # CPU check uses a handful of classes on purpose.
+        available = DATASETS[self.dataset]["classes"]
         if self.classes_per_task < 2:
             raise ValueError("classes_per_task must be at least 2.")
+        if self.classes_per_task > available:
+            raise ValueError(
+                f"{self.dataset} has {available} classes, so a task cannot "
+                f"have {self.classes_per_task}."
+            )
         if self.backbone not in ("resnet18", "resnet50", "cnn"):
             raise ValueError(f"Unknown backbone: {self.backbone}")
         if self.chunks < 1:
