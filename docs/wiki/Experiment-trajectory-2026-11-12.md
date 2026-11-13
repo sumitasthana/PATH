@@ -105,6 +105,36 @@ would not make its old results readable and would break their stored hashes.
 The report-building scripts that draw a 10 percent chance line are describing
 those earlier runs and are correct as they stand.
 
+### The sweep is built and ready to run
+
+The compute budget was confirmed, so phase 2a is prepared:
+`notebooks/43_learning_rate_sweep.ipynb`, runs 1 to 5 of the thirteen. Five
+short runs, one per candidate learning rate, each learning only the first three
+tasks of `order_A` at seed 0. Everything else is held fixed, so the learning
+rate is the only thing that differs between them: five epochs per task, batch
+size 64, ResNet50 written by the generator, beta 0.01, hyperfan-in
+initialization.
+
+The candidates are 3e-4, 5e-4, 1e-3, 2e-3 and 4e-3, centred on the current
+default of 1e-3. All five are written to `sweep_summary.json` whether chosen or
+rejected, because the methodology reports the tuning runs in full.
+
+The sweep reads no plasticity indicator and writes nothing to R2. It only needs
+accuracy. Boundaries, fixed image sets and the held-out probe group belong to
+the nine-task runs.
+
+Nothing has been trained yet. The notebook's logic was exercised end to end on
+the CPU at toy scale, with a small CNN, one epoch and 200 images per task, to
+check the wiring rather than the science: the configuration builds from
+`study_defaults`, the run completes, the mean accuracy over the learned tasks
+comes out, and the summary file is written. Both toy values landed near 5
+percent, which is chance for twenty classes and is what a model trained on 200
+images for one epoch should score.
+
+The first run prints its own wall clock and projects the rest of the sweep and
+the seven nine-task runs from it. That projection is the point at which to stop
+if the real cost is worse than the estimate below.
+
 ### Next decision
 
 Phase 2 is thirteen training runs: five short learning-rate sweep runs on the
