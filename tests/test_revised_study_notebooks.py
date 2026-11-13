@@ -190,6 +190,31 @@ class RestartTests(unittest.TestCase):
                          [0, 1, 2, 3])
         self.assertEqual(result["boundaries_measured"], 4)
 
+    def test_a_finished_run_costs_nothing_to_start_again(self):
+        """The seed loop has to be safe to re-enter from the top.
+
+        On Colab the whole loop cell is what gets re-run after a disconnect,
+        so seeds that already finished are started again. They must cost a
+        download and no training, or restarting near the end of five seeds
+        would be as expensive as the first attempt.
+        """
+        source = run_one_from(NAMES[0])
+        store = FakeStore(self.home / "r2")
+        output_root = self.home / "out"
+        output_root.mkdir()
+
+        run_one, _ = self.environment(source, store, output_root, stop_after=None)
+        run_one("first", self.config(), "order_A", 0, "0", REQUESTS)
+
+        shutil.rmtree(output_root)
+        output_root.mkdir()
+
+        run_one, trained = self.environment(source, store, output_root,
+                                            stop_after=None)
+        result = run_one("again", self.config(), "order_A", 0, "0", REQUESTS)
+        self.assertEqual(trained, [], f"a finished run retrained: {trained}")
+        self.assertEqual(result["boundaries_measured"], 4)
+
     def test_notebook_44_resumes_from_r2_after_the_machine_is_lost(self):
         self.check_one(NAMES[0])
 
