@@ -164,22 +164,26 @@ seeds rather than a single case.
 The purpose is narrow. It produces a model whose damage is known, located in a
 known place, and confirmed by accuracy: the unlearned task should sit at chance
 for a twenty-class task, which is 5 percent, while the other eight tasks should
-be close to unchanged. A reading is taken at the boundary after this step, the
-tenth boundary of that run.
+be close to unchanged. That check is made on each of the seven runs before any
+reading from it is used. A reading is taken at the boundary after this step:
+boundary 10, counting the fresh generator as boundary 0, which is the eleventh
+reading of that run.
 
 This arm is what lets us ask whether the indicators detect damage that is
 certainly present. It is not a claim about unlearning, and nothing in our
 conclusions depends on the UnCLe method working as its authors describe. We use
 it only as a way to break a model on purpose.
 
-The rescaling control in 3.8 is applied to this pair of checkpoints, the model
-before the unlearn and the model after it, because the unlearn moves the weight
-norm much further in one step than a learning task does.
+The rescaling control in 3.8 is applied to each run's pair of checkpoints, the
+model before the unlearn and the model after it, because the unlearn moves the
+weight norm much further in one step than a learning task does. That is seven
+pairs, of which five differ only in the seed.
 
 ## 3.6 Reading protocol
 
 Readings are taken at ten boundaries: before the first task, and after each of
-the nine. A reading is a single forward pass. Nothing is trained to take one.
+the nine. Every run then takes an eleventh after its unlearn step, as 3.5
+describes. A reading is a single forward pass. Nothing is trained to take one.
 There are no gradient steps and no classifier head fitted on top of the
 features.
 
@@ -269,12 +273,18 @@ norm, and the earlier checkpoint's weights multiplied by the constant that
 imposes the later norm. Whatever difference survives the rescaling is the part
 attributable to the representation.
 
+This runs on all seven before-and-after pairs from 3.5. The five order A pairs
+share everything but the seed, so the spread across them is what a difference
+has to clear before the rescaling is said to have changed anything. The earlier
+version of this control rested on one pair and could not make that comparison.
+
 ## 3.9 Compute
 
 Each full nine-task run trains nine tasks of twenty classes on a ResNet50
 written by the generator. The hyperparameter sweep adds shortened three-task
-runs, one per learning-rate value. The unlearn arm adds 100 update steps on top
-of one finished stream run. The three controls in 3.8 add no training: the seed
+runs, one per learning-rate value. The unlearn arm adds 100 update steps to each
+of the seven stream runs, which is under 2 percent of a run: a nine-task run is
+7,065 optimizer steps. The three controls in 3.8 add no training: the seed
 and order controls read checkpoints the stream runs already produce, and the
 rescaling control costs four forward passes.
 

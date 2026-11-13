@@ -101,6 +101,33 @@ If 5e-4 fails that gate, 3e-4 is the fallback and needs no new sweep. It is the
 value this sweep could not separate from the winner, and it holds task 0 best
 of the five at 43.5 percent.
 
+### Decision: the unlearn step runs on all seven stream runs, not one
+
+The methodology first called for one unlearn, a tenth step on one finished run.
+The run notebooks were written to unlearn on every run instead, each on the
+task its ordering learned first: task 0 in order A, task 4 in order B, task 8
+in order C. That is seven damaged models rather than one.
+
+The user has chosen the seven, and `docs/plasticity/methodology.md` has been
+updated to match rather than left to disagree with the code.
+
+It costs almost nothing. An unlearn is 100 update steps against the 7,065 a
+nine-task run spends learning, so the whole arm adds under 2 percent. What it
+buys is a floor. The five order A runs differ only in their seed, so the damage
+test now has a spread of its own, and the rescaling control in section 3.8 has
+seven before-and-after pairs instead of the single pair it used to rest on. A
+difference smaller than the spread across those five is not an effect, which is
+the same rule the rest of the study already applies and which the one-run
+version of this arm could not state at all.
+
+The reading after the unlearn was also renumbered in writing. Section 3.5 said
+"the tenth boundary", which dates from when the stream was eight tasks long.
+With nine tasks the stream ends at boundary 9 and the unlearn is boundary 10,
+the eleventh reading counting the fresh generator as boundary 0. The notebooks
+already number it that way. This is the specification catching up with the
+code, and it is worth having unambiguous on paper: the 7 November record shows
+a boundary off by one already cost this study a run once.
+
 ### Gaps in this record
 
 The per-run `environment` files record the code revision as `None`, because the
