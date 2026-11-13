@@ -53,6 +53,27 @@ TINY_IMAGENET_SEQUENCES = {
        "L14 L5 U5 U10 L11 L1 U1 L17 L6 L3",
 }
 
+# This study's three task orderings, which are NOT from the UnCLe paper. The
+# old orderings were the learn-only prefix of TINY_IMAGENET_SEQUENCES[1] and
+# addressed task IDs up to 17, which the ten-group split no longer has.
+#
+# Nine tasks are learned, IDs 0 through 8. Task 9 is never trained on: it is
+# the held-out in-distribution probe (methodology 3.1).
+#
+# Tasks 1, 2, 3, 5, 6 and 7 hold the same position in all three orderings.
+# Tasks 0, 4 and 8 rotate through positions 1, 5 and 9, so each of the three
+# is learned first once, in the middle once, and last once. That rotation is
+# what separates an effect of the order from an effect of one task being
+# harder than another (methodology 3.4).
+TINY_IMAGENET_ORDERS = {
+    "order_A": "L0 L1 L2 L3 L4 L5 L6 L7 L8",
+    "order_B": "L4 L1 L2 L3 L8 L5 L6 L7 L0",
+    "order_C": "L8 L1 L2 L3 L0 L5 L6 L7 L4",
+}
+
+# The group the stream never sees. Its test images are the `probe` image set.
+PROBE_TASK = "9"
+
 # Per-dataset defaults from the paper: the request sequences, how many tasks
 # the sequences address, beta (Appendix C: 1e-1 for Permuted MNIST and
 # CIFAR-100, 1e-2 for Tiny-ImageNet, 1e-3 for 5-Tasks), and the backbone
@@ -66,10 +87,12 @@ TINY_IMAGENET_SEQUENCES = {
 DATASETS = {
     "permuted_mnist": {
         "channels": 1, "size": 28, "task_count": 10, "beta": 0.1,
+        "classes_per_task": 10,
         "backbone": "resnet18", "sequences": PERMUTED_MNIST_SEQUENCES,
     },
     "tiny_imagenet": {
         "channels": 3, "size": 64, "task_count": 20, "beta": 0.01,
+        "classes_per_task": 20,
         "backbone": "resnet50", "sequences": TINY_IMAGENET_SEQUENCES,
     },
 }
@@ -87,7 +110,11 @@ def dataset_defaults(dataset: str, sequence: int) -> dict:
     """The paper's task list, request sequence, beta and backbone for a dataset.
 
     Sequence numbers are the rows of Table 4. The task list is sized to the
-    sequence: Permuted MNIST names tasks 0-9, Tiny-ImageNet names 0-19.
+    sequence: Permuted MNIST names tasks 0-9, Tiny-ImageNet names 0-19. Those
+    20 Tiny ImageNet tasks are the old 20 x 10 split in
+    uncle/task_partition.json, which the paper rows still need. This study's
+    nine-task orderings come from `study_defaults` instead, and `task_count`
+    stays at 20 here so the paper rows keep building.
     Everything here is a value the paper states, so a caller that overrides one
     is departing from the paper on purpose.
     """
@@ -98,6 +125,25 @@ def dataset_defaults(dataset: str, sequence: int) -> dict:
         "requests": parse_sequence(settings["sequences"][sequence]),
         "beta": settings["beta"],
         "backbone": settings["backbone"],
+        "classes_per_task": settings["classes_per_task"],
+    }
+
+
+def study_defaults(order: str) -> dict:
+    """This study's settings for one of the three orderings.
+
+    The same shape `dataset_defaults` returns, so a run builds its Config the
+    same way either side of the change. `tasks` holds all ten groups, not just
+    the nine learned ones, so the held-out probe group stays addressable when a
+    run builds its image sets. Nothing requests it, so nothing trains on it.
+    """
+    return {
+        "dataset": "tiny_imagenet",
+        "tasks": tuple(str(index) for index in range(10)),
+        "requests": parse_sequence(TINY_IMAGENET_ORDERS[order]),
+        "beta": DATASETS["tiny_imagenet"]["beta"],
+        "backbone": DATASETS["tiny_imagenet"]["backbone"],
+        "classes_per_task": DATASETS["tiny_imagenet"]["classes_per_task"],
     }
 
 
@@ -120,11 +166,13 @@ class Config:
         PERMUTED_MNIST_SEQUENCES[1]
     )
 
-    # Tiny ImageNet only. The paper gives 10 tasks of 10 classes but never says
-    # which classes. The grouping lives in uncle/task_partition.json: the 200
-    # WordNet IDs shuffled with seed 42 into 20 disjoint groups of ten, written
-    # once and verified on every run.
-    classes_per_task: int = 10
+    # Tiny ImageNet only. The grouping lives in
+    # uncle/task_partition_10x20.json: the 200 WordNet IDs shuffled with seed
+    # 42 into ten disjoint groups of twenty, written once and verified on every
+    # run. Every class is used; nothing is dropped. Twenty classes per task
+    # also moves chance accuracy to 5 percent, from the 10 percent of the old
+    # 20 x 10 split.
+    classes_per_task: int = 20
 
     backbone: str = "resnet18"        # "resnet18", "resnet50", or "cnn"
     seed: int = 0

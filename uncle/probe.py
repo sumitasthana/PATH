@@ -31,9 +31,12 @@ Three differences from that study, forced by this framework rather than chosen:
 
   * Probe tasks must have exactly as many classes as the stream's tasks. The
     generator's output layout is fixed when it is built, from a classifier with
-    `classes_per_task` outputs. Of that study's three natural probe tasks only
-    EuroSAT, at ten classes, could ever fit; DTD at 47 and Flowers102 at 102
-    cannot be generated at all.
+    `classes_per_task` outputs, now twenty. None of that study's three natural
+    probe tasks fits: EuroSAT has ten classes, DTD 47 and Flowers102 102. Under
+    the old ten-class split EuroSAT at least matched. It no longer does, so a
+    trained probe needs a probe task drawn from Tiny ImageNet itself. The
+    indicator readings do not use this path: they fit nothing and read EuroSAT
+    as images only.
   * Probe tasks here come from the same dataset as the stream. That study uses
     unrelated tasks on purpose, so that transfer from similar earlier classes
     cannot be mistaken for plasticity. Probes drawn from the same dataset do

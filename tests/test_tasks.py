@@ -56,9 +56,16 @@ class TaskTests(unittest.TestCase):
             before = path.read_bytes()
             self.assertEqual(partition, load_partition(root, path))
             self.assertEqual(before, path.read_bytes())
+            # Ten groups of twenty, covering all 200 classes once each. The
+            # split is the one place a silent class loss would not show up in
+            # any accuracy number, so it is checked by count and by content.
+            self.assertEqual(len(partition["tasks"]), 10)
+            self.assertTrue(all(len(task["wnids"]) == 20 for task in partition["tasks"]))
             flattened = [wnid for task in partition["tasks"] for wnid in task["wnids"]]
-            self.assertEqual(sorted(flattened), classes)
-            self.assertTrue(all(len(task["wnids"]) == 10 for task in partition["tasks"]))
+            self.assertEqual(len(flattened), 200)          # nothing dropped
+            self.assertEqual(len(set(flattened)), 200)     # nothing repeated
+            self.assertEqual(sorted(flattened), classes)   # and these 200
+            self.assertEqual(partition["classes_per_task"], 20)
             self.assertEqual(partition["tasks"][1]["task_id"], 1)
             with self.assertRaises(ValueError):
                 load_partition(root, path, seed=43)

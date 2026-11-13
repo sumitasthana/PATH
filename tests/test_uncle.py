@@ -44,7 +44,7 @@ def build(**overrides):
     config = Config(
         tasks=("A", "B"),
         requests=(("learn", "A"), ("learn", "B"), ("forget", "A")),
-        backbone="cnn", chunks=32,
+        backbone="cnn", chunks=32, classes_per_task=10,
         epochs=25, batch_size=64, burn_in=150, device="cpu",
         **overrides,
     )
@@ -260,6 +260,45 @@ def test_tiny_imagenet_sequences_match_the_paper():
     )
 
 
+def test_study_orderings_rotate_three_tasks_and_hold_six_still():
+    """Methodology 3.4, checked rather than trusted.
+
+    Nine tasks are learned and task 9 is held out. Six tasks must sit in the
+    same position in all three orderings, and the other three must rotate
+    through positions 1, 5 and 9, each one first once, middle once and last
+    once. Getting this wrong would not crash anything: it would quietly turn
+    the order comparison into a comparison of three different task mixes.
+    """
+    from uncle.config import PROBE_TASK, TINY_IMAGENET_ORDERS, study_defaults
+
+    orders = {}
+    for name in TINY_IMAGENET_ORDERS:
+        settings = study_defaults(name)
+        config = Config(**settings, device="cpu")   # runs the request checks
+        learned = [task for action, task in config.requests if action == "learn"]
+
+        assert len(config.requests) == len(learned) == 9   # nothing unlearned
+        assert sorted(learned, key=int) == [str(i) for i in range(9)]
+        assert PROBE_TASK not in learned                   # never trained on
+        assert PROBE_TASK in config.tasks                  # but still nameable
+        orders[name] = learned
+
+    positions = list(zip(*orders.values()))            # one tuple per position
+    fixed = [index for index, column in enumerate(positions) if len(set(column)) == 1]
+    moving = [index for index in range(9) if index not in fixed]
+
+    assert len(fixed) == 6
+    assert moving == [0, 4, 8]                         # positions 1, 5 and 9
+
+    # Each rotating task takes each of the three positions exactly once.
+    for index in moving:
+        assert len(set(positions[index])) == 3
+    rotating = {positions[index][0] for index in moving}
+    assert len(rotating) == 3
+    for task in rotating:
+        assert sorted(order.index(task) for order in orders.values()) == moving
+
+
 def test_resnet_target_keeps_buffers_per_task():
     """BatchNorm statistics are not generated, so each task holds its own."""
     config = Config(
@@ -296,7 +335,7 @@ def test_resnet_target_keeps_buffers_per_task():
         (torch.randn(8, 1, 28, 28),), strict=True,
     )
 
-    assert scores.shape == (8, 10)
+    assert scores.shape == (8, config.classes_per_task)
     assert torch.isfinite(scores).all()
     # Train mode must have moved this task's statistics.
     assert not torch.equal(before, uncle.task_buffers["A"]["bn1.running_mean"])
@@ -327,7 +366,7 @@ def test_dataset_defaults_are_the_papers_stated_values():
     config = Config(**dataset_defaults("tiny_imagenet", 1))
     assert config.hidden == (128, 256, 512)
     assert config.code_dim == 32 and config.chunks == 200
-    assert config.classes_per_task == 10
+    assert config.classes_per_task == 20   # ten groups of twenty
     assert config.learning_rate == 0.001
     assert config.gamma == 0.01 and config.noise_samples == 10
     assert (config.burn_in, config.burn_in_decay, config.burn_in_min) == (100, 0.9, 20)

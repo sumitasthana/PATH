@@ -38,7 +38,9 @@ from uncle.telemetry import RunLog, environment
 from uncle.streams import build_tasks
 from uncle.tinyimagenet import DEFAULT_ROOT
 
-CHANCE = 10.0
+# Twenty classes per task, so random guessing scores 5 percent. It was 10
+# under the old 20 x 10 split.
+CHANCE = 100.0 / 20
 
 
 def small_config(**overrides) -> Config:
@@ -125,7 +127,7 @@ class StreamTests(unittest.TestCase):
         train = tasks["0"]["train"]
         self.assertEqual(len(train), 300)
         labels = {train[index][1] for index in range(len(train))}
-        self.assertEqual(labels, set(range(10)))
+        self.assertEqual(labels, set(range(20)))
 
     def test_unknown_task_is_refused(self):
         with self.assertRaises(ValueError):
@@ -187,10 +189,11 @@ class RequestLoopTests(unittest.TestCase):
         """The check that the classifier's output scale exists to make possible.
 
         With He initialization on the classifier this could not pass: the loss
-        pinned to ln(10) = 2.3026 and accuracy to exactly 10.0, however many
-        epochs it was given. Twenty epochs on 300 images is a small budget, so
-        the bar is the loss falling clearly below ln(10) rather than a
-        particular accuracy, which is still noisy at this scale.
+        pinned to the chance-level cross-entropy and accuracy to exactly
+        chance, however many epochs it was given. Twenty classes put that loss
+        at ln(20) = 2.9957, so the bar below is well clear of it. Twenty epochs
+        on 300 images is a small budget, so the bar is the loss falling rather
+        than a particular accuracy, which is still noisy at this scale.
         """
         config = small_config(requests=parse_sequence("L0"), tasks=("0",), epochs=20)
         torch.manual_seed(config.seed)

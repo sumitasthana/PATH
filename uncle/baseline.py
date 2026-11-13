@@ -1,8 +1,8 @@
 """Train the target network on one task the ordinary way, as a sanity check.
 
 Nothing here involves a hypernetwork. It answers one question: can this
-architecture learn a single Tiny ImageNet task at all? If this cannot beat 10%
-on ten classes, no hypernetwork result downstream is worth debugging.
+architecture learn a single Tiny ImageNet task at all? If this cannot beat 5%
+on twenty classes, no hypernetwork result downstream is worth debugging.
 
 The network comes from `uncle.hypernet.build_target`, so it is the same
 architecture the hypernetwork later generates weights for.

@@ -69,7 +69,7 @@ def build_tasks(config=None, root=DEFAULT_ROOT, partition_path=DEFAULT_PARTITION
 
 
 def _capped(task, max_images):
-    """Keep the first `max_images` of every class, so all ten stay represented."""
+    """Keep the first `max_images` of every class, so all twenty stay represented."""
     if max_images is None or len(task) <= max_images:
         return task
     per_class = max(1, max_images // len(task.classes))

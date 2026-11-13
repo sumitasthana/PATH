@@ -11,11 +11,19 @@ from torchvision.transforms import ToTensor
 from .tinyimagenet import DEFAULT_ROOT, TinyImageNet, prepare_data
 
 
-DEFAULT_PARTITION = Path(__file__).parent / "task_partition.json"
+# Ten disjoint groups of twenty, the split the plasticity methodology fixes.
+# Nine groups are learned in sequence and the tenth is held out as the probe.
+CLASSES_PER_TASK = 20
+TASK_COUNT = 200 // CLASSES_PER_TASK
+
+# A new file rather than an edit of task_partition.json, which holds the old
+# 20 x 10 split. Checkpoints and study plans from the earlier runs name that
+# file and hash it, so overwriting it would make those runs unreproducible.
+DEFAULT_PARTITION = Path(__file__).parent / "task_partition_10x20.json"
 
 
 def load_partition(root=DEFAULT_ROOT, path=DEFAULT_PARTITION, seed=42):
-    """Create once, then verify and reuse the saved 20 x 10 class assignment.
+    """Create once, then verify and reuse the saved 10 x 20 class assignment.
 
     Sorted WordNet IDs are permuted with NumPy PCG64, independently of training
     randomness. Task IDs are zero-based. The list order defines local labels.
@@ -27,15 +35,18 @@ def load_partition(root=DEFAULT_ROOT, path=DEFAULT_PARTITION, seed=42):
         raise ValueError("This experiment requires 200 unique Tiny ImageNet classes")
     order = np.random.Generator(np.random.PCG64(seed)).permutation(200)
     shuffled = [classes[int(index)] for index in order]
+    # Version 2 is the ten-group split. Version 1 was 20 groups of ten and
+    # still lives in task_partition.json, so a stale file cannot be mistaken
+    # for this one even if the two paths are ever swapped by hand.
     expected = {
-        "version": 1,
+        "version": 2,
         "seed": seed,
         "shuffle": "numpy.PCG64.permutation over sorted WordNet IDs",
         "task_id_base": 0,
-        "classes_per_task": 10,
+        "classes_per_task": CLASSES_PER_TASK,
         "tasks": [
-            {"task_id": task_id, "wnids": shuffled[start:start + 10]}
-            for task_id, start in enumerate(range(0, 200, 10))
+            {"task_id": task_id, "wnids": shuffled[start:start + CLASSES_PER_TASK]}
+            for task_id, start in enumerate(range(0, 200, CLASSES_PER_TASK))
         ],
     }
     path = Path(path)
@@ -88,8 +99,8 @@ def build_task(task_id=1, root=DEFAULT_ROOT, partition_path=DEFAULT_PARTITION,
     Pixels remain in [0, 1], without augmentation or normalization. Worker count
     is zero for Windows/notebook compatibility. Neither split drops images.
     """
-    if not isinstance(task_id, int) or not 0 <= task_id < 20:
-        raise ValueError("task_id must be an integer from 0 through 19")
+    if not isinstance(task_id, int) or not 0 <= task_id < TASK_COUNT:
+        raise ValueError(f"task_id must be an integer from 0 through {TASK_COUNT - 1}")
     if batch_size < 1:
         raise ValueError("batch_size must be positive")
     partition = load_partition(root, partition_path, seed)

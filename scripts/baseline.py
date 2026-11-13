@@ -2,8 +2,8 @@
 
     python scripts/baseline.py --task 1 --backbone resnet18 --epochs 10
 
-No hypernetwork. If this cannot beat 10% on ten classes, nothing downstream is
-worth debugging.
+No hypernetwork. If this cannot beat 5% on twenty classes, nothing downstream
+is worth debugging.
 """
 
 from pathlib import Path

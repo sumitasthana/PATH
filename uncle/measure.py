@@ -1,7 +1,7 @@
 """Two measurements that accuracy alone cannot give, in one place.
 
 Accuracy cannot separate a model that guesses from a model that answers the
-same class for every image. Both score about 10% on ten classes. The study
+same class for every image. Both score about 5% on twenty classes. The study
 needs that separation, so it reports two further numbers.
 
   input sensitivity   how far any single output score travels across the test
