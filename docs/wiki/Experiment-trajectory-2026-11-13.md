@@ -2,130 +2,110 @@
 
 Back to the [index](Experiment-trajectory).
 
-## The split change broke two things, and the two run notebooks are written
+## The learning-rate sweep: 5e-4 wins, but not by enough to call it a win
 
-No training ran today. This is a code fix and two new notebooks. The runs they
-drive have not started and are still waiting on the compute budget decision.
+Phase 2a of the revised study is done. Runs 1 to 5 of the thirteen, the
+learning-rate sweep, all finished on one Colab session with an L4.
 
-## Two defects in the 12 November split change
+### Settings
 
-The split change of 12 November was reviewed today. The split itself holds up:
-a new partition file rather than an edit of the old one, the version bumped to
-2, the verify-against-saved-file guard kept, tests written first, and chance
-accuracy updated from 10 to 5 percent at every call site. Two defects were
-found, both confirmed by running the code.
+Five short runs, one per candidate rate, each learning the first three tasks of
+`order_A` at seed 0 and then stopping. Everything else held fixed: five epochs
+per task, batch size 64, ResNet50 written by the generator, beta 0.01,
+hyperfan-in initialization, twenty classes per task. 785 optimizer steps per
+task, which is 10,000 training images in batches of 64, five times over.
 
-**`main.py --dataset tiny_imagenet` stopped working.** The default partition
-path moved to the ten-group file for every caller, while `dataset_defaults`
-still returned twenty task names. The run died with `The partition has no task
-named ['10', ..., '19']`.
+The generator holds 134,076,432 parameters and writes 23,541,332 into the
+target network. Peak GPU memory was 5.08 GiB of the L4's 22, so the batch size
+was never near the limit.
 
-**The old split became unreadable even when its path was passed explicitly.**
-This was wider than the first review said. `load_partition` built the split it
-expected from a module constant of twenty classes per task, so handing it the
-version-1 file produced a mismatch and an error. `scripts/norm_control.py` and
-the paired-study notebooks pass that path and were broken too. The 12 November
-commit message said the paper rows would keep building. They did not.
+### Result
 
-**A bare `Config()` gave Permuted MNIST twenty classes per task.** MNIST has
-ten. Nothing failed when this happened: the generated head simply grew ten
-outputs that no label could reach, and chance would have been reported at 5
-percent instead of 10.
+| Learning rate | Mean over 3 tasks | Task 0 | Task 1 | Task 2 | Minutes |
+| --- | --- | --- | --- | --- | --- |
+| 3e-4 | 48.80% | 43.5 | 51.5 | 51.4 | 14.6 |
+| **5e-4** | **49.33%** | 39.8 | 52.3 | 55.9 | 14.0 |
+| 1e-3 | 34.60% | 11.1 | 43.2 | 49.5 | 14.1 |
+| 2e-3 | 41.23% | 23.6 | 48.9 | 51.2 | 14.0 |
+| 4e-3 | 39.07% | 31.1 | 40.8 | 45.3 | 14.0 |
 
-### The fix
+Chance accuracy is 5 percent, because a task now holds twenty classes. Every
+value is far above it, so the model learns at all five rates. The rejected
+values are kept here because the methodology reports the tuning runs in full.
 
-The group size now travels with the partition path instead of living in a
-separate constant. `load_partition` reads it off the file name, so both saved
-splits load again, and `build_task` takes its task count from the partition it
-loaded. `uncle/data.py` picks the file from `config.classes_per_task`, which is
-the one value that already says which split a run wants.
+5e-4 is chosen, by the rule set before the sweep ran: highest mean accuracy
+over the three tasks.
 
-The dataclass default returns to ten, matching the default dataset, and a task
-can no longer ask for more classes than the dataset holds. Fewer is still
-allowed: short CPU checks use four classes on purpose, and a strict allowlist
-broke 97 tests before this was understood.
+### Why the win does not mean much on its own
 
-`dataset_defaults` now returns ten classes per task for Tiny ImageNet, which is
-what twenty tasks means, and `study_defaults` carries the twenty of the
-ten-group split. One test had asserted the broken pairing of twenty tasks of
-twenty classes, which is 400 classes and more than the dataset has, so it was
-locking the defect in. It was corrected and two tests were added.
+5e-4 beats 3e-4 by 0.53 percentage points. The methodology's own noise floor,
+the figure the five-seed confirmation has to come in under, is 3 points. The
+gap between first and second place is about a sixth of that, on one seed each.
+These two values are tied as far as this sweep can tell.
 
-Suite at the end: 318 pass, 1 skipped, and the pre-existing
-`test_experiment_site.py` failure that predates this work.
+The shape of the results says the same thing a second way. The response is not
+monotonic: 1e-3 scores 34.60, below both its neighbours, 5e-4 at 49.33 and
+2e-3 at 41.23. A smooth response to the learning rate does not dip in the
+middle and come back up. With one seed per value, the most likely reading is
+that seed-to-seed variation here is worth several points, which is large enough
+to have produced the ordering of the top two by itself.
 
-## The three run notebooks
+So the sweep supports a weaker claim than a single chosen number suggests: the
+two low rates, 3e-4 and 5e-4, are clearly better than the three higher ones,
+and the sweep cannot separate the two low rates from each other.
 
-The revised study is three notebook jobs, not thirteen separate launches. Each
-job builds the dataset once and loops inside itself, because indexing the
-dataset costs more than the first optimizer steps do.
+### What actually separates the candidates
 
-| Job | Notebook | Contains | Task-trainings | Where |
-| --- | --- | --- | --- | --- |
-| 1 | `43_learning_rate_sweep` | 5 learning rates, seed 0, first 3 tasks of `order_A` | 15 | Colab |
-| 2 | `44_order_A_five_seeds` | `order_A` seeds 0 to 4, each ending with an unlearn of task 0 | 45 | RunPod |
-| 3 | `45_orders_B_and_C` | `order_B` and `order_C`, seed 0 each, each ending with its own unlearn | 18 | RunPod |
+Almost all of the spread is in task 0, the first task learned:
 
-Notebook 43 already existed. Notebooks 44 and 45 were written today.
+| | Range across the five rates |
+| --- | --- |
+| Task 0 | 32.4 points, from 11.1 to 43.5 |
+| Task 1 | 11.5 points, from 40.8 to 52.3 |
+| Task 2 | 10.6 points, from 45.3 to 55.9 |
 
-The split between the two machines is by run length, not by arm. The sweep is
-three tasks per run and finishes inside one Colab session. The two long jobs
-go to RunPod, where the machine does not disconnect. Everything after them
-trains nothing and returns to Colab: the rescaling control is four forward
-passes per pair, and the tables and figures only read files.
+Task 2 is measured right after it is learned and barely moves. Task 0 has to
+survive two later tasks, and that is where the learning rate decides the
+outcome. The learning rate's main effect in this setting is on how much of the
+first task is still there at the end, not on how well a task is learned when it
+arrives.
 
-### What jobs 2 and 3 record
+At 1e-3, task 0 falls to 11.1 percent, which is close to the 5 percent floor.
+That value is the default the earlier version of this work used and never
+tuned. It is the worst of the five tested here.
 
-Both notebooks attach the plasticity indicators at every boundary, through
-hooks `uncle.experiment.run` already exposed, so no library change was needed.
-`run_experiment` could not be used here: it keeps `on_start` and
-`on_saved_checkpoint` for its own purposes and builds its own task dictionary.
+### The nine-task runs will cost about twice what was projected
 
-Eleven boundaries per run: before any task, after each of the nine, and after
-the unlearn. At each one, effective rank, srank and dormant units at all three
-cut-offs, on all three image sets, plus the generator and target norms,
-distance travelled and angle.
+The sweep's first run printed a projection of 5.1 hours for the seven nine-task
+runs. That was wrong, and the notebook has been corrected.
 
-The indicator record and its baseline are uploaded to R2 after every boundary,
-not at the end, and a run resumes from its own record. A dropped RunPod
-instance therefore costs one task rather than one run. Three boundary models
-per run are kept as files, at boundaries 4, 9 and 10, which is what the
-rescaling control needs: the model before the unlearn and the model after it.
+A task costs more the later it arrives, because the term that holds earlier
+tasks still has one more task to hold at every optimizer step. The first run's
+three tasks took 0.244, 0.361 and 0.470 seconds per step, so the cost per task
+rises by roughly 89 seconds for each extra task being held. The old projection
+multiplied a flat per-task mean by 63 and so assumed the ninth task costs what
+the first one did.
 
-One gap is recorded in both notebooks. The within-task loss progress curve that
-notebook 36 collected is not collected here, because this code path has no
-per-update hook. Every boundary indicator the paper uses is collected.
+Fitting a line to the rise and extending it to nine positions gives about 1.4
+hours for one nine-task run and **about 9.6 hours for the seven of them**. The
+fit rests on three points, so treat that as a floor rather than an estimate.
 
-### The unlearn now runs on all seven streams
+### Decision
 
-The old study unlearned one model, which is why the weight-scale result of 8
-November rests on a single pair of checkpoints. An unlearn is 100 update steps
-against nine tasks of training, so appending one to every run costs 700 steps
-in total and gives seven pairs across three orderings and five seeds. Each run
-unlearns the task it learned first, matching what the earlier study did.
+Go to runs 6 to 10 at 5e-4: five seeds of the full nine-task `order_A` stream.
+The gate is unchanged. The five seeds must finish within 3 percentage points of
+each other on mean accuracy over the nine tasks, or the value is not good
+enough to measure against and tuning continues instead.
 
-### The gate between job 2 and job 3
+If 5e-4 fails that gate, 3e-4 is the fallback and needs no new sweep. It is the
+value this sweep could not separate from the winner, and it holds task 0 best
+of the five at 43.5 percent.
 
-Notebook 44 ends by checking the methodology's target: five seeds, differing
-only in random start and data order, within 3 percentage points of each other
-on mean accuracy over the nine tasks. If the spread is wider, job 3 does not
-start. The reason is a floor. If two seeds of the identical setting can differ
-by ten points, a ten-point difference between two orderings means nothing.
+### Gaps in this record
 
-Notebook 45 checks the rotation before it trains: tasks 0, 4 and 8 must each
-visit positions 1, 5 and 9 across the three orderings, and the other six must
-never move. If somebody edits the orderings and breaks the pattern, the run
-stops rather than producing a comparison that cannot separate the order from
-the task.
-
-## Evidence
-
-- `7ef57f0` the partition fix and its tests
-- `add9c6d` notebooks 44 and 45
-- `docs/plasticity/methodology.md`, `docs/plasticity/run-plan.md`
-
-## Next decision
-
-The compute budget. The projection is printed inside notebook 44 after its
-first seed finishes, so the job can be stopped there rather than after all
-five. Nothing else is blocked: notebook 43 can run on Colab now.
+The per-run `environment` files record the code revision as `None`, because the
+run was started from a Colab clone where the notebook's own revision lookup did
+not reach the saved environment record. The revision is in
+`sweep_summary.json`, which the notebook writes itself, so the runs are not
+unidentified, but the two records disagree and the environment file is the one
+that is wrong.
