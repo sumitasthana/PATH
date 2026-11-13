@@ -2,160 +2,235 @@
 
 Back to the [index](Experiment-trajectory).
 
-## The learning-rate sweep: 5e-4 wins, but not by enough to call it a win
+## The question of the day
 
-Phase 2a of the revised study is done. Runs 1 to 5 of the thirteen, the
-learning-rate sweep, all finished on one Colab session with an L4.
+The learning rate is the size of the step the model takes each time it
+corrects itself. Too small and it barely learns. Too large and it overshoots
+and damages what it already knew.
 
-### Settings
+The earlier version of this work never chose one. It copied the value from the
+original hypernetwork paper, 1e-3, and used it everywhere without checking. The
+new methodology says to settle this first, before measuring anything else.
 
-Five short runs, one per candidate rate, each learning the first three tasks of
-`order_A` at seed 0 and then stopping. Everything else held fixed: five epochs
-per task, batch size 64, ResNet50 written by the generator, beta 0.01,
-hyperfan-in initialization, twenty classes per task. 785 optimizer steps per
-task, which is 10,000 training images in batches of 64, five times over.
+So today's question was simple. Out of five candidate step sizes, which one
+should every later run use?
 
-The generator holds 134,076,432 parameters and writes 23,541,332 into the
-target network. Peak GPU memory was 5.08 GiB of the L4's 22, so the batch size
-was never near the limit.
+## What was run
 
-### Result
+Five short training runs, one per candidate.
 
-| Learning rate | Mean over 3 tasks | Task 0 | Task 1 | Task 2 | Minutes |
-| --- | --- | --- | --- | --- | --- |
-| 3e-4 | 48.80% | 43.5 | 51.5 | 51.4 | 14.6 |
-| **5e-4** | **49.33%** | 39.8 | 52.3 | 55.9 | 14.0 |
-| 1e-3 | 34.60% | 11.1 | 43.2 | 49.5 | 14.1 |
-| 2e-3 | 41.23% | 23.6 | 48.9 | 51.2 | 14.0 |
-| 4e-3 | 39.07% | 31.1 | 40.8 | 45.3 | 14.0 |
+Each run learned the same three tasks, in the same order, starting from the
+same place. Only the step size differed between them. Each run was then scored
+on its average accuracy across those three tasks.
 
-Chance accuracy is 5 percent, because a task now holds twenty classes. Every
-value is far above it, so the model learns at all five rates. The rejected
-values are kept here because the methodology reports the tuning runs in full.
+Three tasks rather than the full nine, because a sweep only has to compare the
+candidates against each other. Nine would have cost three times as much and
+answered the same question.
 
-5e-4 is chosen, by the rule set before the sweep ran: highest mean accuracy
-over the three tasks.
+Everything else was held still: one random starting point, five passes over
+each task's images, batches of 64 images, the ResNet50 written by the
+generator, and the same protection setting of 0.01 that holds earlier tasks in
+place.
 
-### Why the win does not mean much on its own
+A task holds 20 classes with 500 training images each, so one task is 10,000
+images. In batches of 64, five times over, that is 785 correction steps per
+task. The generator holds 134,076,432 numbers and writes 23,541,332 of them
+into the network it builds.
 
-5e-4 beats 3e-4 by 0.53 percentage points. The methodology's own noise floor,
-the figure the five-seed confirmation has to come in under, is 3 points. The
-gap between first and second place is about a sixth of that, on one seed each.
-These two values are tied as far as this sweep can tell.
+All five runs finished in one Colab session on an L4 GPU, about 14 minutes
+each. Memory use peaked at 5.08 GiB of the card's 22, so the batch size was
+never near the limit.
 
-The shape of the results says the same thing a second way. The response is not
-monotonic: 1e-3 scores 34.60, below both its neighbours, 5e-4 at 49.33 and
-2e-3 at 41.23. A smooth response to the learning rate does not dip in the
-middle and come back up. With one seed per value, the most likely reading is
-that seed-to-seed variation here is worth several points, which is large enough
-to have produced the ordering of the top two by itself.
+## The result
 
-So the sweep supports a weaker claim than a single chosen number suggests: the
-two low rates, 3e-4 and 5e-4, are clearly better than the three higher ones,
-and the sweep cannot separate the two low rates from each other.
+| Step size | Average of the 3 tasks | Task 0 | Task 1 | Task 2 |
+| --- | --- | --- | --- | --- |
+| 3e-4 | 48.80% | 43.5 | 51.5 | 51.4 |
+| **5e-4** | **49.33%** | 39.8 | 52.3 | 55.9 |
+| 1e-3 | 34.60% | 11.1 | 43.2 | 49.5 |
+| 2e-3 | 41.23% | 23.6 | 48.9 | 51.2 |
+| 4e-3 | 39.07% | 31.1 | 40.8 | 45.3 |
 
-### What actually separates the candidates
+A task has 20 classes, so a model guessing at random would score 5 percent.
+Every value here is far above that. The model does learn at all five step
+sizes, and none of them is broken.
 
-Almost all of the spread is in task 0, the first task learned:
+The losing values stay in this table on purpose. The methodology says the
+tuning runs are reported in full. A chosen number with the rejected ones thrown
+away cannot be checked by anyone.
 
-| | Range across the five rates |
-| --- | --- |
-| Task 0 | 32.4 points, from 11.1 to 43.5 |
-| Task 1 | 11.5 points, from 40.8 to 52.3 |
-| Task 2 | 10.6 points, from 45.3 to 55.9 |
+## How the winner was picked
 
-Task 2 is measured right after it is learned and barely moves. Task 0 has to
-survive two later tasks, and that is where the learning rate decides the
-outcome. The learning rate's main effect in this setting is on how much of the
-first task is still there at the end, not on how well a task is learned when it
-arrives.
+5e-4 scored highest, so 5e-4 is the choice.
 
-At 1e-3, task 0 falls to 11.1 percent, which is close to the 5 percent floor.
-That value is the default the earlier version of this work used and never
-tuned. It is the worst of the five tested here.
+That rule, take the highest average, was written down before the runs started.
+It was not picked afterwards to suit the numbers.
 
-### The nine-task runs will cost about twice what was projected
+That matters here, because 5e-4 beats 3e-4 by only 0.53 points. For comparison,
+the next stage of the study treats a gap of up to 3 points between runs as
+ordinary variation rather than a real difference. The gap between first and
+second place is about a sixth of that.
 
-The sweep's first run printed a projection of 5.1 hours for the seven nine-task
-runs. That was wrong, and the notebook has been corrected.
+So this sweep cannot really tell 5e-4 and 3e-4 apart. Had the scoring been
+"which value keeps the first task best", 3e-4 would have won instead, 43.5
+against 39.8.
 
-A task costs more the later it arrives, because the term that holds earlier
-tasks still has one more task to hold at every optimizer step. The first run's
-three tasks took 0.244, 0.361 and 0.470 seconds per step, so the cost per task
-rises by roughly 89 seconds for each extra task being held. The old projection
-multiplied a flat per-task mean by 63 and so assumed the ninth task costs what
-the first one did.
+That is exactly why the rule was fixed in advance. Once the results are in
+front of you there is nearly always some way of reading them that favours
+whichever answer you already prefer. Choosing the measure after seeing the
+numbers lets you land anywhere and still feel justified.
 
-Fitting a line to the rise and extending it to nine positions gives about 1.4
-hours for one nine-task run and **about 9.6 hours for the seven of them**. The
-fit rests on three points, so treat that as a floor rather than an estimate.
+The choice is not final either. Five more runs have to agree with each other
+before 5e-4 is accepted. If they do not, 3e-4 is next, and no new sweep is
+needed to get there.
 
-### Decision
+## A sign that single runs are noisy
 
-Go to runs 6 to 10 at 5e-4: five seeds of the full nine-task `order_A` stream.
-The gate is unchanged. The five seeds must finish within 3 percentage points of
-each other on mean accuracy over the nine tasks, or the value is not good
-enough to measure against and tuning continues instead.
+Read down the average column. It goes 48.80, 49.33, drops to 34.60, then climbs
+back to 41.23 and 39.07.
 
-If 5e-4 fails that gate, 3e-4 is the fallback and needs no new sweep. It is the
-value this sweep could not separate from the winner, and it holds task 0 best
-of the five at 43.5 percent.
+If the step size were the only thing driving the score, that column should rise
+to a peak and then fall away steadily. It should not dip in the middle and
+climb back out.
 
-### Decision: the unlearn step runs on all seven stream runs, not one
+1e-3 sitting below both of its neighbours suggests each of these numbers
+carries a few points of randomness of its own. Every value was run once, from a
+single random starting point, so there is nothing to average that randomness
+away.
 
-The methodology first called for one unlearn, a tenth step on one finished run.
-The run notebooks were written to unlearn on every run instead, each on the
-task its ordering learned first: task 0 in order A, task 4 in order B, task 8
-in order C. That is seven damaged models rather than one.
+This does not change the decision. It does mean the gaps in the table should
+not be read too precisely, and it is a second reason not to treat the top two
+as genuinely separated.
 
-The user has chosen the seven, and `docs/plasticity/methodology.md` has been
-updated to match rather than left to disagree with the code.
+## What the step size actually controls here
 
-It costs almost nothing. An unlearn is 100 update steps against the 7,065 a
-nine-task run spends learning, so the whole arm adds under 2 percent. What it
-buys is a floor. The five order A runs differ only in their seed, so the damage
-test now has a spread of its own, and the rescaling control in section 3.8 has
-seven before-and-after pairs instead of the single pair it used to rest on. A
-difference smaller than the spread across those five is not an effect, which is
-the same rule the rest of the study already applies and which the one-run
-version of this arm could not state at all.
+This is the part worth remembering.
 
-The reading after the unlearn was also renumbered in writing. Section 3.5 said
-"the tenth boundary", which dates from when the stream was eight tasks long.
-With nine tasks the stream ends at boundary 9 and the unlearn is boundary 10,
-the eleventh reading counting the fresh generator as boundary 0. The notebooks
-already number it that way. This is the specification catching up with the
-code, and it is worth having unambiguous on paper: the 7 November record shows
-a boundary off by one already cost this study a run once.
+Compare how far each task's score moves across the five step sizes:
 
-`docs/plasticity/run-plan.md` still carried the one-run wording in two places:
-the summary of the arms, and a paragraph headed "unlearn settings for run 13".
-There is no run 13 any more, because the unlearn is a step inside each of the
-seven runs rather than a run of its own. Both are corrected. The cost section
-of that file already said seven.
+| | Lowest | Highest | Range |
+| --- | --- | --- | --- |
+| Task 0 | 11.1 | 43.5 | 32.4 points |
+| Task 1 | 40.8 | 52.3 | 11.5 points |
+| Task 2 | 45.3 | 55.9 | 10.6 points |
 
-### The eleventh boundary breaks the report's idea of the end
+Task 2 is the last one learned and is scored straight afterwards. It barely
+moves, whatever the step size.
+
+Task 0 is the first one learned, and by the time it is scored the model has
+been through two more tasks. It moves three times as much.
+
+So the step size is not mainly deciding how well the model learns something
+new. It is deciding how much of the earlier work survives as new tasks arrive.
+A large step learns the task in front of it and damages what came before.
+
+## The old default was the worst value tested
+
+1e-3 came last of the five. At that setting the first task ended at 11.1
+percent, close to the 5 percent a random guess would score. Almost nothing of
+it was left.
+
+1e-3 is the value the earlier version of this work ran on, taken from the paper
+and never tested.
+
+That does not by itself invalidate the earlier results. Those runs used eight
+tasks of ten classes, a different split, so their numbers do not carry across.
+But it does support the reason the methodology gave for tuning first, which was
+that untuned runs make every later comparison harder to read.
+
+## The next stage will cost about twice the first estimate
+
+The sweep's first run printed an estimate of 5.1 hours for the seven nine-task
+runs still to come. That estimate was wrong, and the notebook has been fixed.
+
+Here is why. A correction step took 0.244 seconds during the first task, 0.361
+during the second, and 0.470 during the third.
+
+Steps get slower as the stream goes on. The model carries a term that holds
+earlier tasks in place, and at each new task there is one more old task to hold
+on to. More to protect means more work per step.
+
+The old estimate took the average time per task and multiplied it by the tasks
+remaining. That quietly assumed the ninth task would cost what the first one
+did. It will not.
+
+Measuring the rise instead, and carrying it out to nine tasks, gives about 1.4
+hours for one nine-task run and about **9.6 hours for the seven**. The rise was
+measured from three points only, so treat 9.6 hours as a floor rather than a
+firm figure.
+
+## Decision: the damage step now runs on all seven runs
+
+A separate decision was settled today, about the damage arm.
+
+The study breaks a model on purpose at the end of a run. It picks one task and
+unlearns it deliberately, so the indicators can be tested against damage that
+is certainly there. An indicator that reads healthy on a model just broken
+cannot tell learning from damage.
+
+The methodology first asked for this on one run. The run notebooks were written
+to do it on every run instead, each time on whichever task that run learned
+first: task 0 in order A, task 4 in order B, task 8 in order C.
+
+The seven version was chosen, and `docs/plasticity/methodology.md` has been
+updated to say so rather than left contradicting the code. `run-plan.md` still
+described it as a run of its own, "run 13", in two places. There is no run 13
+now, because the unlearn is a step inside each of the seven runs. Both places
+are corrected.
+
+It is nearly free. Breaking a model takes 100 steps against the 7,065 a
+nine-task run spends learning, so the whole arm adds under 2 percent.
+
+What it buys is something to compare against. Five of the seven runs differ
+only in their random starting point. So the damage test now has its own measure
+of ordinary run-to-run variation, and anything smaller than that is not
+reported as a finding. The rescaling check in section 3.8 gains the same thing.
+It used to rest on a single before-and-after pair, which left it nothing to
+judge its own result against.
+
+One numbering detail was fixed in writing at the same time. Section 3.5 called
+the reading after the damage step "the tenth boundary". That wording is left
+over from when a run was eight tasks long. With nine tasks the stream ends at
+boundary 9 and the damage step is boundary 10, counting the untrained model as
+boundary 0. The notebooks already number it that way; now the specification
+does too. A boundary off by one already cost this study a run on 7 November.
+
+## The extra reading confuses the report, and has to be worked around
+
+This follows directly from the decision above, and it would have been easy to
+miss.
 
 `indicator_report.endpoints` takes the smallest and the largest boundary number
-in a record and reports the change between them. Every earlier record stopped
-at the last task learned, so the largest number was the end of learning.
+in a record and reports the change between them. Until now the largest number
+was always the end of learning, because records stopped at the last task.
 
-These records do not stop there. Boundary 10 is the model after the unlearn, so
-the largest number is now a model damaged on purpose, and the headline change
-for every measure would read from the fresh generator to the damaged model.
-Section 4.1 asks what nine tasks of learning do to effective rank. That number
-would quietly mix the damage into the answer.
+These records do not stop there. Boundary 10 is the model after the damage
+step. So the largest number is now a model broken on purpose, and the headline
+change for every measure would run from the untrained generator all the way to
+the damaged model.
 
-Nothing is wrong in either run notebook, and nothing needs changing in the
-library. The report has to be run twice: over boundaries 0 to 9 for the
-learning claim, and over all eleven for the damage claim. Recorded here because
-the wrong version would look entirely reasonable in the output.
+Section 4.1 asks what nine tasks of learning do to effective rank. Read that
+way, the answer would quietly have the damage mixed into it.
 
-### Gaps in this record
+Nothing is wrong in either run notebook and nothing in the library needs
+changing. The report simply has to be run twice: over boundaries 0 to 9 for the
+learning claim, and over all eleven for the damage claim. It is written down
+here because the wrong version would look perfectly reasonable in the output.
 
-The per-run `environment` files record the code revision as `None`, because the
-run was started from a Colab clone where the notebook's own revision lookup did
-not reach the saved environment record. The revision is in
-`sweep_summary.json`, which the notebook writes itself, so the runs are not
-unidentified, but the two records disagree and the environment file is the one
-that is wrong.
+## Where this leaves the study
+
+Done: the learning rate is chosen, at 5e-4.
+
+Next: five runs of the full nine-task stream, the same ordering, differing only
+in their random starting point. They have to finish within 3 points of each
+other on average accuracy. If they do, the setting is good enough to measure
+against and the two remaining orderings can run. If they do not, the next thing
+to try is 3e-4, before changing the number of passes or the protection setting.
+
+## Gaps in this record
+
+The per-run `environment` files record the code version as `None`. The runs
+were started from a Colab copy of the repository, where the notebook's own
+version lookup did not reach that file. The version is recorded correctly in
+`sweep_summary.json`, which the notebook writes itself, so the runs can still
+be identified. But the two files disagree, and `environment` is the wrong one.
