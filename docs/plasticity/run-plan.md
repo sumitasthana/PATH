@@ -26,8 +26,9 @@ wrong and the user decides which.
   tasks rotate through positions 1, 5 and 9.
 - Five seeds of the full stream, required to finish within 3 percentage points
   of each other on mean accuracy over the nine tasks.
-- One unlearn arm: a tenth step on one finished run that deliberately destroys
-  a single task, used to test whether the indicators detect certain damage.
+- One unlearn arm: a tenth step on every finished run that deliberately
+  destroys a single task, used to test whether the indicators detect certain
+  damage. Seven runs, so the damage test has a spread of its own.
 
 Chance accuracy for an unlearned task is now 5 percent, not 10, because tasks
 have twenty classes.
@@ -264,19 +265,22 @@ other if not.
 **Gate between phase 2a and 2b.** Runs 1 to 5 pick the learning rate. Runs 6 to
 10 confirm it. If the five seeds do not finish within 3 percentage points of
 each other on mean accuracy over the nine tasks, **stop**. Do not start runs 11
-to 13 on a setting that failed its own target. Tune further and repeat runs 6
+and 12 on a setting that failed its own target. Tune further and repeat runs 6
 to 10.
 
 Candidate learning rates for the sweep, centred on the current default of
 1e-3: `3e-4, 5e-4, 1e-3, 2e-3, 4e-3`. Record every value including the
 rejected ones.
 
-**Unlearn settings for run 13.** Unlearn task 0, the task learned first in
-`order_A`, matching the old study which unlearned its own position-1 task. 100
-steps, the UnCLe prescription and the current `burn_in` default. Confirm the
-unlearn worked before reading anything from it: task 0 at 5 percent, which is
-chance for twenty classes, and the other eight tasks within a few points of
-where they were.
+**Unlearn settings.** There is no separate unlearn run. Each of the seven
+stream runs continues into one, on the task its own ordering learned first:
+task 0 for `order_A`, task 4 for `order_B`, task 8 for `order_C`. That matches
+the old study, which unlearned its own position-1 task. 100 steps, the UnCLe
+prescription and the current `burn_in` default.
+
+Confirm the unlearn worked on each run before reading anything from it: the
+unlearned task at 5 percent, which is chance for twenty classes, and the other
+eight tasks within a few points of where they were.
 
 ## Cost
 

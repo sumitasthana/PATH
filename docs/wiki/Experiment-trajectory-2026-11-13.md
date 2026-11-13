@@ -128,6 +128,29 @@ already number it that way. This is the specification catching up with the
 code, and it is worth having unambiguous on paper: the 7 November record shows
 a boundary off by one already cost this study a run once.
 
+`docs/plasticity/run-plan.md` still carried the one-run wording in two places:
+the summary of the arms, and a paragraph headed "unlearn settings for run 13".
+There is no run 13 any more, because the unlearn is a step inside each of the
+seven runs rather than a run of its own. Both are corrected. The cost section
+of that file already said seven.
+
+### The eleventh boundary breaks the report's idea of the end
+
+`indicator_report.endpoints` takes the smallest and the largest boundary number
+in a record and reports the change between them. Every earlier record stopped
+at the last task learned, so the largest number was the end of learning.
+
+These records do not stop there. Boundary 10 is the model after the unlearn, so
+the largest number is now a model damaged on purpose, and the headline change
+for every measure would read from the fresh generator to the damaged model.
+Section 4.1 asks what nine tasks of learning do to effective rank. That number
+would quietly mix the damage into the answer.
+
+Nothing is wrong in either run notebook, and nothing needs changing in the
+library. The report has to be run twice: over boundaries 0 to 9 for the
+learning claim, and over all eleven for the damage claim. Recorded here because
+the wrong version would look entirely reasonable in the output.
+
 ### Gaps in this record
 
 The per-run `environment` files record the code revision as `None`, because the
