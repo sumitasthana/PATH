@@ -217,6 +217,80 @@ changing. The report simply has to be run twice: over boundaries 0 to 9 for the
 learning claim, and over all eleven for the damage claim. It is written down
 here because the wrong version would look perfectly reasonable in the output.
 
+## Every class is now used, for the first time
+
+Worth stating plainly, because it is easy to assume this was always true.
+
+Tiny ImageNet has 200 classes. They are split into 10 groups of 20. Nine of
+those groups, 180 classes, are learned one after another. The tenth group, the
+remaining 20, is never trained on. It is held back as the probe: images the
+model has never seen, from the same dataset, used to ask what the generator
+does with unfamiliar data.
+
+So every class has a job. 180 are learned, 20 are the held-out probe, none is
+left over.
+
+That was not true before. The old split cut the same 200 classes into 20 groups
+of 10, but a run only learned 8 of those groups, which is 80 classes, plus one
+group of 10 as the probe. So 90 classes were used and 110 were never touched.
+More than half the dataset sat idle.
+
+This is one of the reasons for the restart. A claim about what continual
+learning does to a model is easier to defend when the stream covers the whole
+dataset rather than a bit under half of it.
+
+EuroSAT is separate from all of this. It is satellite imagery, a different
+dataset, used as a second probe to ask what happens on images unlike anything
+in Tiny ImageNet. It is never trained on either.
+
+## Job 2 result: five seeds done, and the gate as written fails
+
+| Seed | Mean over 9 tasks | Task 0 after the unlearn | Hours |
+| --- | --- | --- | --- |
+| 0 | 41.41% | 5.00% | 0.7 |
+| 1 | 37.60% | 5.00% | 0.7 |
+| 2 | 39.12% | 5.00% | 0.7 |
+| 3 | 44.63% | 5.00% | 0.7 |
+| 4 | 38.11% | 5.00% | 0.7 |
+
+The damage arm is clean. Task 0 landed on exactly 5.00 percent in all five
+runs, which is the guessing floor for 20 classes. The break worked, every time,
+in the place it was aimed at.
+
+The gate did not pass. Best minus worst is 7.03 points against a target of 3.
+
+Two things need separating before anyone retunes.
+
+**The runs are not behaving oddly.** The standard deviation across the five
+seeds is 2.89 points. For data spread like that, the gap between the highest
+and lowest of five draws should be about 6.7 points. The observed 7.03 is what
+that spread predicts. Nothing anomalous happened.
+
+**The target is the part that is broken.** It is written as a range, best minus
+worst, and a range gets wider the more runs you do, because more draws reach
+further into the tails. The same "3 points" therefore demands a standard
+deviation under 1.77 with three seeds, under 1.29 with five, and under 0.97
+with ten. A study could pass it by running fewer seeds, which is the opposite
+of what a stability check should reward.
+
+So the failure is partly an artifact of how the target was worded, not proof
+that 5e-4 is unusable.
+
+That is not a reason to wave it through. The floor exists because every claim
+in the results compares numbers from different runs, and section 4.2 compares
+single runs of different orderings. If seed noise alone moves mean accuracy by
+a standard deviation of 2.9 points, an order difference smaller than about 6
+points says nothing. That is exactly the failure the restart was meant to fix.
+
+**Decision: measure the right quantity before changing anything.** The gate
+scores mean accuracy, but almost every claim in the paper compares an
+indicator, not an accuracy. Effective rank, dormant units and weight norm have
+their own spread, and five seeds of indicator records are now in R2. Reading
+that spread costs no GPU time and answers the real question, which is whether
+these runs are stable enough for the comparisons the paper actually makes.
+
+Job 3 is on hold until that reading exists. No retuning has been started.
+
 ## Where this leaves the study
 
 Done: the learning rate is chosen, at 5e-4.
