@@ -291,6 +291,90 @@ these runs are stable enough for the comparisons the paper actually makes.
 
 Job 3 is on hold until that reading exists. No retuning has been started.
 
+## Reading the indicator spread, which is the measurement that mattered
+
+The accuracy gate failed, so instead of retuning on that number the five
+records were pulled from R2 and the spread of the indicators themselves was
+measured. Five seeds, same ordering, differing only in their random start.
+Nothing was trained and nothing was written back.
+
+The answer is more useful than the accuracy gate, and worse.
+
+### The measures split cleanly into two groups
+
+Comparing the fall from boundary 0 to boundary 9 against how much that fall
+varies between seeds:
+
+| Measure | Fall over nine tasks | Spread of the fall | Fall divided by spread |
+| --- | --- | --- | --- |
+| Angle, generator | 51.82 | 0.97 | 53 |
+| Distance moved, generator | 1.294 | 0.037 | 35 |
+| Weight norm, generator | 308.8 | 13.0 | 24 |
+| Dormant units at 0.1 | 0.168 | 0.049 | 3.4 |
+| Dormant units at 0.01 | 0.164 | 0.061 | 2.7 |
+| Effective rank, in-stream | -2.776 | 1.332 | 2.1 |
+| srank, in-stream | -95.2 | 58.0 | 1.6 |
+
+The weight measures are solid. What nine tasks do to them is twenty to fifty
+times larger than what the random seed does. One run carries those claims
+easily.
+
+The two rank measures are the weakest of everything recorded, and they are the
+paper's headline measures.
+
+### What this does and does not break
+
+**Section 4.1 still stands.** It asks what nine tasks of learning do, and it
+has five seeds to answer with. Averaged over five runs the fall in effective
+rank is 4.7 standard errors from zero on the in-stream images, 4.5 on the
+probe and 3.9 on EuroSAT. The fall is real. It just cannot be seen reliably in
+any single run.
+
+**Section 4.2 does not stand as planned.** The order comparison was going to
+run one seed per ordering. At boundary 9, effective rank on the in-stream
+images averages 2.79 across seeds with a spread of 1.42. For a difference
+between two single runs to mean anything it has to clear roughly 2.0, which is
+72 percent of the measured value itself. For srank it is 81 percent. Two runs
+of different orderings could differ by more than the whole effect and still be
+telling us nothing but which seed they got.
+
+The same comparison is perfectly sound for the other measures. A gap in the
+generator's angle only has to clear 3 percent of its value, the weight norm 2
+percent, dormant units at the 0.1 cut-off 11 percent.
+
+### Why the accuracy gate was the wrong instrument
+
+The gate asked whether mean accuracy lands within 3 points across seeds. It
+failed at 7.03. But accuracy was never the thing being compared, and its
+failing did not predict this: the dormant-unit measures pass comfortably while
+the rank measures do not, and no reading of the accuracy spread would have
+separated those two cases.
+
+So the earlier note on this page is half right. The gate is badly worded,
+because a range widens as runs are added. It was also pointing at the wrong
+quantity. Both are true, and the second matters more.
+
+### Decision
+
+Retuning the learning rate is not the first move. Nothing here suggests a
+different step size would tighten effective rank; the variance looks like a
+property of the measure on a 256 by 2048 feature matrix, not of the setting.
+
+The cheaper and better-aimed fix is seeds. A run costs 0.7 hours. Taking
+orders B and C to five seeds each is eight more runs, about 5.6 hours, and it
+turns section 4.2 from a comparison of single runs into a comparison of means
+with a spread attached, which is what the rank measures need.
+
+The alternative, if that time is not available, is to keep one seed per
+ordering and report section 4.2 only for the measures that survive it: the
+generator's angle, the distance it moved, the weight norm, and dormant units
+at the 0.1 cut-off. The rank measures would then be reported for section 4.1
+only, where five seeds back them.
+
+Either way the methodology's stability target needs rewriting. It should name
+the measure it applies to, use a statistic that does not widen with the number
+of runs, and set the bar per measure rather than once for everything.
+
 ## Where this leaves the study
 
 Done: the learning rate is chosen, at 5e-4.
