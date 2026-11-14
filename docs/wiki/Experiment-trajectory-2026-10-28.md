@@ -176,6 +176,110 @@ With equal repetitions at both points the floor becomes `1.96 * s * sqrt(2/n)`. 
 
 Eleven repetitions at both points, the full arm only, both probe tasks and three rates is 132 runs, about 82 minutes at the per-run cost measured here. Dropping the code-only arm is safe: it has now read chance in four of four places.
 
+## Notebook 23: how many unlearning steps are actually needed
+
+Written on 13 November from the run files in R2. The runs happened on 28 October and no entry
+was made at the time. Nothing here is new work. Every number below is read from the saved files,
+which are listed at the end of this section.
+
+Two runs, both with the fixed notebook, both after the stopping-point defect above was repaired.
+The repair landed at 09:48 and the notebook was pointed at the three budgets at 10:58. The first
+run started at 11:32 and the second at 12:02, so both carry the fix.
+
+Shared settings for both runs: study `paired_generalization_v2`, order 01, seed 0, forget task 3,
+then learn task 15. Ten classes per task, five epochs, gamma 0.01, beta 0.1, on a GPU. The
+implementation is pinned to `65e2e7c`, which is the revision the study's saved models were
+trained with. The relapse limit is 12.0 percent, the study's own rule. Chance is 10 percent.
+
+Before anything is unlearned, task 3 reads 35.6 percent, the other seven tasks average 40.43
+percent, input sensitivity is 13.24, and the generated weights have a size of 4706.
+
+### Run 2 of 2: the published method at 6, 20 and 100 steps
+
+This is the run that answers the question. A control that never unlearns anything is included,
+so the cost of unlearning can be separated from the cost of simply learning one more task.
+
+| Steps | Task 3 after unlearning | Other seven after unlearning | Task 3 after learning task 15 | Task 15 | Sensitivity after unlearning | Weight size after unlearning |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| control, 0 | not unlearned | not unlearned | 31.0 | 47.6 | 13.12 | 4706 |
+| 6 | 10.6 | 40.09 | 12.8 | 47.8 | 6.051 | 4476 |
+| 20 | 10.0 | 39.43 | 10.0 | 42.2 | 3.943e-01 | 4008 |
+| 100 | 10.0 | 40.03 | 10.0 | 43.4 | 2.280e-06 | 2690 |
+
+Three things follow.
+
+**The task is already gone at 6 steps.** It reads 10.6 percent, which is chance. The 94 further
+steps do not take more away, because there is nothing left to take.
+
+**What the extra steps buy is irreversibility.** At 6 steps the task climbs back to 12.8 percent
+once the model learns task 15. That is above the study's 12.0 limit, so it counts as a relapse.
+At 20 and 100 steps it stays flat at chance. So the later steps are not removing more of the
+task. They are making the removal harder to undo.
+
+**The other tasks are not paying for it.** They stand at 40.43 percent before unlearning, and at
+40.09, 39.43 and 40.03 after it. Every gap is under one point and there is no trend with the step
+count, so this is run to run noise and not a small real cost.
+
+The last two columns say what is really happening. Input sensitivity is the widest spread any one
+output score shows across the test set, so it measures how much the model still reacts to its
+input at all. It falls by six orders of magnitude, from 13.24 to 2.280e-06. The weights shrink
+with it, from 4706 to 2690. A model with random weights still reacts strongly to its input, just
+wrongly. This model has stopped reacting. That is the behaviour of weights near zero, not the
+behaviour of weights set to a fresh random draw.
+
+Task 15 is learned to 47.8, 42.2 and 43.4 percent at the three budgets, against 47.6 for the
+control. The 6-step arm matches the control. The 20 and 100-step arms sit about 4 to 5 points
+below it. One seed cannot separate that from noise, so it is recorded and not read.
+
+### Run 1 of 2: the fixed-target variant beside the published one
+
+The published objective draws a new random target every step. This run adds a variant that draws
+the target once and keeps it, so the weights really are pulled toward one fixed noise pattern
+instead of toward the average of many draws. The budgets are the same.
+
+| Arm | Steps | Task 3 after unlearning | Sensitivity after unlearning | Weight size after unlearning |
+| --- | ---: | ---: | ---: | ---: |
+| published, fresh draw each step | 6 | 10.6 | 6.051 | 4476 |
+| fixed draw | 6 | 11.4 | 5.839 | 4477 |
+| fixed draw | 20 | 11.2 | 6.612e-01 | 4140 |
+| fixed draw | 100 | 10.0 | 21311 | 7426 |
+
+The 6-step published arm reproduces run 2 exactly, to every digit saved. The two runs share a
+starting model and a seed, so this is a check that the pipeline is deterministic, not a second
+measurement.
+
+The fixed-draw arm at 100 steps goes the opposite way. The weights grow, from 4706 to 7426, and
+sensitivity rises to 21311 instead of falling to near zero. Same objective, same budget, same
+starting model. The only change is whether the target is redrawn.
+
+This is the clearest single piece of evidence that the published objective is not moving the
+weights toward noise. Averaged over fresh draws, the pull toward noise cancels and what is left
+is a pull toward zero. Hold the draw still and the cancelling stops, and the weights move toward
+noise as the text describes. The paper's own Appendix E says the objective drives the weights
+toward zero, while its abstract and methodology say noise. These two arms show both behaviours
+side by side and show which one the published method produces.
+
+The task reaches chance in both arms, so this is not a claim that the variant fails to unlearn.
+It is a claim about where the weights end up.
+
+### Where the files are
+
+Bucket `uncle-experiments`, under
+`uncle/paired_generalization/paired_generalization_v2/diagnostics/`:
+
+- `20261028T153229Z/` is run 1, the fixed-target comparison
+- `20261028T160216Z/` is run 2, the published method at three budgets
+
+Each folder holds `summary.json`, `comparison.csv`, `stages.csv`, and the chart as PNG and SVG.
+`stages.csv` has the per-task scores at each of the three measurement moments.
+
+### What is still missing
+
+One seed. Everything above is seed 0. The 6-step relapse at 12.8 percent sits 0.8 points above
+the limit, which is close enough that a second seed could put it on the other side. The
+irreversibility reading rests on that one crossing, so it should carry a second seed before it
+is relied on in a paper.
+
 ## Next decision
 
 Seed 2 should not start until the stopping-point fix is in the notebook, so that its two settings are genuinely 6 and 100 steps.
