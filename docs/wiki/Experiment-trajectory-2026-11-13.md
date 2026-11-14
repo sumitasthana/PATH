@@ -375,6 +375,32 @@ Either way the methodology's stability target needs rewriting. It should name
 the measure it applies to, use a statistic that does not widen with the number
 of runs, and set the bar per measure rather than once for everything.
 
+## Job 3 changed to five seeds per order
+
+Acting on the reading above. Notebook 45 ran one seed for order B and one for
+order C. It now runs five of each, the same five seeds job 2 used, so ten runs
+instead of two.
+
+The reason is the rank measures. A gap between two single runs would have to
+reach 72 percent of effective rank's own value, or 81 percent of srank's,
+before it meant anything. With five seeds each, the comparison becomes one
+average against another, each with a spread attached, which is what those
+measures need.
+
+The cost is eight extra runs at about 0.7 hours each, roughly 5.6 hours more.
+The notebook now prints its run count and rough hours before it starts.
+
+Two other things follow. Storage goes from about 3.3 GB to about 17 GB for
+this job, at three kept boundary models per run, so the size of the first
+upload is worth reading before trusting that figure. Dropping boundary 4 from
+the kept list halves it and loses only a convenience. And the unlearn arm now
+runs on fifteen streams rather than seven, since every run ends with one.
+
+`docs/plasticity/methodology.md` has been updated so the written plan matches.
+The old order control paragraph claimed a one-seed comparison was controlled
+rather than sampled, and that claim is now replaced with the measurement that
+disproved it.
+
 ## Where this leaves the study
 
 Done: the learning rate is chosen, at 5e-4.

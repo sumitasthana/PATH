@@ -257,13 +257,22 @@ everything else held fixed, to separate what training does from what the
 initialization supplies. Across runs we report the spread, not the mean,
 because the spread is what reveals convergence toward a common band.
 
-**Order control.** Runs sharing a verified identical initialization are
-compared across the three orderings, as described in 3.4. The two further
-orderings are run with one seed each, so the order comparison rests on single
-runs that differ in exactly one factor and share a verified starting value. It
-is a controlled comparison, not a sampled one, and the paper states it that
-way: the direction of the effect is supported, the size of it is one
-measurement per ordering and is reported as such.
+**Order control.** All three orderings are run with the same five random
+initializations. Runs sharing a verified identical initialization are compared
+across orderings, as described in 3.4, and the five runs of an ordering are
+also averaged, so a difference between orderings is read against how far that
+ordering's own seeds disagree.
+
+An earlier version ran the two further orderings with one seed each and called
+the result a controlled comparison rather than a sampled one. Measuring the
+seed spread of the indicators themselves showed that this cannot work for the
+rank measures. Across five seeds of one ordering, effective rank at the end of
+the stream moves about half as much between seeds as nine tasks of learning
+move it, so a gap between two single runs would have to reach about 72 percent
+of the measure's own value before it meant anything, and for srank 81 percent.
+The weight measures would have been safe on one seed, needing 2 to 3 percent,
+but the rank measures are the ones this control exists to compare. Five seeds
+per ordering is what makes the comparison readable.
 
 **Rescaling control.** To separate a change in a rank measure from a
 simultaneous change in weight scale, we read four arms in four forward passes
@@ -283,8 +292,8 @@ version of this control rested on one pair and could not make that comparison.
 Each full nine-task run trains nine tasks of twenty classes on a ResNet50
 written by the generator. The hyperparameter sweep adds shortened three-task
 runs, one per learning-rate value. The unlearn arm adds 100 update steps to each
-of the seven stream runs, which is under 2 percent of a run: a nine-task run is
-7,065 optimizer steps. The three controls in 3.8 add no training: the seed
+of the fifteen stream runs, which is under 2 percent of a run: a nine-task run
+is 7,065 optimizer steps. The three controls in 3.8 add no training: the seed
 and order controls read checkpoints the stream runs already produce, and the
 rescaling control costs four forward passes.
 
@@ -294,8 +303,8 @@ The run count, to be confirmed against the compute budget before launching:
 |---|---|---|
 | Learning-rate sweep | one per candidate value | 3 tasks |
 | Seed control, one ordering | 5 | 9 tasks |
-| Order control, two further orderings | 2, one seed each | 9 tasks |
-| Unlearn arm | 7, one continuing each finished stream run | 100 steps |
+| Order control, two further orderings | 10, five seeds each | 9 tasks |
+| Unlearn arm | 15, one continuing each finished stream run | 100 steps |
 
 None of the runs behind the earlier version of this work can be reused. They
 were trained on eight tasks of ten classes, so every number in every arm above
