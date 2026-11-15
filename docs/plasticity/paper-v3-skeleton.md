@@ -229,21 +229,18 @@ drawn in.
 
 **Status.** To write.
 
-## 5.3 Relation between indicator change and measured learning
+## 5.3 The size of the fall does not track measured learning
 
-Section 5.1 reports that every indicator moves in the direction associated
-with lost plasticity, and Section 5.2 reports that measured learning ability
-rises over the same span. Those results concern the direction each quantity
-moves. This section asks the weaker question that would still leave the
-indicators useful: whether the size of the indicator change tracks the size of
-the change in measured learning.
+Each of the fifteen runs gives a pair of numbers: how far an indicator moved
+over the nine tasks, and how far probe accuracy moved over the same span. Both
+vary widely. The effective-rank fall runs from 29.8% to 80.6%, a factor of
+2.7, and the probe gain from 15.90 to 20.49 points (Table 6). If the fall
+reports the ability to learn, the runs that fell furthest should be the runs
+that gained least.
 
-The question can be asked here because both quantities vary across the
-fifteen runs. Table 6 gives their ranges.
-
-Table 6. Change from boundary 0 to boundary 9 on the in_stream images,
-across the fifteen runs. Indicator changes are a percent of the value at
-boundary 0; the probe change is in accuracy points.
+Table 6. Change from boundary 0 to boundary 9 on the in_stream images, across
+the fifteen runs. Indicator changes are a percent of the boundary 0 value; the
+probe change is in accuracy points.
 
 | Quantity | Mean | Lowest | Highest |
 | --- | --- | --- | --- |
@@ -254,77 +251,48 @@ boundary 0; the probe change is in accuracy points.
 | Dormant units, cut-off 0.1 | +62.45% | +34.67% | +86.63% |
 | Probe accuracy | +17.87 | +15.90 | +20.49 |
 
-The change in effective rank varies by a factor of 2.7 between the smallest
-and the largest. If the indicators report the ability to learn, the runs whose
-indicators moved furthest should be the runs that gained least.
+They are not. The correlation between the effective-rank fall and the probe
+gain is -0.054, which accounts for 0.3% of the spread in the gain (Table 7,
+Figure 1). srank gives -0.178 and the three dormant-unit cut-offs give +0.112
+to +0.129.
 
-Each measure carries a predicted direction for this relation. Effective rank
-and srank are read so that a larger fall means less remaining ability to
-learn, so a run whose rank fell less should gain more, which makes the
-predicted correlation positive. Dormant units are read the other way, so their
-predicted correlation is negative. Table 7 gives the measured values.
+Each measure also predicts a sign. A run whose rank fell less should have more
+ability left, so the rank measures predict a positive correlation; dormant
+units are read the other way and predict a negative one. All five come out
+with the wrong sign, and the largest of them accounts for 3.2% of the spread.
 
 Table 7. Correlation between each indicator's change and the probe's change,
-over the fifteen runs. r is the Pearson correlation and r squared is the share
-of the between-run variation in the probe change that it accounts for.
+over the fifteen runs.
 
-| Measure | Predicted sign | r | r squared | Sign as predicted |
-| --- | --- | --- | --- | --- |
-| Effective rank | positive | -0.054 | 0.3% | no |
-| srank | positive | -0.178 | 3.2% | no |
-| Dormant units, cut-off 0.01 | negative | +0.129 | 1.7% | no |
-| Dormant units, cut-off 0.025 | negative | +0.125 | 1.6% | no |
-| Dormant units, cut-off 0.1 | negative | +0.112 | 1.3% | no |
+| Measure | Predicted sign | r | r squared |
+| --- | --- | --- | --- |
+| Effective rank | positive | -0.054 | 0.3% |
+| srank | positive | -0.178 | 3.2% |
+| Dormant units, cut-off 0.01 | negative | +0.129 | 1.7% |
+| Dormant units, cut-off 0.025 | negative | +0.125 | 1.6% |
+| Dormant units, cut-off 0.1 | negative | +0.112 | 1.3% |
 
-No measure matches its predicted direction, and the largest share of the
-variation any of them accounts for is 3.2 percent. Figure 1 shows the
-effective-rank row of Table 7.
+Figure 1. Change in effective rank against change in probe accuracy, one point
+per run. Error bars are each run's own standard error on the probe change,
+from eleven repetitions. The dashed line is the least-squares fit. The runs
+furthest left fell most; they did not gain least.
 
 ![Figure 1](figures-v3/v3-fig1-rank-change-vs-probe-change.png)
 
-Figure 1. Change in effective rank against change in probe accuracy, one
-point per run. Error bars are each run's own standard error on the probe
-change. The dashed line is the least-squares fit.
+A failed correlation means little if the gain it fails to predict is mostly
+measurement noise, and the eleven repetitions at each point let the two be
+separated. The gain's spread across the fifteen runs is 1.300 points. The
+repetitions account for 0.953 of that, leaving 0.883 as real difference
+between models, which is 46.2% of the spread by variance. An outcome measured
+that well caps any predictor at a correlation of 0.680, the square root of
+that share. The largest value in Table 7 is 0.178, and at fifteen runs a
+correlation needs 0.514 to be separable from zero at the 5% level.
 
-A failed correlation is only informative if the quantity it fails to predict
-varies for real reasons rather than from measurement noise. If the probe
-change were the same in every run apart from noise, no predictor could
-correlate with it and Table 7 would say nothing about the indicators.
-
-The probe was repeated eleven times at each point of each run, so this can be
-measured rather than assumed. The spread of those repetitions gives the noise
-the probe adds to one run's reported change, and the spread of the reported
-changes across runs gives the total. The difference between the two is real
-variation between models.
-
-Table 8. Where the between-run spread in the probe change comes from. All
-values are standard deviations in accuracy points, except the last three rows.
-
-| Quantity | Value |
-| --- | --- |
-| Mean probe change | +17.87 |
-| Spread of the change between runs | 1.300 |
-| Part the probe's own repetition noise produces | 0.953 |
-| Part that is real difference between models | 0.883 |
-| Share of the between-run spread that is real | 46.2% |
-| Largest correlation that share permits | 0.680 |
-| Largest correlation measured in Table 7 | 0.178 |
-
-Just under half of the between-run spread in the probe change is real
-difference between models, so there is something for the indicators to
-predict. An imperfectly measured outcome does limit how large a correlation
-any predictor can show, and that limit is the square root of the real share,
-which is 0.680 here. Every value in Table 7 is far below that limit. Every
-value is also far below 0.514, which is the correlation that fifteen runs
-would need for the relation to be distinguishable from zero at the five
-percent level.
-
-Within this design, then, the size of the indicator change carries no usable
-information about how much the ability to learn changed. The failure is not
-only that the relation is weak. In all five measures its direction is the
-opposite of the one the usual reading requires.
-
-Appendix A gives the per-run values behind Tables 6 and 7.
+The size of an indicator's change therefore says nothing usable about how much
+the model's ability to learn changed, and the little relation there is runs
+the wrong way. Section 5.2 compares two endpoints; this is the easier test,
+since the indicators only have to rank fifteen runs rather than get a
+direction right, and they fail that too. Appendix A gives the per-run values.
 
 ## 5.4 Indicator response to a deliberately damaged model
 
