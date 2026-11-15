@@ -8,31 +8,40 @@ Two alternative titles are recorded in the paper plan.
 
 ## Abstract
 
-Loss of plasticity in continual learning is commonly diagnosed with measures
-read from a network's weights or activations, without training anything. Three
-such measures are in wide use: effective rank, srank, and the fraction of
-dormant units. Each is normalized so that overall scale does not affect it,
-which is taken to mean that two readings may be compared directly.
+A network that learns tasks in sequence can become worse at learning the next
+one. Detecting that loss matters, but measuring it directly means training the
+network on a further task, which is costly enough that it is rarely repeated.
+Practitioners therefore rely on measures read from the weights or activations
+alone, with no training. Three are in wide use: effective rank, srank, and the
+fraction of dormant units. Each is normalized so that overall scale cannot
+affect it, which is taken to mean that two readings may be compared directly.
 
-We examine these measures in a setting where the quantity they stand for can
-also be measured. A hypernetwork learns nine 20-class tasks in sequence, drawn
-from Tiny ImageNet, while a tenth group of classes is held out and never
-trained. Learning ability is then measured directly, by freezing the
-hypernetwork and training only a fresh task code on the held-out group. The
-trained code is discarded, so the measurement cannot alter the model. Fifteen
-streams are run: three task orderings with five random seeds each.
+How closely these measures follow the quantity they stand for is largely
+untested, because in the architectures they are applied to the direct
+measurement is expensive. A hypernetwork removes that cost. The generator can
+be frozen and a short task code trained in its place, so learning ability can
+be measured many times rather than once.
 
-The indicators fall over the stream in every run. Directly measured learning
-ability rises in every run, and the size of the indicator change does not
-account for the differences in learning between runs. A model with one task
-deliberately reduced to chance accuracy moves the indicators in the direction
-they report as healthy, and holding the weight scale fixed removes about half
-of that movement. We also retract an earlier single-run result on task
-ordering, which the five-seed measurement does not support.
+We run fifteen streams of nine 20-class Tiny ImageNet tasks, as three task
+orderings with five random seeds each, holding a tenth group of classes out of
+training. At the start and the end of every stream we train a fresh task code
+on that held-out group, record its accuracy, and discard the code, so the
+measurement cannot alter the model it measures.
 
-We do not propose a replacement measure. We report the conditions under which
-the existing ones were found not to correspond to the quantity they are used
-to estimate.
+Across the fifteen runs the size of the indicator change does not account for
+the differences in measured learning, and its sign is the opposite of the one
+the usual reading predicts. The indicators fall in every run while measured
+learning ability rises in every run. A model with one task deliberately
+reduced to chance accuracy moves the indicators in the direction they report
+as healthy, and holding the weight scale fixed removes about half of that
+movement. We also retract an earlier single-run result on task ordering, which
+the five-seed measurement does not support.
+
+In this setting, a reading of these measures is not evidence about the ability
+to learn. The weight-scale result shows where the failure comes from: both
+rank measures reach the generated weights along a path that their own scale
+normalization does not cover, so a comparison between models of different
+weight scale is in part a comparison of those scales.
 
 ---
 
