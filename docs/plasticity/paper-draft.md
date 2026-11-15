@@ -373,6 +373,13 @@ Probe accuracy rose past the run's own floor in 15 of 15 runs. It fell past the
 floor in none. Figure 2 shows every row of Table 6 as a line from its starting
 point to its end point, with the floor drawn on the start.
 
+![Figure 2](figures/fig2-probe-endpoints.png)
+
+**Figure 2.** Every row of Table 6 drawn as a line. The open circle is the
+untrained generator, the filled circle is after nine tasks, and the grey bar on
+the start is that run's own noise floor. The dotted line is chance at 5
+percent.
+
 So the model learns an unseen twenty-class group better after nine tasks than
 before any training, on every run, while the indicators say its representation
 collapsed.
@@ -395,6 +402,14 @@ it would learn the new group worst. Table 7 says they do not. The correlation
 is almost exactly zero, and what little sign it has points the other way: more
 rank lost goes with slightly more learned, not less. Figure 1 plots the fifteen
 runs.
+
+![Figure 1](figures/fig1-rank-fall-vs-probe.png)
+
+**Figure 1.** Each point is one of the fifteen runs of Table 6. The horizontal
+axis is how much effective rank fell over the stream; the vertical axis is how
+much better the model then learned the held-out group. If the measure reported
+a lost ability to learn, points on the left would sit low. The fitted line is
+flat, with the correlation given in Table 7.
 
 Read coarsely by ordering, the two quantities move against each other, which is
 the same point:
@@ -482,6 +497,12 @@ From Table 11, the unlearn moves effective rank about 9.7 times as far as an
 ordinary learning step, in the opposite direction, and still 4.7 times as far
 after the weight size is held fixed. Figure 3 draws the three rows.
 
+![Figure 3](figures/fig3-unlearn-vs-learning-step.png)
+
+**Figure 3.** The three rows of Table 11. Destroying a task moves effective
+rank further than learning does, and in the direction the measure calls
+healthy.
+
 A measure that barely notices nine tasks of learning, and then jumps about ten
 times further in the healthy direction when a task is destroyed, is not
 reporting damage.
@@ -564,6 +585,13 @@ seeds.
 The five seeds of a single ordering vary by about as much as the three
 orderings differed from each other in the old reading. A gap of 1.36 standard
 errors is not a difference. Figure 4 puts the two panels side by side.
+
+![Figure 4](figures/fig4-order-effect-retracted.png)
+
+**Figure 4.** Table 12 in two panels. Left: one run per ordering on the
+retired design, which looked like a large order effect. Right: five seeds per
+ordering on the revised design, where the spread inside one ordering covers the
+gap between orderings.
 
 Every measure was compared between every pair of orderings. Table 13 gives the
 widest gap each measure reached.
@@ -748,32 +776,21 @@ either way.
 
 ---
 
-## Figures
-
-**Figure 1.** `figures/fig1-rank-fall-vs-probe.png`. Each point is one of the
-fifteen runs of Table 6. The horizontal axis is how much effective rank fell
-over the stream; the vertical axis is how much better the model then learned
-the held-out group. If the measure reported lost ability to learn, points on
-the left would sit low. The fitted line is flat, with the correlation given in
-Table 7.
-
-**Figure 2.** `figures/fig2-probe-endpoints.png`. Every row of Table 6 drawn as
-a line. Open circle is the untrained generator, filled circle is after nine
-tasks, and the grey bar on the start is that run's own noise floor. The dotted
-line is chance at 5 percent.
-
-**Figure 3.** `figures/fig3-unlearn-vs-learning-step.png`. The three rows of
-Table 11. Destroying a task moves effective rank further than learning does,
-and in the direction the measure calls healthy.
-
-**Figure 4.** `figures/fig4-order-effect-retracted.png`. Table 12 in two
-panels. Left: one run per ordering on the retired design, which looked like a
-large order effect. Right: five seeds per ordering on the revised design, where
-the spread inside one ordering covers the gap between orderings.
+## How this draft is built
 
 Figures are built by `scripts/build_paper_figures.py`. Every value in that
-script is copied from a table above, so any point can be checked against a
-table.
+script is copied from a table above, so any point on any figure can be checked
+against a table.
+
+`paper-draft.docx` beside this file is generated, not edited. Rebuild it after
+any change here, from the repository root:
+
+```
+tail -n +2 docs/plasticity/paper-draft.md > /tmp/body.md && pandoc /tmp/body.md -o docs/plasticity/paper-draft.docx --resource-path=docs/plasticity --metadata title="Rank-based plasticity indicators do not track the ability to learn"
+```
+
+The first line is dropped because the title comes from the metadata instead,
+which keeps Word from showing it twice.
 
 ---
 
