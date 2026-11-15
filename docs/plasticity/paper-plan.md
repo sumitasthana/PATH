@@ -52,11 +52,20 @@ What each part is for:
   figure with its own caption, which would print the caption twice.
 - `--resource-path` lets the image path in the markdown resolve.
 - `scripts/style_paper_docx.py` does what `--reference-doc` cannot. Version 1
-  formats its tables directly rather than through a named style, so none of it
-  is copied. The script applies the same rules: a rule above and below the
-  table, a light grey rule between rows, no vertical rules, a shaded and bold
-  header that repeats across pages, 10pt text, and 3pt by 5pt cell padding. It
-  also strips the paragraph styles pandoc adds, which version 1 does not use.
+  formats its tables and its spacing directly rather than through named
+  styles, so none of it is copied. The script applies the same rules:
+
+  - Tables: a rule above and below, a light grey rule between rows, no
+    vertical rules, a shaded and bold header that repeats across pages, 10pt
+    text, 3pt by 5pt cell padding, and columns sized to their contents rather
+    than split equally. It also removes pandoc's reference to a table style
+    named "Table", which the reference document never defines.
+  - Spacing: 6pt after each body paragraph. A table caption gets 12pt above
+    and 4pt below, so it sits against its table. A figure is centred with 12pt
+    above, and its caption gets 4pt above and 12pt below.
+  - It strips the paragraph styles pandoc adds, which version 1 does not use.
+    This runs before the spacing pass, because a paragraph that still carries
+    a style is left alone by it.
 
 ## Captions
 
