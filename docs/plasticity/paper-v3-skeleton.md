@@ -272,12 +272,12 @@ over the fifteen runs.
 | Dormant units, cut-off 0.025 | negative | +0.125 | 1.6% |
 | Dormant units, cut-off 0.1 | negative | +0.112 | 1.3% |
 
+![](figures-v3/v3-fig1-rank-change-vs-probe-change.png)
+
 Figure 1. Change in effective rank against change in probe accuracy, one point
 per run. Error bars are each run's own standard error on the probe change,
 from eleven repetitions. The dashed line is the least-squares fit. The runs
 furthest left fell most; they did not gain least.
-
-![Figure 1](figures-v3/v3-fig1-rank-change-vs-probe-change.png)
 
 A failed correlation means little if the gain it fails to predict is mostly
 measurement noise, and the eleven repetitions at each point let the two be

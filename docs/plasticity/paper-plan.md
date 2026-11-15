@@ -33,15 +33,35 @@ Stated by the user on 15 November 2026. These are the rules for version 3.
 The output format is the format of
 `ops-docs/plasticity-indicators-paper-draft.docx`, which is version 1.
 
-Build command, from the repository root:
+Build command, from the repository root. Both steps are needed.
 
 ```bash
-tail -n +2 docs/plasticity/paper-v3-skeleton.md > /tmp/skel.md && pandoc /tmp/skel.md -o ops-docs/plasticity-paper-v3-skeleton.docx --reference-doc=ops-docs/plasticity-indicators-paper-draft.docx --metadata title="Rank-based plasticity indicators and directly measured learning ability in a hypernetwork continual learner"
+tail -n +2 docs/plasticity/paper-v3-skeleton.md > /tmp/skel.md && pandoc -f markdown-implicit_figures /tmp/skel.md -o ops-docs/plasticity-paper-v3-skeleton.docx --reference-doc=ops-docs/plasticity-indicators-paper-draft.docx --resource-path=docs/plasticity --metadata title="Rank-based plasticity indicators and directly measured learning ability in a hypernetwork continual learner"
 ```
 
-The `tail -n +2` removes the markdown H1 so that Word does not print the title
-twice. The `--reference-doc` copies the styles of version 1: Title, Heading 1,
-Heading 2, Normal, and nothing else.
+```bash
+python scripts/style_paper_docx.py ops-docs/plasticity-paper-v3-skeleton.docx
+```
+
+What each part is for:
+
+- `tail -n +2` removes the markdown H1, so Word does not print the title twice.
+- `--reference-doc` copies version 1's paragraph styles: Title, Heading 1,
+  Heading 2, Normal, and nothing else.
+- `-f markdown-implicit_figures` stops pandoc turning a lone image into a
+  figure with its own caption, which would print the caption twice.
+- `--resource-path` lets the image path in the markdown resolve.
+- `scripts/style_paper_docx.py` does what `--reference-doc` cannot. Version 1
+  formats its tables directly rather than through a named style, so none of it
+  is copied. The script applies the same rules: a rule above and below the
+  table, a light grey rule between rows, no vertical rules, a shaded and bold
+  header that repeats across pages, 10pt text, and 3pt by 5pt cell padding. It
+  also strips the paragraph styles pandoc adds, which version 1 does not use.
+
+## Captions
+
+Version 1 puts table captions above the table and figure captions below the
+figure. Keep that. Both are plain Normal paragraphs, not Word caption fields.
 
 ## Standing rules for every section
 
