@@ -2,6 +2,15 @@
 
 Back to the [index](Experiment-trajectory).
 
+**Superseded, 16 November 2026.** The disagreement reported here was measured
+between boundary 0 and boundary 9 only. Notebook 48 probed boundary 4 and
+found the whole probe gain finished by then, with no further change to
+boundary 9. The indicator fall is likewise concentrated at the first task.
+Both movements are the exit from random initialisation, so the two measures do
+not disagree about the stream. See the [16 November
+tests](Experiment-trajectory-2026-11-16). The phrase "frozen generator" below
+is also wrong; the correction is under Limits.
+
 This page covers the direct plasticity probe on the revised streams, all three
 orders. The [first record for the day](Experiment-trajectory-2026-11-14)
 covers job 3 and the task-order result. The
