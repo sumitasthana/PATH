@@ -287,3 +287,71 @@ run repeats none of the 330 runs at boundaries 0 and 9 and performs only the
 Orders B and C are run only if the order A result lands between about 5 and 14
 points, which is the ambiguous range where which groups were seen by boundary 4
 could plausibly matter. A result near 17 or near zero does not need them.
+
+## Result: the centring check on an ordinary network
+
+Notebook 50 ran on 16 November. Twelve readings, forward passes only, no
+training. The same three 256-picture sets and the same arithmetic notebook 48
+used. Notebook 48's 450 hypernetwork readings are shown beside them.
+
+Mean share is how much of the feature matrix is the single row every picture
+shares, from 0 to 1.
+
+| Network | in_stream | probe | eurosat |
+| --- | ---: | ---: | ---: |
+| hypernetwork, reference code | 0.9811 | 0.9770 | not read |
+| hypernetwork, trained code | 0.9820 | 0.9793 | not read |
+| study target, random weights, 64px | 0.9812 | 0.9789 | 0.9410 |
+| stock ResNet50, random weights, 64px | 0.9826 | 0.9814 | 0.9294 |
+| stock ResNet50, ImageNet weights, 64px | 0.3181 | 0.3101 | 0.3823 |
+| stock ResNet50, ImageNet weights, 224px scaled | 0.5299 | 0.5230 | 0.5961 |
+
+Effective rank on in-stream pictures, as published and after removing the
+shared row:
+
+| Network | Published | Centred | Times |
+| --- | ---: | ---: | ---: |
+| hypernetwork, reference code | 1.965 | 9.25 | 4.7 |
+| hypernetwork, trained code | 2.699 | 15.46 | 5.7 |
+| study target, random weights, 64px | 5.827 | 45.15 | 7.7 |
+| stock ResNet50, random weights, 64px | 16.793 | 107.86 | 6.4 |
+| stock ResNet50, ImageNet weights, 64px | 224.564 | 228.14 | 1.0 |
+| stock ResNet50, ImageNet weights, 224px scaled | 208.233 | 220.10 | 1.1 |
+
+**The split is training, not architecture.** Every network with untrained
+weights reads a mean share near 0.98, the unmodified stock ResNet50 included at
+0.9826, which is slightly higher than the hypernetwork's 0.9811. So the
+generator is not the cause, and neither is the changed stem. Both trained
+networks read far lower, 0.32 at 64 pixels and 0.53 at their proper 224 pixels
+with their proper scaling.
+
+The notebook's own printed verdict on this run was wrong. It averaged the three
+stock readings into one number of 0.6170 and concluded the cause was the
+changed stem. The table it printed shows otherwise. The verdict code has been
+corrected to group by trained against untrained.
+
+**The finding that survives is narrower and sharper.** The study's models have
+learned nine tasks and still read like networks that were never trained. An
+ordinary network that has really been trained does not: centring changes its
+effective rank by a factor of 1.0, against 4.7 for the hypernetwork. So
+centring is not a general correction to the plasticity literature's rank
+numbers. It is a statement about these models.
+
+**Effective rank falls in three steps, each smaller than the last.** Stock
+ResNet50 at random initialisation reads 16.793. Swapping in the study's
+architecture, still at random initialisation, drops it to 5.827. Letting the
+generator write the weights drops it to 1.965. So the changed stem accounts for
+part of the gap and the generator for more. None of these is the trained value
+of about 224.
+
+**The open confound, and the run that closes it.** The trained comparison was
+trained on ImageNet: 1.28 million pictures and a thousand classes. The study's
+models saw nine groups of twenty classes. "Trained" is therefore not matched,
+and the difference could come from how much data was seen rather than from how
+the weights are made. An ordinary ResNet50 trained on this study's own nine
+groups, read the same way, would settle it. That run was listed as optional
+before this result and is now the one that decides what the paper can claim.
+
+Readings are in
+`uncle/indicator_protocol/plasticity_revised_v1/plain_network_centering.jsonl`.
+Notebook 49 was still running on order A when this was recorded.
