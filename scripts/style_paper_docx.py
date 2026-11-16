@@ -188,6 +188,12 @@ def kind_of(para):
     return "body"
 
 
+def follows_a_table(para):
+    """True if the thing just before this paragraph in the document is a table."""
+    previous = para._p.getprevious()
+    return previous is not None and previous.tag == qn("w:tbl")
+
+
 def space_body(document):
     """Give each body paragraph the gap version 1 gives it.
 
@@ -205,6 +211,13 @@ def space_body(document):
         spacing = replace(props, "spacing")
         for side, size in SPACE[kind].items():
             spacing.set(qn("w:" + side), size)
+        if kind == "body" and follows_a_table(para):
+            # A paragraph with only the 6pt gap below it has nothing above it,
+            # so prose set straight after a table reads as part of the table.
+            # Version 1 never has this case: its tables are followed by a
+            # heading or by a short note that sits close on purpose. Give the
+            # prose the same 12pt gap a heading would have.
+            spacing.set(qn("w:before"), "240")
         if kind in ("table", "figure"):
             # Do not let a caption or a figure be split from what follows it.
             replace(props, "keepNext")

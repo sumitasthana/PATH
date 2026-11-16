@@ -60,9 +60,11 @@ What each part is for:
     text, 3pt by 5pt cell padding, and columns sized to their contents rather
     than split equally. It also removes pandoc's reference to a table style
     named "Table", which the reference document never defines.
-  - Spacing: 6pt after each body paragraph. A table caption gets 12pt above
-    and 4pt below, so it sits against its table. A figure is centred with 12pt
-    above, and its caption gets 4pt above and 12pt below.
+  - Spacing: 6pt after each body paragraph, and 12pt above a paragraph that
+    comes straight after a table, so prose is not read as part of the table. A
+    table caption gets 12pt above and 4pt below, so it sits against its table.
+    A figure is centred with 12pt above, and its caption gets 4pt above and
+    12pt below.
   - It strips the paragraph styles pandoc adds, which version 1 does not use.
     This runs before the spacing pass, because a paragraph that still carries
     a style is left alone by it.
