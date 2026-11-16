@@ -17,21 +17,22 @@ fraction of dormant units. Each is normalized so that overall scale cannot
 affect it, which is taken to mean that two readings may be compared directly.
 
 How closely these measures follow the quantity they stand for is largely
-untested, because in the architectures they are applied to the direct
-measurement is expensive. A hypernetwork removes that cost. The generator can
-be frozen and a short task code trained in its place, so learning ability can
-be measured many times rather than once.
+untested, because the direct measurement is usually run once and so carries no
+error bar of its own. We run it 990 times. Each run is short and works on a
+copy that is restored afterwards, so the same point can be measured again and
+again and each model gets its own noise floor.
 
 We run fifteen streams of nine 20-class Tiny ImageNet tasks, as three task
 orderings with five random seeds each, holding a tenth group of classes out of
-training. At the start and the end of every stream we train a fresh task code
-on that held-out group, record its accuracy, and discard the code, so the
-measurement cannot alter the model it measures.
+training. At the start and the end of every stream we train the model on that
+held-out group for a fixed short budget, eleven times at each point, and
+record how well it fits.
 
 Across the fifteen runs the size of the indicator change does not account for
 the differences in measured learning, and its sign is the opposite of the one
-the usual reading predicts. The indicators fall in every run while measured
-learning ability rises in every run. A model with one task deliberately
+the usual reading predicts. The same holds when the end values are used in
+place of the changes. The indicators fall in every run while the model's
+measured fit to an unseen task improves in every run. A model with one task deliberately
 reduced to chance accuracy moves the indicators in the direction they report
 as healthy, and holding the weight scale fixed removes about half of that
 movement. We also retract an earlier single-run result on task ordering, which
@@ -378,15 +379,16 @@ units are read the other way and predict a negative one. All five come out
 with the wrong sign, and the largest of them accounts for 3.2% of the spread.
 
 Table 7. Correlation between each indicator's change and the probe's change,
-over the fifteen runs.
+over the fifteen runs. The last column repeats the test on the boundary-9
+values themselves rather than on the changes.
 
-| Measure | Predicted sign | r | r squared |
-| --- | --- | --- | --- |
-| Effective rank | positive | -0.054 | 0.3% |
-| srank | positive | -0.178 | 3.2% |
-| Dormant units, cut-off 0.01 | negative | +0.129 | 1.7% |
-| Dormant units, cut-off 0.025 | negative | +0.125 | 1.6% |
-| Dormant units, cut-off 0.1 | negative | +0.112 | 1.3% |
+| Measure | Predicted sign | r | r squared | r, end values |
+| --- | --- | --- | --- | --- |
+| Effective rank | positive | -0.054 | 0.3% | -0.165 |
+| srank | positive | -0.178 | 3.2% | -0.212 |
+| Dormant units, cut-off 0.01 | negative | +0.129 | 1.7% | +0.164 |
+| Dormant units, cut-off 0.025 | negative | +0.125 | 1.6% | +0.162 |
+| Dormant units, cut-off 0.1 | negative | +0.112 | 1.3% | +0.139 |
 
 ![](figures-v3/v3-fig3-rank-change-vs-probe-change.png)
 
@@ -395,20 +397,33 @@ per run. Error bars are each run's own standard error on the probe change,
 from eleven repetitions. The dashed line is the least-squares fit. The runs
 furthest left fell most; they did not gain least.
 
+Both quantities in that test are differences, and a difference inherits the
+noise of both of its endpoints. The last column of Table 7 therefore sets the
+differences aside and asks the plainer question: among the fifteen finished
+models, does the one with the higher indicator reading fit the unseen task
+better? It does not. Effective rank gives -0.165 and srank -0.212 where a
+positive value was predicted, and the three dormant-unit cut-offs give +0.139
+to +0.164 where a negative value was predicted. The sign is wrong in the same
+way, so the result is not an artifact of dividing by a starting value.
+
 A failed correlation means little if the gain it fails to predict is mostly
 measurement noise, and the eleven repetitions at each point let the two be
 separated. The gain's spread across the fifteen runs is 1.300 points. The
 repetitions account for 0.953 of that, leaving 0.883 as real difference
 between models, which is 46.2% of the spread by variance. An outcome measured
 that well caps any predictor at a correlation of 0.680, the square root of
-that share. The largest value in Table 7 is 0.178, and at fifteen runs a
-correlation needs 0.514 to be separable from zero at the 5% level.
+that share. That ceiling covers the change test only; the end-value test in
+the last column does not take a difference and so is not subject to it. It
+does not need to be: the largest value anywhere in Table 7 is 0.212, and at
+fifteen runs a correlation needs 0.514 to be separable from zero at the 5%
+level.
 
-The size of an indicator's change therefore says nothing usable about how much
-the model's ability to learn changed, and the little relation there is runs
-the wrong way. Section 5.2 compares two endpoints; this is the easier test,
-since the indicators only have to rank fifteen runs rather than get a
-direction right, and they fail that too. Appendix A gives the per-run values.
+Neither the size of an indicator's change nor its final value therefore says
+anything usable about how well the model fits an unseen task, and the little
+relation there is runs the wrong way. Section 5.2 asked the indicators to get
+a direction right. This section asks less of them: set the direction aside and
+only rank fifteen runs against each other. They fail that too. Appendix A
+gives the per-run values.
 
 ## 5.4 Indicator response to a deliberately damaged model
 
