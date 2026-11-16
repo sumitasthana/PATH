@@ -192,3 +192,98 @@ Probe runs from Test 3 and Test 4 are in
 The published probe file was read and not written. Tests 3 and 4 cover order
 A only, five seeds. Orders B and C were not run at boundary 4 and were not run
 on the frozen arm.
+
+## Independent recomputation of the four tests
+
+All four tables above were recomputed from the saved records in a separate
+session, using the same learning-rate selection rule the study uses: the best
+of the three rates chosen per repetition on that repetition's validation
+accuracy, ties going to the lower rate. Every value reproduced. The Test 3
+per-seed rows, the mean 0 to 4 gain of +17.50, the 4 to 9 change of -0.50 with
+standard deviation 0.84 and standard error 0.37, and the frozen-arm range of
+4.14 to 5.84 percent all match to the second decimal.
+
+One alternative explanation for Test 3 was checked and does not hold. If 44
+percent were the most this probe can read, flatness after boundary 4 would be
+the measurement running out of room rather than the model holding still. At the
+selected rate the probe reaches 78 to 87 percent on its own training images
+while scoring about 44 percent on held-out ones, at both boundaries. There is
+headroom in the measure, so the flatness is a property of the model.
+
+Two wording changes follow. First, the reason the boundary 0 to 9 comparison
+proves nothing is not that both measures move at the same time. At that one
+point they move in opposite senses. The reason is that boundary 0 is a randomly
+started network, so neither movement carries information about losing
+plasticity. Second, "flat" is stronger than five runs support. A standard error
+of 0.37 rules out a large change, not a change of about one point. Write it as
+no detectable change.
+
+## Constraint found: boundary 1 cannot be re-read
+
+Only boundaries 4, 9 and 10 are saved as checkpoints, three files per stream,
+45 files and 22.56 GB in total. Boundary 1 is not saved. The claim that the
+indicator movement happens at the first task therefore rests on the reference
+code route alone, from the values written live into the stream logs during
+training. The trained-code route cannot be extended back to boundary 1 without
+retraining the streams. This is a limitation to state, not a run to schedule.
+
+## Planned: the centring check on an ordinary network
+
+Notebook `50_centering_on_an_ordinary_network.ipynb` is written. It has not
+been run.
+
+**Question.** Test 2 found that about 98 percent of the feature matrix is the
+single row every picture shares, and that removing it raises effective rank by
+a factor near 4.7. The obvious objection is that this is a property of a
+hypernetwork, whose weights are written by a generator from a 32-number code,
+rather than a property of the measure. Does an ordinary network read the same
+way?
+
+**What changes.** The network only. Four are read: the study's own target
+architecture holding ordinary random weights rather than generated ones; a
+stock ResNet50 with random weights; the same with ImageNet weights at 64 by 64;
+and the same at its own 224 by 224 size with ImageNet scaling. The first is the
+sharpest, because it differs from the study's models in exactly one way, which
+is where the weights come from.
+
+**What is held fixed.** The same three 256-picture sets drawn by
+`fixed_image_sets` with the same seed, the same reading site at the 2048 inputs
+to the final classifier layer, evaluation mode forced, and the same effective
+rank, srank and mean share arithmetic copied from notebook 48.
+
+**Cost.** Twelve readings, forward passes only, no training. It runs on CPU and
+does not compete with the probe run in flight.
+
+**Decision.** All four near 0.98: the finding is about the measure and applies
+to anyone reporting effective rank on ReLU features. Only the hypernetwork near
+0.98: the finding is about hypernetworks and the paper must narrow the claim.
+In between: report both numbers.
+
+**Early signal, not a result.** The two functions were run locally on CPU
+before the notebook was committed. A randomly started stock ResNet50, fed
+uniform noise pictures rather than the study's picture sets, read a mean share
+of 0.9994 with effective rank 3.906 rising to 59.52 when centred. That is the
+same pattern the hypernetwork shows. It is one network on the wrong pictures
+and settles nothing, but it is the direction the notebook is expected to
+confirm.
+
+**Results go to**
+`uncle/indicator_protocol/plasticity_revised_v1/plain_network_centering.jsonl`.
+
+## Compute plan for the CIFAR probe
+
+Decided 16 November, before running. Notebook 49 runs order A only at first.
+Orders B and C are not included, because the fifteen streams share five seeds,
+so B and C vary the ordering rather than adding independent starting points,
+and the question being asked is whether a 17.5 point gain survives a different
+dataset. The order A per-seed spread on that gain is about one point, so five
+streams settle it.
+
+Boundary 4 is added to notebook 49 after the current run finishes rather than
+by restarting it. The notebook's skip key includes the boundary, so a second
+run repeats none of the 330 runs at boundaries 0 and 9 and performs only the
+165 new runs at boundary 4, about 1.5 hours instead of 4.5.
+
+Orders B and C are run only if the order A result lands between about 5 and 14
+points, which is the ambiguous range where which groups were seen by boundary 4
+could plausibly matter. A result near 17 or near zero does not need them.
