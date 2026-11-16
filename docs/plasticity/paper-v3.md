@@ -258,22 +258,77 @@ The stream does produce the fall these measures were built to detect, then.
 Whether the size of that fall tracks how well the model can still learn is the
 question Section 5.3 puts to it. Appendix A gives the per-run values.
 
-## 5.2 Directly measured learning ability at the stream endpoints
+## 5.2 Measured learning ability rises over the same stream
 
-**Contents.** Probe accuracy at boundary 0 and boundary 9 for each of the
-fifteen runs, with each run's own noise floor. The comparison between the
-change and that floor.
+The probe asks the model the question the indicators only guess at: hand the
+generator a fresh task it has never seen, let it fit a new task code and
+nothing else, and see how well it does. It was run on the held-out group of
+twenty classes at the start of each stream and again at the end, eleven times
+at each point, with the code discarded after every reading so the model is
+never changed.
 
-**Experiment.** Experiment 2 in the explainer.
+Every run ends better than it started (Table 4, Figure 2). Accuracy goes from
+26.20% before any task to 44.08% after nine, a gain of 17.87 points against a
+chance level of 5%. The smallest gain in the fifteen runs is 15.90 points and
+the largest is 20.49. The spread between runs is small next to the gain
+itself.
 
-**Notebook.** `47_probe_on_the_revised_streams.ipynb`.
+Table 4. Probe accuracy on the held-out group, averaged over the fifteen runs
+and over the eleven repetitions at each point.
 
-**Table to include.** Fifteen rows: ordering, seed, start, end, change, floor.
+| Point in the stream | Probe accuracy | Gain over chance |
+| --- | --- | --- |
+| Boundary 0, before any task | 26.20% | 21.20 points |
+| Boundary 9, after nine tasks | 44.08% | 39.08 points |
 
-**Figure.** Start and end per run, with the noise floor marked and chance
-drawn in.
+The gain is far larger than the measurement can produce on its own. Each run
+carries its own floor, built from the spread of its eleven repetitions at
+boundary 0 and read as the smallest change that would survive that spread at
+the 5% level. The largest floor in the fifteen runs is 2.72 points, and the
+smallest gain is 15.90 (Table 5). No run comes close to its floor, so the rise
+is not a reading error.
 
-**Status.** To write.
+Table 5. The gain for each run against its own noise floor. The floor is
+1.96 s sqrt(1/11 + 1/11), where s is the standard deviation of the eleven
+boundary-0 repetitions for that run.
+
+| Run | Boundary 0 | Boundary 9 | Gain | Floor | Gain clears floor |
+| --- | --- | --- | --- | --- | --- |
+| A0 | 26.13% | 43.72% | +17.59 | 1.70 | yes |
+| A1 | 27.25% | 43.65% | +16.40 | 2.72 | yes |
+| A2 | 26.06% | 43.75% | +17.68 | 2.10 | yes |
+| A3 | 26.55% | 42.76% | +16.22 | 1.26 | yes |
+| A4 | 26.78% | 43.90% | +17.12 | 2.07 | yes |
+| B0 | 25.50% | 42.39% | +16.89 | 1.62 | yes |
+| B1 | 26.35% | 43.81% | +17.45 | 1.91 | yes |
+| B2 | 26.15% | 44.24% | +18.09 | 1.81 | yes |
+| B3 | 26.21% | 44.03% | +17.82 | 2.63 | yes |
+| B4 | 26.05% | 45.28% | +19.24 | 1.60 | yes |
+| C0 | 27.41% | 43.31% | +15.90 | 1.67 | yes |
+| C1 | 25.27% | 44.45% | +19.18 | 1.82 | yes |
+| C2 | 24.95% | 45.44% | +20.49 | 1.48 | yes |
+| C3 | 26.39% | 45.36% | +18.97 | 2.31 | yes |
+| C4 | 26.01% | 45.04% | +19.03 | 2.27 | yes |
+
+![](figures-v3/v3-fig2-probe-endpoints.png)
+
+Figure 2. Probe accuracy for each run. The open circle is boundary 0 and the
+filled circle is boundary 9. The dotted line is chance for a twenty-class
+group.
+
+One caveat belongs here. The three orderings of a seed start from the same
+model, so their three boundary-0 readings should agree, and they do not: for
+seed 0 they are 26.13%, 25.50% and 27.41%. The largest such gap is about two
+points, which is roughly the size of a noise floor and well under the gain, so
+it does not touch the result of this section. Section 5.7 reports the spread
+in full and states what is known about its cause.
+
+This is the result the indicators have to be judged against. Over the nine
+tasks every indicator said the model was losing the ability to learn, and the
+direct measurement of that ability says it rose, in all fifteen runs, by more
+than ten times the largest floor. Section 5.3 takes the weaker question: set
+the direction aside, and ask only whether the runs that fell furthest are the
+runs that gained least.
 
 ## 5.3 The size of the fall does not track measured learning
 

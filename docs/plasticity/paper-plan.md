@@ -2,7 +2,7 @@
 
 Written 15 November 2026. This document exists so that work on the paper can
 start in a fresh chat with no other context. Read it first, then read
-`docs/plasticity/paper-v3-skeleton.md`.
+`docs/plasticity/paper-v3.md`.
 
 ## Goal
 
@@ -36,11 +36,11 @@ The output format is the format of
 Build command, from the repository root. Both steps are needed.
 
 ```bash
-tail -n +2 docs/plasticity/paper-v3-skeleton.md > /tmp/skel.md && pandoc -f markdown-implicit_figures /tmp/skel.md -o ops-docs/plasticity-paper-v3-skeleton.docx --reference-doc=ops-docs/plasticity-indicators-paper-draft.docx --resource-path=docs/plasticity --metadata title="Rank-based plasticity indicators and directly measured learning ability in a hypernetwork continual learner"
+tail -n +2 docs/plasticity/paper-v3.md > /tmp/skel.md && pandoc -f markdown-implicit_figures /tmp/skel.md -o ops-docs/plasticity-indicators-paper-v3.docx --reference-doc=ops-docs/plasticity-indicators-paper-draft.docx --resource-path=docs/plasticity --metadata title="Rank-based plasticity indicators and directly measured learning ability in a hypernetwork continual learner"
 ```
 
 ```bash
-python scripts/style_paper_docx.py ops-docs/plasticity-paper-v3-skeleton.docx
+python scripts/style_paper_docx.py ops-docs/plasticity-indicators-paper-v3.docx
 ```
 
 What each part is for:
@@ -125,7 +125,7 @@ they depend on, then the framing sections last.
 | --- | --- | --- |
 | 1 | 5.3 Relation between indicator change and measured learning | Written. Tables 6 and 7, Figure 3. |
 | 2 | 5.1 Indicator trajectories | Written. Tables 2 and 3, Figure 1. |
-| 3 | 5.2 Directly measured learning ability | Sets up 5.3. |
+| 3 | 5.2 Directly measured learning ability | Written. Tables 4 and 5, Figure 2. |
 | 4 | 5.4 Indicator response to a damaged model | Independent of 5.1 to 5.3. One srank number still to extract. |
 | 5 | 5.5 The contribution of weight scale | Depends on 5.4. |
 | 6 | 5.6 Orderings and the retraction | Independent. |
@@ -184,8 +184,8 @@ this plan settles.
 
 | File | What it is |
 | --- | --- |
-| `docs/plasticity/paper-v3-skeleton.md` | The skeleton being filled. The working file. |
-| `ops-docs/plasticity-paper-v3-skeleton.docx` | Built output, version 1 format. |
+| `docs/plasticity/paper-v3.md` | Version 3. The working file. |
+| `ops-docs/plasticity-indicators-paper-v3.docx` | Built output, version 1 format. |
 | `ops-docs/plasticity-indicators-paper-draft.docx` | Version 1. The format reference. Do not edit. |
 | `docs/plasticity/paper-draft.md` | Version 2. Rejected on style. Kept for its numbers. |
 | `ops-docs/revised-regime-explainer.md` | Plain walkthrough of the six experiments. |

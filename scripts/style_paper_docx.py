@@ -18,7 +18,7 @@ Read from version 1 (ops-docs/plasticity-indicators-paper-draft.docx):
 
 Run after pandoc:
 
-    python scripts/style_paper_docx.py ops-docs/plasticity-paper-v3-skeleton.docx
+    python scripts/style_paper_docx.py ops-docs/plasticity-indicators-paper-v3.docx
 """
 import re
 import sys

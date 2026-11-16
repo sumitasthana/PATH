@@ -82,6 +82,8 @@ def probe_changes():
         for seed in range(5):
             at0, at9 = picked[(order, seed, 0)], picked[(order, seed, 9)]
             out[(order, seed)] = {
+                "start": mean(at0),
+                "end": mean(at9),
                 "change": mean(at9) - mean(at0),
                 "se": math.sqrt(stdev(at0) ** 2 / len(at0)
                                 + stdev(at9) ** 2 / len(at9)),
@@ -135,6 +137,36 @@ def figure_trajectories(runs):
     plt.close(fig)
 
 
+def figure_probe_endpoints(probes):
+    """Probe accuracy at the start and the end of the stream, one column per run.
+
+    Each run gets a vertical line from its boundary-0 accuracy to its
+    boundary-9 accuracy, so the direction of the move is the thing you see
+    first. Chance is drawn in because the whole scale only means something
+    against it.
+    """
+    plt.rcParams.update({"font.size": 9, "figure.dpi": 200,
+                         "font.family": "serif",
+                         "axes.spines.top": False, "axes.spines.right": False})
+    fig, ax = plt.subplots(figsize=(6.4, 2.8))
+    keys = [(o, s) for o in ("order_A", "order_B", "order_C") for s in range(5)]
+    for i, key in enumerate(keys):
+        lo, hi = probes[key]["start"], probes[key]["end"]
+        ax.plot([i, i], [lo, hi], color="0.6", linewidth=0.9)
+        ax.plot(i, lo, "o", markersize=4, color="black", markerfacecolor="white")
+        ax.plot(i, hi, "o", markersize=4, color="black")
+    ax.axhline(5.0, color="black", linewidth=0.8, linestyle=":")
+    ax.text(14.3, 6.2, "chance", fontsize=8, ha="right")
+    ax.set_xticks(range(15))
+    ax.set_xticklabels([f"{o[-1]}{s}" for o, s in keys], fontsize=8)
+    ax.set_xlabel("Run")
+    ax.set_ylabel("Probe accuracy (%)")
+    ax.set_ylim(0, 50)
+    fig.tight_layout()
+    fig.savefig(OUT / "v3-fig2-probe-endpoints.png")
+    plt.close(fig)
+
+
 def pearson(xs, ys):
     mx, my = mean(xs), mean(ys)
     top = sum((x - mx) * (y - my) for x, y in zip(xs, ys))
@@ -182,6 +214,7 @@ if __name__ == "__main__":
     figure_trajectories(trajectories())
     ind = indicator_changes()
     prb = probe_changes()
+    figure_probe_endpoints(prb)
     r = figure_1(ind, prb)
     print(f"figure 3 written, r = {r:+.3f}")
     for f in sorted(OUT.glob("*.png")):
