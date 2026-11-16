@@ -20,6 +20,7 @@ Run after pandoc:
 
     python scripts/style_paper_docx.py ops-docs/plasticity-paper-v3-skeleton.docx
 """
+import re
 import sys
 
 import docx
@@ -181,9 +182,11 @@ def kind_of(para):
     if para._p.findall(".//" + qn("w:drawing")):
         return "figure"
     text = para.text.strip()
-    if text.startswith("Table "):
+    # A numbered caption only. "Table to include." is a planning stub in an
+    # unwritten section, not a caption, and must keep the body's own look.
+    if re.match(r"Table \d+\.", text):
         return "table"
-    if text.startswith("Figure "):
+    if re.match(r"Figure \d+\.", text):
         return "caption"
     return "body"
 
@@ -221,6 +224,11 @@ def space_body(document):
         if kind in ("table", "figure"):
             # Do not let a caption or a figure be split from what follows it.
             replace(props, "keepNext")
+        if kind in ("table", "caption"):
+            # Captions are set at 10pt, the same size as the table text, so a
+            # caption does not compete with the body for attention.
+            for run in para.runs:
+                run.font.size = docx.shared.Pt(FONT_HALF_POINTS / 2)
         if kind == "figure":
             align = replace(props, "jc")
             align.set(qn("w:val"), "center")

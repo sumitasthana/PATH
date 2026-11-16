@@ -192,25 +192,71 @@ that keeps the retired-design results visibly separate from the present ones.
 
 # 5 Results
 
-## 5.1 Indicator trajectories over the stream
+## 5.1 The indicators move at the first task and then hold
 
-**Contents.** How effective rank, srank and the dormant-unit fraction change
-from boundary 0 to boundary 9, across the fifteen runs. Per-ordering means and
-the spread between seeds within an ordering. The ratio of the change to that
-spread, which is the quantity that decides how many runs a comparison needs.
+Fifteen streams were run: three orderings of the nine task groups, five seeds
+each. All five measures were read at every task boundary on the same 256
+in-stream images. Every run moves the way a loss of plasticity would predict.
+Effective rank and srank fall in all fifteen, and the dormant-unit fraction
+rises in all fifteen at each of the three cut-offs.
 
-**Experiment.** Experiment 1 in the explainer.
+Nearly all of that movement happens at the first task (Table 2, Figure 1).
+Averaged over the fifteen runs, effective rank falls from 5.56 to 1.72 after
+one task of the nine and ends at 2.09. srank falls from 215.6 to 66.1 and ends
+at 81.1. The dormant fraction at cut-off 0.01 rises from 0.160 to 0.366 and
+ends at 0.342. Each measure passes its boundary-9 value after a single task
+and then moves back a little, and the last column of Table 2 counts how many
+runs move back that way.
 
-**Notebooks.** `44_order_A_five_seeds.ipynb`, `45_orders_B_and_C.ipynb`.
+Table 2. Each measure averaged over the fifteen runs, at the start of the
+stream, after the first task, and after the ninth. The last column counts the
+runs whose boundary-9 reading has moved back toward the starting value
+compared with boundary 1.
 
-**Tables to include.** Per-run change in effective rank, fifteen rows. All
-three measures with their change, seed spread, and the ratio between them.
-The dormant-unit values must appear in a table; version 2 asserts their
-direction in prose with no table behind it.
+| Measure | Boundary 0 | Boundary 1 | Boundary 9 | Runs moving back |
+| --- | --- | --- | --- | --- |
+| Effective rank | 5.56 | 1.72 | 2.09 | 10 of 15 |
+| srank | 215.6 | 66.1 | 81.1 | 10 of 15 |
+| Dormant units, cut-off 0.01 | 0.160 | 0.366 | 0.342 | 15 of 15 |
+| Dormant units, cut-off 0.025 | 0.197 | 0.401 | 0.381 | 15 of 15 |
+| Dormant units, cut-off 0.1 | 0.290 | 0.480 | 0.469 | 13 of 15 |
 
-**Figure.** One bar per run, showing that every run falls and by how much.
+The direction is the same everywhere, but the size of the change is not. The
+five seeds of one ordering differ from each other about as much as the three
+orderings differ from each other (Table 3). For effective rank the mean change
+is 3.6 times the spread between runs; for srank it is 2.2 times. A measure
+whose mean is only twice its spread cannot separate two models from one run
+each, which is the point Section 5.6 returns to.
 
-**Status.** To write.
+Table 3. Change from boundary 0 to boundary 9, as a percent of the boundary 0
+value. Each ordering column gives the mean over its five seeds, with the
+standard deviation between those seeds in brackets. The last column is the
+mean over all fifteen runs divided by their standard deviation.
+
+| Measure | Ordering A | Ordering B | Ordering C | All fifteen | Mean / spread |
+| --- | --- | --- | --- | --- | --- |
+| Effective rank | -50.3 (18.1) | -63.6 (20.0) | -69.7 (6.0) | -61.2 (17.0) | 3.6 |
+| srank | -45.5 (30.9) | -67.9 (31.4) | -76.2 (16.4) | -63.2 (28.5) | 2.2 |
+| Dormant units, cut-off 0.01 | +104.8 (44.8) | +121.7 (50.4) | +122.2 (31.2) | +116.2 (40.6) | 2.9 |
+| Dormant units, cut-off 0.025 | +86.8 (35.3) | +99.2 (39.6) | +100.1 (25.4) | +95.4 (32.0) | 3.0 |
+| Dormant units, cut-off 0.1 | +58.7 (20.0) | +64.2 (21.6) | +64.5 (14.3) | +62.5 (17.7) | 3.5 |
+
+![](figures-v3/v3-fig1-indicator-trajectories.png)
+
+Figure 1. Each measure against the task boundary, on the in_stream images. One
+thin grey line per run, with the mean over the fifteen runs in black. The three
+cut-offs behave alike, so only 0.01 is drawn.
+
+A seed fixes the starting generator, and the ordering decides only which task
+group comes first, so the three orderings of one seed begin from the same
+model. The boundary-0 readings confirm this: they agree across the three
+orderings to within floating-point noise. The indicator reading at boundary 0
+therefore repeats exactly, which matters for Section 5.7, where the probe's
+reading of the same point does not.
+
+The stream does produce the fall these measures were built to detect, then.
+Whether the size of that fall tracks how well the model can still learn is the
+question Section 5.3 puts to it. Appendix A gives the per-run values.
 
 ## 5.2 Directly measured learning ability at the stream endpoints
 
@@ -253,7 +299,7 @@ probe change is in accuracy points.
 
 They are not. The correlation between the effective-rank fall and the probe
 gain is -0.054, which accounts for 0.3% of the spread in the gain (Table 7,
-Figure 1). srank gives -0.178 and the three dormant-unit cut-offs give +0.112
+Figure 3). srank gives -0.178 and the three dormant-unit cut-offs give +0.112
 to +0.129.
 
 Each measure also predicts a sign. A run whose rank fell less should have more
@@ -272,9 +318,9 @@ over the fifteen runs.
 | Dormant units, cut-off 0.025 | negative | +0.125 | 1.6% |
 | Dormant units, cut-off 0.1 | negative | +0.112 | 1.3% |
 
-![](figures-v3/v3-fig1-rank-change-vs-probe-change.png)
+![](figures-v3/v3-fig3-rank-change-vs-probe-change.png)
 
-Figure 1. Change in effective rank against change in probe accuracy, one point
+Figure 3. Change in effective rank against change in probe accuracy, one point
 per run. Error bars are each run's own standard error on the probe change,
 from eleven repetitions. The dashed line is the least-squares fit. The runs
 furthest left fell most; they did not gain least.

@@ -89,6 +89,52 @@ def probe_changes():
     return out
 
 
+def trajectories():
+    """Every reading of every run, keyed by measure then by boundary.
+
+    Section 5.1 needs the whole path, not just the two endpoints, because the
+    shape of the path is the finding: the move happens at the first task.
+    """
+    out = {}
+    for order in ("order_A", "order_B", "order_C"):
+        for seed in range(5):
+            text = read(f"uncle/indicators/{STUDY}/{order}/seed_{seed}.jsonl")
+            out[(order, seed)] = {
+                r["t"]: r for r in
+                (json.loads(l) for l in text.splitlines() if l.strip())
+            }
+    return out
+
+
+def figure_trajectories(runs):
+    """Three panels: one per measure, one thin line per run, mean in black.
+
+    The thin lines show how much the runs differ. The thick line shows the
+    shape they share, which is a step at the first task and then a flat tail.
+    """
+    plt.rcParams.update({"font.size": 9, "figure.dpi": 200,
+                         "font.family": "serif",
+                         "axes.spines.top": False, "axes.spines.right": False})
+    panels = [("Effective rank", "effective_rank_in_stream"),
+              ("srank", "srank_in_stream"),
+              ("Dormant units, cut-off 0.01", "dormant_0.01_in_stream")]
+    fig, axes = plt.subplots(1, 3, figsize=(7.2, 2.5))
+    points = range(10)                   # boundary 0 to 9, the nine tasks
+    for ax, (label, key) in zip(axes, panels):
+        for run in runs.values():
+            ax.plot(points, [run[t][key] for t in points],
+                    color="0.75", linewidth=0.6)
+        ax.plot(points, [mean([r[t][key] for r in runs.values()]) for t in points],
+                color="black", linewidth=1.6)
+        ax.set_xlabel("Task boundary")
+        ax.set_title(label, fontsize=9)
+        ax.set_xticks([0, 3, 6, 9])
+        ax.set_ylim(bottom=0)
+    fig.tight_layout()
+    fig.savefig(OUT / "v3-fig1-indicator-trajectories.png")
+    plt.close(fig)
+
+
 def pearson(xs, ys):
     mx, my = mean(xs), mean(ys)
     top = sum((x - mx) * (y - my) for x, y in zip(xs, ys))
@@ -127,15 +173,16 @@ def figure_1(indicators, probes):
     ax.set_ylim(0, 24)
     ax.legend(frameon=False, fontsize=8, loc="lower left")
     fig.tight_layout()
-    fig.savefig(OUT / "v3-fig1-rank-change-vs-probe-change.png")
+    fig.savefig(OUT / "v3-fig3-rank-change-vs-probe-change.png")
     plt.close(fig)
     return r
 
 
 if __name__ == "__main__":
+    figure_trajectories(trajectories())
     ind = indicator_changes()
     prb = probe_changes()
     r = figure_1(ind, prb)
-    print(f"figure 1 written, r = {r:+.3f}")
+    print(f"figure 3 written, r = {r:+.3f}")
     for f in sorted(OUT.glob("*.png")):
         print("wrote", f.relative_to(REPO), f.stat().st_size, "bytes")

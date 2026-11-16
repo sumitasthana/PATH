@@ -65,9 +65,19 @@ What each part is for:
     table caption gets 12pt above and 4pt below, so it sits against its table.
     A figure is centred with 12pt above, and its caption gets 4pt above and
     12pt below.
+  - Captions: a paragraph that starts "Table 7." or "Figure 3.", with a
+    number, is set at 10pt, the same size as the table text. A planning stub
+    that starts "Table to include." is left as body text.
   - It strips the paragraph styles pandoc adds, which version 1 does not use.
     This runs before the spacing pass, because a paragraph that still carries
     a style is left alone by it.
+
+## Numbering
+
+Tables run in reading order: Table 1 in Section 4, Tables 2 and 3 in 5.1,
+Tables 4 and 5 in 5.2, Tables 6 and 7 in 5.3. Figures the same way: Figure 1
+in 5.1, Figure 2 in 5.2, Figure 3 in 5.3. A section written out of order must
+take the numbers its position gives it, not the next free number.
 
 ## Captions
 
@@ -113,8 +123,8 @@ they depend on, then the framing sections last.
 
 | Order | Section | Why here |
 | --- | --- | --- |
-| 1 | 5.3 Relation between indicator change and measured learning | The central result. Fixes what the paper claims. |
-| 2 | 5.1 Indicator trajectories | Sets up 5.3. Needs the dormant-unit table that version 2 lacked. |
+| 1 | 5.3 Relation between indicator change and measured learning | Written. Tables 6 and 7, Figure 3. |
+| 2 | 5.1 Indicator trajectories | Written. Tables 2 and 3, Figure 1. |
 | 3 | 5.2 Directly measured learning ability | Sets up 5.3. |
 | 4 | 5.4 Indicator response to a damaged model | Independent of 5.1 to 5.3. One srank number still to extract. |
 | 5 | 5.5 The contribution of weight scale | Depends on 5.4. |
