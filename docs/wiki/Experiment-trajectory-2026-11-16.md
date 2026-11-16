@@ -355,3 +355,85 @@ before this result and is now the one that decides what the paper can claim.
 Readings are in
 `uncle/indicator_protocol/plasticity_revised_v1/plain_network_centering.jsonl`.
 Notebook 49 was still running on order A when this was recorded.
+
+## Result: the direct probe on CIFAR-100
+
+Notebook 49 ran on 16 November, order A, five streams, boundaries 0 and 9. The
+probe task is twenty CIFAR-100 classes chosen from seed 7, renumbered 0 to 19
+and enlarged to 64 by 64. Everything else matches notebook 47: the same saved
+checkpoints, the same three learning rates chosen per repetition on a
+validation split, 250 steps, eleven repetitions, 4,800 training images, the
+`full` arm. Chance is 5 percent for both probes.
+
+| Run | CIFAR start | CIFAR end | CIFAR gain | Floor | Clears |
+| --- | ---: | ---: | ---: | ---: | --- |
+| order_A seed 0 | 34.45 | 55.03 | +20.59 | 2.21 | yes |
+| order_A seed 1 | 33.20 | 55.89 | +22.69 | 1.33 | yes |
+| order_A seed 2 | 33.09 | 53.93 | +20.84 | 1.86 | yes |
+| order_A seed 3 | 33.31 | 52.15 | +18.85 | 1.85 | yes |
+| order_A seed 4 | 33.55 | 53.61 | +20.07 | 1.55 | yes |
+| mean | | | +20.61 | | 5 of 5 |
+
+The same five streams on the Tiny ImageNet probe gain +17.00 points. The
+different-dataset probe keeps 121 percent of the gain.
+
+**The transfer objection does not hold.** The probe task shares no classes, no
+pictures and no source with the stream, and the gain is larger rather than
+smaller. Every run clears its own noise floor. Section 5.2's measurement is not
+neighbouring-class transfer within Tiny ImageNet.
+
+CIFAR is simply an easier twenty-class task at this budget. Both ends are
+higher: 33 against 26 at boundary 0, and 54 against 44 at boundary 9. What
+matters is that the distance between them survives.
+
+**What this does not remove.** Boundary 0 is a randomly started network, so the
+comparison is still untrained against trained. General visual features help on
+any natural-image task, and a result of the same size on an unrelated dataset
+is what general features would predict. So the narrow transfer explanation is
+ruled out and the broad one is not. The paper must say which of the two it is
+ruling out.
+
+**Where the gain happens is not yet known for CIFAR.** On the Tiny ImageNet
+probe the whole gain is finished by boundary 4 and the change from 4 to 9 is
+-0.50 points, 1.3 standard errors from zero. The CIFAR run covers boundaries 0
+and 9 only, so it cannot say whether it behaves the same way.
+
+**Decision, and a conflict with the earlier rule.** The 15 November plan said a
+clearly positive gain makes orders B and C worth five further hours. The 16
+November compute plan said to run them only on an ambiguous result between
+about 5 and 14 points. This result is +20.61, far outside that range. The two
+rules disagree, and the 16 November one is being followed, because B and C vary
+the ordering rather than the five starting points and would not change a call
+with this margin.
+
+Boundary 4 is added to notebook 49 instead. That is 165 runs and about 1.5
+hours, and it tests a question that is still open on this dataset. The notebook
+now reports the 0 to 4 and 4 to 9 split with a standard error, and that
+reporting code was checked against the Tiny ImageNet records, where it
+reproduces notebook 48's +17.50, -0.50 and 1.3 standard errors exactly.
+
+## Cross-reading: training moves rank the other way in an ordinary network
+
+Two results from 16 November fit together and were not planned to.
+
+| Model | Effective rank, in-stream pictures |
+| --- | ---: |
+| stock ResNet50, random weights | 16.793 |
+| study target architecture, random weights | 5.827 |
+| hypernetwork at boundary 0, untrained generator | 5.563 |
+| hypernetwork at boundary 9, after nine tasks | 2.094 |
+| stock ResNet50, trained on ImageNet | 224.564 |
+
+The hypernetwork's boundary 0 value of 5.563 and the study architecture's
+random-weight value of 5.827 are close, which is a useful check: notebook 50's
+first network really is standing in for the study's starting point.
+
+Reading down the table, training an ordinary network raises effective rank by
+more than a factor of ten. Training this hypernetwork lowers it by more than
+half. So the fall at the first task is not a general consequence of training
+beginning. It runs opposite to what an ordinary network does.
+
+The same confound applies as before. The ordinary trained network saw 1.28
+million pictures and a thousand classes. Until an ordinary ResNet50 is trained
+on this study's own nine groups and read the same way, the cause cannot be
+named.
