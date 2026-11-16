@@ -470,3 +470,70 @@ once, early, and then hold.
 
 What it does not change is the boundary 0 confound. The large early gain is
 still measured against a randomly started network, on both datasets.
+
+## Planned: an ordinary network on the same stream
+
+Notebook `51_an_ordinary_network_on_the_same_stream.ipynb` is written and
+pushed. It has not been run.
+
+**Question.** Notebook 50 left one hole, and it sits under both of that
+notebook's findings. Its trained comparison was trained on ImageNet: 1.28
+million pictures and a thousand classes, all at once. The study's models saw
+nine groups of twenty classes, one group at a time. So a difference between the
+two sides could come from how much data was seen, or from learning one task
+after another, rather than from where the weights come from. What does an
+ordinary network do on this study's own stream?
+
+**What changes.** The weights only. They are ordinary parameters trained by
+gradient descent instead of being written by a generator from a 32 number code.
+
+**What is held fixed.** The nine groups in order A from the same ten-group
+split, five epochs per group, batch 64, Adam at 1e-3, a fresh optimizer per
+group, the same target architecture with its 3 by 3 stride 1 stem and spatial
+mean, the same three fixed 256 picture sets from the same seed, the same
+reading site at the 2048 inputs to the classifier, evaluation mode forced, and
+the same effective rank, srank and mean share arithmetic. The training settings
+are read off the study's own `Config` rather than retyped.
+
+**The network.** One shared trunk and one 20 way classifier per group. The
+shared trunk mirrors the shared generator and the per-group head mirrors the
+per-task code. Every reading is taken on the trunk, so the heads never enter a
+number. There is no preservation term, so the two sides differ in that way as
+well, and the write-up has to say so.
+
+**A second question, for free.** Every boundary is read twice. Once through the
+statistics the network built up while training, which is what an ordinary user
+would do. Once through the statistics it was born with, which is the route the
+study uses, since the study reads through `trainer.buffer_template` so that only
+the weights move between boundaries. If the two disagree, the study's protocol
+is part of what it measures. A local check on a barely trained network already
+reads 3.128 one way and 2.472 the other, so the two routes do separate.
+
+**Boundary 1 comes for free.** The study cannot re-read its own boundary 1,
+because only boundaries 4, 9 and 10 were saved. Here the readings are taken
+while the run goes, so all ten boundaries are recorded. Boundary 1 is where the
+study's whole rank fall happens, so this is the sharpest single comparison in
+the notebook.
+
+**Cost.** Three seeds, 7,065 training steps each, about half an hour per seed
+on an A100. Results are written and uploaded after each seed, and a seed
+already in the file is skipped, so a stopped run can be restarted.
+
+**Decision.** Effective rank rises over the stream: the fall is about the
+hypernetwork and the opposite direction finding is a real result with the
+confound closed. Effective rank falls in both buffer modes: the fall is about
+sequential training on this much data, and the opposite direction claim comes
+out of the paper. The two buffer modes disagree: the reading route is part of
+the measurement and must be stated before any rank number is reported. Mean
+share stays near 0.98 after training: the untrained signature is about this data
+and this budget rather than about the generator.
+
+**Checks run before pushing.** The notebook's three function cells were executed
+on CPU against small fake data. Six checks passed: the trunk returns 2048
+features with gradients on, 159 BatchNorm statistics move during training and
+all are restored, a boundary read leaves the model's mode and statistics as it
+found them, the two buffer modes give different numbers, training lowers the
+loss, and mean share reads 1.0 on identical rows.
+
+**Results go to**
+`uncle/indicator_protocol/plasticity_revised_v1/plain_network_stream.jsonl`.
