@@ -95,6 +95,14 @@ figure. Keep that. Both are plain Normal paragraphs, not Word caption fields.
   where the old value is the thing being retracted.
 - **Do not invent a number.** If a record gives a direction but no value, read
   the value from the stored records or leave the row out and say so.
+- **Describe the probe from the records, not from memory.** Every record of
+  the revised run has `arm="full"`, `code_only=false`, `train_code=true`, and
+  `uncle/probe.py` puts the generator's parameters in the trainable list when
+  `code_only` is false. The probe therefore trains the generator together
+  with a fresh task code, inside a copy that is restored afterwards. Version 2
+  and the 14 November record both said the generator was frozen; both are
+  wrong, the record now carries a correction, and version 2 is not being
+  edited. Do not reintroduce this.
 - No em dash. Plain English for a non-native reader.
 
 ## Title

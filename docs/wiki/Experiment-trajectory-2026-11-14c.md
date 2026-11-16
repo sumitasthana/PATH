@@ -136,7 +136,16 @@ and both are stronger here.
 The probe task shares a dataset with the stream, so ordinary transfer is not
 ruled out. The probe trains a fresh task code on a frozen generator, so it
 measures what the generator can be asked to do, not what the stream model does
-unaided. Boundary 4 was not probed, so the two endpoints could in principle
+unaided.
+
+Correction, 15 November 2026. The sentence above is wrong. Every record of
+this run has `arm="full"`, `code_only=false` and `train_code=true`, and in
+`uncle/probe.py` `code_only=false` puts the generator's parameters in the
+trainable list. So the probe trained the generator together with the fresh
+code. The `code_only` arm exists in the code but was not run here. The
+measurement is therefore how well the model fits an unseen task when the whole
+of it is free to move, with the model restored afterwards. The numbers in this
+record are unaffected; only their description was wrong. Boundary 4 was not probed, so the two endpoints could in principle
 hide a dip in the middle; the models for that are kept.
 
 ## What this moves

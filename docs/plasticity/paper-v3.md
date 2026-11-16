@@ -134,11 +134,14 @@ one applies, and what that normalization is taken to guarantee.
 
 ## 3.5 The direct probe
 
-**Contents.** The procedure: freeze the generator, train a fresh task code on
-the held-out group, record accuracy, discard the code. The learning-rate
-choice within the probe, made on a validation split. The eleven repetitions
-and the noise floor taken from their spread. Why the measurement cannot alter
-the model it measures.
+**Contents.** The procedure: copy the model, draw a fresh 32-number code for
+the held-out group, train the generator and that code together for a fixed
+number of steps, record accuracy, and restore the model. What trains and what
+does not, stated plainly, because the paper's claim depends on it. The
+learning-rate choice within the probe, made on a validation split. The eleven
+repetitions and the noise floor taken from their spread. The two control arms
+that exist in the code and were not used here: `code_only`, which freezes the
+generator, and `train_code=False`, which freezes the code.
 
 **Experiment.** Experiment 2 in the explainer.
 
@@ -260,12 +263,20 @@ question Section 5.3 puts to it. Appendix A gives the per-run values.
 
 ## 5.2 Measured learning ability rises over the same stream
 
-The probe asks the model the question the indicators only guess at: hand the
-generator a fresh task it has never seen, let it fit a new task code and
-nothing else, and see how well it does. It was run on the held-out group of
-twenty classes at the start of each stream and again at the end, eleven times
-at each point, with the code discarded after every reading so the model is
-never changed.
+The probe asks the model the question the indicators only guess at: give it a
+task it has never seen, let it train on that task with a fixed budget, and see
+how well it does. A copy of the whole model is taken first and put back
+afterwards, so the measurement cannot change the model it measures. Inside
+that copy both the generator and a fresh 32-number code for the new task
+train; neither is frozen. The probe was run on the held-out group of twenty
+classes at the start of each stream and again at the end, eleven times at each
+point.
+
+This makes the boundary-0 reading the comparison the plasticity literature
+uses. At boundary 0 the generator is still at its random starting values, so
+the question the two endpoints put is whether a model that has learned nine
+tasks fits a new one better or worse than a freshly started model given the
+same budget. A loss of plasticity is the case where it does worse.
 
 Every run ends better than it started (Table 4, Figure 2). Accuracy goes from
 26.20% before any task to 44.08% after nine, a gain of 17.87 points against a
@@ -325,8 +336,12 @@ in full and states what is known about its cause.
 
 This is the result the indicators have to be judged against. Over the nine
 tasks every indicator said the model was losing the ability to learn, and the
-direct measurement of that ability says it rose, in all fifteen runs, by more
-than ten times the largest floor. Section 5.3 takes the weaker question: set
+direct measurement says it fits a new task better, in all fifteen runs, by
+more than ten times the largest floor. The probe trains the generator, so part
+of that gain is ordinary transfer between tasks drawn from one dataset, and
+Section 7 lists this among the limits. Transfer does not explain the
+disagreement, though: the indicators are read as a statement about the model
+itself, and the model they call least able is the one that learns best. Section 5.3 takes the weaker question: set
 the direction aside, and ask only whether the runs that fell furthest are the
 runs that gained least.
 
@@ -495,10 +510,17 @@ not: this is one architecture, one dataset, and one kind of learning.
 
 # 7 Limitations
 
-**Contents.** One model family, one hypernetwork, one dataset. The probe
-trains a 32-number task code rather than the whole network, so it measures one
-specific kind of learning. The unresolved cause of the Section 5.7 spread. The
-absence of a pre-stated test for srank.
+**Contents.** One model family, one hypernetwork, one dataset. The probe task
+is drawn from the same dataset as the stream, and the probe trains the
+generator, so part of the gain in Section 5.2 is ordinary transfer between
+related tasks; a frozen-generator arm exists in the code and was not run. The
+indicators move almost entirely at the first task (Section 5.1), so the
+comparison between boundary 0 and boundary 9 is largely a comparison between
+an untrained and a trained generator; the probe was not read at boundary 1, so
+the middle of the stream is untested on either side. The fifteen runs share
+five starting points, so they are not fifteen independent draws. The
+unresolved cause of the Section 5.7 spread. The absence of a pre-stated test
+for srank.
 
 **Status.** To write.
 
