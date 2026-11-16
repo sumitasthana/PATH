@@ -437,3 +437,36 @@ The same confound applies as before. The ordinary trained network saw 1.28
 million pictures and a thousand classes. Until an ordinary ResNet50 is trained
 on this study's own nine groups and read the same way, the cause cannot be
 named.
+
+## Result: where the CIFAR gain happens
+
+Notebook 49 was run again on 16 November with boundary 4 added. The skip key
+includes the boundary, so this pass performed only the 165 new runs. Settings
+are unchanged from the boundaries 0 and 9 pass.
+
+| Run | t = 0 | t = 4 | t = 9 | 0 to 4 | 4 to 9 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| order_A seed 0 | 34.45 | 54.85 | 55.03 | +20.40 | +0.19 |
+| order_A seed 1 | 33.20 | 52.80 | 55.89 | +19.60 | +3.09 |
+| order_A seed 2 | 33.09 | 53.71 | 53.93 | +20.62 | +0.22 |
+| order_A seed 3 | 33.31 | 51.69 | 52.15 | +18.38 | +0.46 |
+| order_A seed 4 | 33.55 | 55.39 | 53.61 | +21.84 | -1.77 |
+| mean | | | | +20.17 | +0.44 |
+
+The change from boundary 4 to boundary 9 is +0.44 points, which is 0.6
+standard errors from zero on four degrees of freedom. It is not
+distinguishable from no change. The whole gain of +20.61 is +20.17 by task 4.
+
+**The two probes agree on shape as well as size.** Tiny ImageNet gains +17.50
+by task 4 and then changes -0.50. CIFAR gains +20.17 by task 4 and then changes
++0.44. The late changes have opposite signs and neither is separable from zero,
+so the sign carries no information. On two probe tasks that share nothing, the
+model stops changing in the same place.
+
+This closes the question left open when the boundaries 0 and 9 pass was
+recorded. It also removes the last way the probe side could have been read as
+a slow accumulation across the stream. Both the indicators and the probe move
+once, early, and then hold.
+
+What it does not change is the boundary 0 confound. The large early gain is
+still measured against a randomly started network, on both datasets.
