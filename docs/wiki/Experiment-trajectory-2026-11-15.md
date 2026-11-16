@@ -159,3 +159,47 @@ they were measurements under one protocol.
 The user's pending random-direction and cross-seed rank-convergence studies
 remain separate. This audit did not run or claim to complete them. Learning
 speed can now be reported at the four saved steps without additional training.
+
+## Planned: the direct probe on a different dataset
+
+Notebook `49_probe_on_a_different_dataset.ipynb` is written and pushed. It has
+not been run.
+
+**Question.** The probe task is group 9 of Tiny ImageNet and the stream learns
+groups 0 to 8 of the same dataset, so the +17.87 point gain may be transfer
+between related classes rather than a statement about the ability to learn.
+Does the gain survive a probe task that shares nothing with the stream?
+
+**Why not EuroSAT.** The generator's output layer is built once with
+`classes_per_task` outputs, now twenty, so a probe task must have exactly
+twenty classes. EuroSAT has ten. It matched under the retired ten-class design,
+and `uncle/eurosat_probe/` holds those runs. CIFAR-100 has one hundred classes,
+so twenty can be taken, renumbered 0 to 19, and enlarged from 32 by 32 to the
+64 by 64 the backbone expects.
+
+**What changes.** The probe task only. Twenty CIFAR-100 classes chosen once
+from seed 7.
+
+**What is held fixed.** The same saved boundary 9 checkpoints, the same
+boundary 0 rebuild from the seed, the three learning rates 1e-4, 3e-4 and 1e-3
+with the best chosen per repetition on a validation split, 250 steps, batch 64,
+eleven repetitions at each point, 4,800 training images, the `full` arm, and
+fork-and-discard with the unchanged check. Chance stays at 5 percent.
+
+**First pass.** Order A, five seeds, boundaries 0 and 9: 330 probe runs, near
+three hours on one GPU. Results go to
+`uncle/matched_probe/plasticity_revised_v1/cifar100_20class_train4800.jsonl`,
+a separate key, written as the run goes and skipped on restart.
+
+**Decision.** Gain clearly positive and clearing every floor: Section 5.2's
+result is not neighbouring-class transfer, and orders B and C are worth the
+further five hours. Gain much smaller but positive: part of the eighteen points
+was transfer, and both numbers go in the paper. Gain gone or reversed: Section
+5.2 measured transfer and the paper's central disagreement does not hold as
+written.
+
+**What it still will not answer.** Transfer of general visual features is not
+removed, because the boundary 0 comparison is against a randomly started model.
+And the probe is read at two points only, so untrained against trained is not
+separated from early against late. Boundary 4 is saved for every stream and
+would answer the second question.
