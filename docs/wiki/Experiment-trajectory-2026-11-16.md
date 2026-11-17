@@ -833,3 +833,52 @@ statistics are the ones it was born with. For the hypernetwork they differ,
 119.517 against 11.790, because at boundary 0 the generator already writes
 weights that are not the target's initialisation weights. So the two routes
 separate for these models before any task is learned.
+
+## Resolved: the boundary 0 mismatch was an unseeded rebuild
+
+**Cause.** `HyperNetwork.__init__` builds the generator with
+`nn.init.kaiming_normal_`, `nn.init.normal_` and `torch.randn`. All three read
+the global random number generator. None of them reads `config.seed`. The study
+seeds that global generator before it builds: `uncle/paired_study.py` calls
+`random.seed`, `np.random.seed` and `torch.manual_seed` with `config.seed`, and
+`torch.cuda.manual_seed_all` on a GPU, immediately before `build_target` and
+`HyperNetwork`.
+
+Notebooks 52 and 48 rebuilt a model without those four calls. So the generator
+they built was a fresh random draw rather than the study's. At boundary 9 the
+checkpoint overwrites every weight, which is why that boundary matched the logs
+to three decimals. Boundary 0 has no checkpoint, so nothing overwrote the wrong
+draw.
+
+**Shown on CPU.** Two `HyperNetwork` builds with the same `Config` in one
+process give different chunk codes. With the three seed calls first they are
+identical. So the construction is reproducible only when the global generator is
+seeded.
+
+**The logged values were right.** The order A logs hold one indicator row per
+boundary, `t` running 0 to 10, exactly as notebook 51's verdict cell assumed.
+Effective rank on the in-stream pictures at boundary 0 reads 7.142, 6.374,
+4.758, 3.131 and 6.410 across the five seeds, a mean of 5.563. Boundary 9 reads
+a mean of 2.788 against notebook 52's 2.789. Nothing in the published records
+needs changing.
+
+**What was wrong.** Notebook 52's boundary 0 row, which read 11.790 under the
+fixed template and 119.517 under measured statistics. Both are readings of
+models that were never part of this study.
+
+**Fixed.** Both notebooks now seed the global generator inside `build` before
+constructing anything, with a comment saying why. Notebook 52's results key
+moves to `buffer_route_on_hypernetwork_v2.jsonl`, so the rows already saved are
+not resumed from. The old file stays in place as evidence and is not deleted.
+
+**What this does not touch.** Every boundary 9 number in the previous section
+stands: those five models came from checkpoints. The decisive comparison,
+143.001 against 2.789, is unaffected. Notebook 48's test 4 arm also rebuilt
+boundary 0 without seeding, but its result is that the frozen generator reads
+chance at both ends, and chance does not depend on which random generator the
+model started from. Notebook 48's indicator readings used boundaries 4 and 9
+only, both loaded from files.
+
+**Still to do.** Boundary 0 of notebook 52 has to be run again under the fixed
+build. It downloads nothing, because boundary 0 is rebuilt from the seed, so it
+is the cheapest part of that notebook.
