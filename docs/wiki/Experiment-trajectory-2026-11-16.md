@@ -1040,8 +1040,24 @@ unit counted as dormant is one whose activation is small, and reading through
 statistics that do not match the weights is exactly what would make activations
 small.
 
-**What it needs.** One field added to notebook 52's reading loop and a re-run.
-The dormant count is already implemented in `uncle/plasticity_indicators.py` and
-is computed on the same features the other indicators use, so this is a small
-change rather than a new measurement. The cost is the same 2.7 GB of downloads
-and a few minutes of arithmetic. No training.
+**Added to notebook 52.** `read_dormant` counts dormant units for one set of
+weights and one set of buffers, using the library's own `activation_sites` and
+`dormant_fraction`, so the numbers go through exactly the same arithmetic as the
+published ones. The only difference is that the buffers are supplied by the
+caller. All three cut-offs are recorded on every row. The results key moves to
+`buffer_route_on_hypernetwork_v3.jsonl`, because the v2 rows have no dormant
+count and must not be resumed from. The tables now also print srank.
+
+This indicator reads every ReLU in the network rather than only the 2048 numbers
+at the classifier, so it is the broadest of the three. If the fixed template is
+what makes units look quiet, it should show here most clearly: a unit counts as
+dormant when its activation is small beside its neighbours, and reading through
+statistics that do not match the weights is what shrinks activations.
+
+The CPU check on a small ResNet18 hypernetwork reads 0.4647 dormant at the 0.01
+cut-off through the fixed template and 0.1270 through measured statistics. That
+is a toy model and not a result. It only shows the two routes separate on this
+indicator as well, so the measurement is worth taking.
+
+**Cost.** The same 2.7 GB of downloads and a few minutes of arithmetic. No
+training.
