@@ -537,3 +537,88 @@ loss, and mean share reads 1.0 on identical rows.
 
 **Results go to**
 `uncle/indicator_protocol/plasticity_revised_v1/plain_network_stream.jsonl`.
+
+## Result: an ordinary network on the same stream
+
+Three seeds finished, 4.7 minutes each, 180 readings in the file. All ten
+boundaries were read, both buffer modes, on all three picture sets.
+
+**The training worked.** Each group reached 57.7 percent on average right after
+it was learned, against 5 percent chance on twenty classes. By the end of the
+stream the same groups read 28.0 percent through their own heads. So the
+ordinary network learns every group and then forgets a large part of it. The
+study's models do not forget, because they pay a preservation term that this
+network does not have. That difference is a property of the training objective,
+not a plasticity measurement, and it should not be read as one.
+
+**Effective rank on the in-stream pictures, three seeds.**
+
+| boundary | own statistics | start statistics | study's models |
+|---|---|---|---|
+| 0 | 7.30 | 7.30 | 5.56 |
+| 1 | 59.21 | 1.16 | 2.07 |
+| 9 | 115.66 | 1.18 | 2.79 |
+| change | +108.37 | -6.12 | -2.78 |
+
+The study's column is the five order A streams read through
+`trainer.buffer_template`.
+
+**The study's route is the start statistics route, exactly.**
+`Trainer.__init__` clones the buffers of the target as `build_target` returns
+it, and `build_target` calls `resnet50(weights=None)`. So the template holds a
+running mean of 0 and a running variance of 1 at every BatchNorm layer, and
+those values never change. Notebook 51's start statistics are a snapshot of the
+same freshly built network. The two routes hold the same numbers, so the
+comparison is matched and not approximate.
+
+**Matched route to route, the two sides agree.** Read the way the study reads,
+the ordinary network falls from 7.30 to 1.18 and the study's models fall from
+5.56 to 2.79. Both lose almost all of it by boundary 1. Both end close to a
+rank of one. The hypernetwork is not doing anything the ordinary network does
+not do.
+
+**The route decides the direction.** At boundary 9 the same three networks, the
+same pictures and the same arithmetic read 115.66 through the statistics the
+networks built and 1.18 through the statistics they were born with. That is a
+gap of 114.48, or 99 percent of the larger number. One route says the features
+grew much richer over the stream. The other says they collapsed onto a single
+direction. The paper cannot report a rank number without first saying which
+route produced it.
+
+**Mean share on the in-stream pictures, three seeds.**
+
+| boundary | own statistics | start statistics | study's models |
+|---|---|---|---|
+| 0 | 0.9821 | 0.9821 | about 0.98 |
+| 9 | 0.7400 | 0.9542 | 0.9811 |
+
+**Correction to the notebook's own printed verdict.** Part 3 of the final cell
+compared the own statistics reading at boundary 9, 0.7400, against the study's
+0.9811, and concluded that the untrained signature does not survive training.
+Those two numbers come from different routes, so the comparison is not valid.
+On the matched route the ordinary network reads 0.9542 and the study's models
+read 0.9811. The signature does survive. The notebook's printed text is wrong
+on this point and the result file is not.
+
+**What this takes out of the paper.** The claim that effective rank moves in
+the opposite direction for hypernetworks has to go. On the matched route an
+ordinary network falls the same way, by the same boundary, to the same place.
+
+**What this puts into the paper.** The reading route is part of the
+measurement. A fixed initialization-time set of BatchNorm statistics is not a
+neutral window onto the weights. As the weights train they move away from those
+statistics, and the features read through them collapse. The collapse is a
+measure of that distance, not of the model's ability to learn.
+
+**The strongest single line.** The ordinary network that reads 1.18 on the
+study's route, a value that would normally be reported as a near total collapse,
+is at that same moment learning each new group of twenty classes to 57.7 percent
+from 5 percent chance. The indicator says the model cannot learn. The model is
+learning. Whatever the fixed-buffer effective rank measures, it is not the
+ability to learn a new task.
+
+**Not settled by this run.** Whether the own statistics route is the right one
+for a hypernetwork at all. A hypernetwork writes fresh weights for every task
+and has no single set of running statistics that belongs to it, which is the
+reason the fixed template was chosen in the first place. This run shows the
+choice is not free. It does not say what to use instead.
