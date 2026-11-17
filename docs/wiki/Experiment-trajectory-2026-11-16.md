@@ -734,7 +734,7 @@ columns are notebook 51's, read back from its own file.
 
 | what | measured statistics | fixed statistics |
 |---|---|---|
-| hypernetwork t=0, reference code | 119.517 | 11.790 |
+| hypernetwork t=0, reference code | 106.272 | 5.563 |
 | hypernetwork t=9, reference code | 143.001 | 2.789 |
 | hypernetwork t=9, trained codes | 137.542 | 3.837 |
 | ordinary ResNet50 t=0 | 7.300 | 7.300 |
@@ -744,7 +744,7 @@ columns are notebook 51's, read back from its own file.
 
 | what | measured statistics | fixed statistics |
 |---|---|---|
-| hypernetwork t=0, reference code | 0.876 | 0.979 |
+| hypernetwork t=0, reference code | 0.805 | 0.981 |
 | hypernetwork t=9, reference code | 0.865 | 0.983 |
 | hypernetwork t=9, trained codes | 0.814 | 0.983 |
 | ordinary ResNet50 t=0 | 0.982 | 0.982 |
@@ -754,18 +754,23 @@ columns are notebook 51's, read back from its own file.
 
 | what | measured statistics | fixed statistics |
 |---|---|---|
-| hypernetwork t=0, reference code | 187.809 | 76.491 |
+| hypernetwork t=0, reference code | 156.874 | 42.211 |
 | hypernetwork t=9, reference code | 193.857 | 17.173 |
 | hypernetwork t=9, trained codes | 176.627 | 26.909 |
 | ordinary ResNet50 t=0 | 57.836 | 57.836 |
 | ordinary ResNet50 t=9 | 141.625 | 1.566 |
 
-**The published fall does not exist under measured statistics.** At boundary 9
-the same five models, the same 256 pictures and the same arithmetic read 143.001
-through statistics measured from the generated weights and 2.789 through the
-fixed template. That is a factor of 51, a gap of 98 percent. Every effective
-rank figure in the draft is the second number. The claim that this study's
-models lose rank over the stream is a statement about the reading route.
+**The route decides the sign, not just the size.** Read through statistics
+measured from the generated weights, the hypernetwork rises from 106.272 to
+143.001 over the nine groups. Read through the fixed template, the same five
+models fall from 5.563 to 2.789. The same models, the same 256 pictures, the
+same arithmetic. One route says the features grew richer, the other says they
+collapsed onto one direction. At boundary 9 the two readings differ by a factor
+of 51.
+
+Every effective rank figure in the draft is the falling number. The claim that
+this study's models lose rank over the stream is a statement about the reading
+route, and the opposite statement is equally available from the same weights.
 
 **The control network behaves the same way, which is the point.** The ordinary
 ResNet50 reads 115.664 and 1.181 at the same boundary. Two networks that share
@@ -781,13 +786,17 @@ you read through barely changes the answer. The code sensitivity is not a
 separate trap. It is the fixed-template trap seen from another angle, and the
 write-up should say so rather than list it as independent evidence.
 
-**The shared row is mostly the route, but not entirely.** The fixed template
-holds both networks between 0.95 and 0.98. Under measured statistics the
-hypernetwork falls to 0.865 and the ordinary network to 0.740. So most of the
-0.98 signature is the route. The remaining difference, 0.125, is the only
-route-matched architectural difference in the table, and it is small beside the
-route effect. Both numbers are still far above the 0.318 a stock ImageNet
-trained ResNet50 reads at 64 pixels.
+**The shared row is mostly the route, and what is left is a real difference.**
+The fixed template holds both networks between 0.95 and 0.98 at every point. So
+most of the 0.98 signature is the route.
+
+Under measured statistics the two networks separate, and they move in opposite
+directions. The hypernetwork starts at 0.805 and rises to 0.865. The ordinary
+network starts at 0.982 and falls to 0.740. Training pushes an ordinary
+network's features apart and does not push the hypernetwork's apart. That is the
+clearest route-matched architectural difference in the table, and unlike the
+code effect it survives the correction. Both end far above the 0.318 a stock
+ImageNet trained ResNet50 reads at 64 pixels.
 
 **With both confounds removed the hypernetwork is not the degenerate one.**
 Centred and read through measured statistics, the hypernetwork reads 193.857 at
@@ -796,12 +805,12 @@ and the shared row, the generated features are more varied than the ordinary
 network's, not less. Nothing in this study supports a claim that these models
 are representationally impoverished.
 
-**Not everything here moves.** Under measured statistics the hypernetwork's
-centred rank goes from 187.809 to 193.857 while the ordinary network goes from
-57.836 to 141.625. The ordinary network's feature variety grows over the stream
-and the hypernetwork's does not. That is a real route-matched difference and it
-is worth a sentence, but see the open question below before using the boundary 0
-value for anything.
+**Both networks grow, the ordinary one faster.** Under measured statistics
+the hypernetwork's centred rank goes from 156.874 to 193.857, a rise of 36.983,
+and the ordinary network's from 57.836 to 141.625, a rise of 83.789. Both gain
+feature variety over the stream. The ordinary network gains more, and it starts
+from much lower. Under the fixed template both fall instead, the hypernetwork
+from 42.211 to 17.173 and the ordinary network from 57.836 to 1.566.
 
 ### Open: the rebuilt boundary 0 does not match the logged boundary 0
 
@@ -879,9 +888,12 @@ chance at both ends, and chance does not depend on which random generator the
 model started from. Notebook 48's indicator readings used boundaries 4 and 9
 only, both loaded from files.
 
-**Still to do.** Boundary 0 of notebook 52 has to be run again under the fixed
-build. It downloads nothing, because boundary 0 is rebuilt from the seed, so it
-is the cheapest part of that notebook.
+**Confirmed by the re-run.** Notebook 52 was run again under the fixed build.
+Boundary 0 now reads 5.563 through the fixed template, matching the logged mean
+of the five order A seeds to three decimals. The rebuild reproduces the study's
+own boundary 0, so every number in the table above is comparable with the
+published records. The tables in the previous section carry the corrected
+values.
 
 ## Result: learning speed, from the probe records already on disk
 
