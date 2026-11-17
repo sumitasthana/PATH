@@ -577,6 +577,13 @@ the ordinary network falls from 7.30 to 1.18 and the study's models fall from
 rank of one. The hypernetwork is not doing anything the ordinary network does
 not do.
 
+**Sequential training on these nine groups raises effective rank.** Read
+through statistics measured from its own weights, the ordinary network goes
+from 7.30 to 115.66, a factor of about sixteen. So the fall is not what
+sequential training on a small stream does to a network. It is what reading
+does. The data and the budget are not the cause, and the record should not say
+they are.
+
 **The route decides the direction.** At boundary 9 the same three networks, the
 same pictures and the same arithmetic read 115.66 through the statistics the
 networks built and 1.18 through the statistics they were born with. That is a
@@ -604,21 +611,115 @@ on this point and the result file is not.
 the opposite direction for hypernetworks has to go. On the matched route an
 ordinary network falls the same way, by the same boundary, to the same place.
 
-**What this puts into the paper.** The reading route is part of the
-measurement. A fixed initialization-time set of BatchNorm statistics is not a
-neutral window onto the weights. As the weights train they move away from those
-statistics, and the features read through them collapse. The collapse is a
-measure of that distance, not of the model's ability to learn.
+**What this puts into the paper, and how to frame it.** The claim is about
+hypernetworks, not about how the continual learning field measures ordinary
+networks. Nobody evaluates a standard ResNet50 by overwriting its learned
+BatchNorm running averages with initialisation values, so a finding written as
+"effective rank fails on an ordinary ResNet50 under fixed statistics" reads as a
+bug in our own evaluation script and will be dismissed as one.
 
-**The strongest single line.** The ordinary network that reads 1.18 on the
-study's route, a value that would normally be reported as a near total collapse,
-is at that same moment learning each new group of twenty classes to 57.7 percent
-from 5 percent chance. The indicator says the model cannot learn. The model is
-learning. Whatever the fixed-buffer effective rank measures, it is not the
-ability to learn a new task.
+The finding belongs to stateless weight generation. A hypernetwork writes fresh
+weights from a task code every time it is asked, so it carries no per-task
+running BatchNorm statistics of its own. That absence pushes anyone measuring
+one towards holding the statistics fixed at initialisation, which is what this
+study did and what `trainer.buffer_template` is. Notebook 51 is the control
+experiment for that choice. It shows that holding BatchNorm statistics at
+initialisation moves effective rank down by 99 percent, from 115.66 to 1.18,
+and locks the shared row share between 0.95 and 0.98, in a ResNet50 that is
+demonstrably healthy.
 
-**Not settled by this run.** Whether the own statistics route is the right one
-for a hypernetwork at all. A hypernetwork writes fresh weights for every task
-and has no single set of running statistics that belongs to it, which is the
-reason the fixed template was chosen in the first place. This run shows the
-choice is not free. It does not say what to use instead.
+**The strongest single line.** The control network reads 1.18 under the
+protocol, a value that would normally be reported as a near total collapse,
+while at that same moment it is learning each new group of twenty classes to
+57.7 percent from 5 percent chance, and while its own statistics say its
+features have grown sixteen times richer. The protocol says the model cannot
+learn. The model is learning. So a fixed-statistics effective rank does not
+measure the ability to learn a new task, and any plasticity claim resting on
+one has to be rechecked under measured statistics first.
+
+**Not settled by this run.** The hypernetwork has only one column. Notebook 51
+read the ordinary network both ways, but the study's models have never been read
+through statistics measured from their own generated weights, so the table is
+half empty on the side that matters. Notebook 52 fills it.
+
+This run also does not say what a hypernetwork should use instead. It writes
+fresh weights for every code and has no single set of running statistics that
+belongs to it, which is the honest reason the fixed template was chosen. The run
+shows the choice is not free. It does not name a replacement.
+
+## Planned: both buffer routes on the saved hypernetwork models
+
+**Notebook 52.** Forward passes only, no training.
+
+**Question.** Notebook 51 gave the ordinary network two columns, one per reading
+route. The study's models have only ever been read one way. What do they read
+when the BatchNorm statistics are measured from the weights the generator
+actually writes?
+
+**What changes.** The buffers only. For each code, the generated ResNet50 is run
+over 2048 pictures from the nine learned groups' training split with the
+BatchNorm layers in training mode and `momentum` set to None, so each layer
+keeps a plain running average over every batch rather than an exponentially
+decaying one and the result does not depend on batch order. The indicators are
+then read through those measured values.
+
+**What is held fixed.** The same 256 picture reading sets from the same seed,
+the same reading site at the 2048 inputs to the classifier, evaluation mode
+forced for every reading, and the same effective rank, srank and mean share
+arithmetic. The adaptation pictures come from the training split and the reading
+pictures from the held-out split, so the statistics are never fitted to the
+pictures the indicator is computed on.
+
+**Scope.** Order A, five seeds, boundaries 0 and 9. Boundary 0 needs no download
+because the untrained generator is rebuilt from the seed, and without it the
+table has no starting value and no change column. Boundary 9 is five 540 MB
+files, deleted one at a time. Both the fixed reference code and the nine trained
+codes are read, kept apart in the table, because notebook 48 already showed the
+reading moves by about 1.4 times between them. A trained-code row averages a
+seed's nine codes first, so a seed counts once rather than nine times.
+
+**Decision.** If the hypernetwork rises under measured statistics the way the
+ordinary network does, the fall in every published figure of this study is the
+reading route and nothing else, and the rank section becomes a measurement
+result. If it stays low under both routes, the two networks genuinely differ and
+the fixed template is not the whole story. The mean row share decides the second
+question the same way: the ordinary network holds 0.954 under the fixed route
+and drops to 0.740 under measured statistics, so if the hypernetwork holds near
+0.98 under both, the shared row belongs to the generator.
+
+**A limit to state either way.** A hypernetwork carries no running statistics of
+its own, so the measured route is a quantity this notebook constructs rather
+than one the model holds. It answers what these weights would do if their
+statistics matched them, which is the right question for a comparison against an
+ordinary network. It is not a claim that the study should have used it.
+
+**Checks run before pushing.** The notebook's measurement cell was executed on
+CPU against a real ResNet18 hypernetwork. Seven checks passed: the fixed route
+really is a running mean of 0 and a running variance of 1 at all 20 layers, the
+measured route moves every buffer and every layer counts every batch, the
+module's momentum and training mode are restored and the study's own template is
+never written into, the two routes give different features, both readings give
+sane rank and share values, mean share reads 1.0 on identical rows, and two
+different codes get different measured statistics.
+
+**Results go to**
+`uncle/indicator_protocol/plasticity_revised_v1/buffer_route_on_hypernetwork.jsonl`.
+
+## Correction: notebook 51's printed verdicts 1 and 3
+
+Both mixed the two reading routes, and both are now fixed in the notebook. The
+result file was always correct; only the printed text was wrong.
+
+Verdict 1 compared the ordinary network's fixed-statistics change against the
+study's models and concluded that sequential training on this much data is what
+lowers effective rank. Under measured statistics the same network rises from
+7.30 to 115.66. Sequential training on these nine groups raises effective rank
+by a factor of about sixteen. The fall is caused by reading evolved weights
+through statistics that were never updated, and the printed verdict now says so
+and reports both columns.
+
+Verdict 3 compared the ordinary network's measured-statistics mean share at
+boundary 9, 0.7400, against the study's 0.9811, which is a fixed-statistics
+number, and called the gap an architectural difference. On the matched route the
+ordinary network reads 0.9542, and 0.9736 at boundary 7. The printed verdict now
+reports both routes and compares only the matched one.
