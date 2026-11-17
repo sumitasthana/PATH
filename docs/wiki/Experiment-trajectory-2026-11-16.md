@@ -882,3 +882,95 @@ only, both loaded from files.
 **Still to do.** Boundary 0 of notebook 52 has to be run again under the fixed
 build. It downloads nothing, because boundary 0 is rebuilt from the seed, so it
 is the cheapest part of that notebook.
+
+## Result: learning speed, from the probe records already on disk
+
+No new run. `scripts/learning_speed.py` reads the published probe files from R2
+and uses the four checkpoints every probe run already recorded, at steps 62,
+125, 188 and 250. 1155 full-arm runs. Boundary 4 exists for order A only.
+
+Runs are matched. A boundary 0 run and a boundary 9 run sharing an order, a
+seed, a learning rate and a repetition started from the same fresh code and saw
+the same batches in the same order, so they differ only in the model being
+probed. Pairing removes the starting-code spread, which is the largest source of
+noise in this measurement.
+
+**Test accuracy on the held-out group, percent.**
+
+| boundary | step 62 | step 125 | step 188 | step 250 | runs |
+|---|---|---|---|---|---|
+| t=0 | 9.78 | 15.07 | 18.47 | 21.27 | 495 |
+| t=4 | 30.58 | 36.33 | 36.44 | 38.84 | 165 |
+| t=9 | 32.85 | 36.96 | 38.25 | 39.57 | 495 |
+| paired gap, t=9 minus t=0 | +23.07 | +21.89 | +19.78 | +18.29 | 495 |
+
+**Training loss on the held-out group.**
+
+| boundary | step 62 | step 125 | step 188 | step 250 | runs |
+|---|---|---|---|---|---|
+| t=0 | 3.00 | 2.69 | 2.47 | 2.31 | 495 |
+| t=4 | 2.01 | 1.45 | 1.12 | 0.89 | 165 |
+| t=9 | 1.91 | 1.28 | 0.93 | 0.70 | 495 |
+| paired gap, t=9 minus t=0 | -1.09 | -1.41 | -1.54 | -1.61 | 495 |
+
+Every gap in both tables is larger than its own 95 percent interval.
+
+**The gain is speed, not ceiling.** The accuracy gap is widest at the first
+checkpoint and narrows from there, +23.07 at step 62 down to +18.29 at step 250.
+A model that merely ends higher at the same pace would show the opposite shape,
+a gap that grows as the budget is spent. This one shrinks, which is what a
+faster learner looks like when both runs are given the same fixed budget.
+
+**A measure that a higher ceiling cannot inflate.** For each run, divide its
+accuracy at step 62 by its own accuracy at step 250. That share says how much of
+this run's own final result was already reached early, and because each run is
+divided by its own ceiling, a ceiling difference cannot move it.
+
+| boundary | share of its own final accuracy reached at step 62 |
+|---|---|
+| t=0 | 0.476 |
+| t=4 | 0.787 |
+| t=9 | 0.837 |
+
+The paired gap from boundary 0 to boundary 9 is +0.361 with a 95 percent
+interval of 0.028, over 495 pairs. The untrained generator needs the whole
+budget. The model at the end of the stream is 84 percent finished at step 62.
+
+**The cleanest single sentence this study has.** At step 62 the end-of-stream
+model reads 32.85 percent on a group of twenty classes it has never seen. The
+untrained generator does not reach that in the whole 250-step budget; it ends at
+21.27 percent. So the trained model is not slightly better at learning something
+new. It passes the untrained model's best result in a quarter of the budget.
+
+**Why this matters more than the endpoint.** Loss of plasticity is defined as a
+loss of the ability to learn, and the literature measures it as slower fitting
+of a new task. The study's headline number, accuracy after a fixed 250 steps,
+mixes speed and ceiling and does not answer that definition directly. The speed
+share does. It moves the wrong way for a plasticity claim, by a large margin,
+on a statistic a ceiling cannot inflate.
+
+**Where this disagrees with an existing finding, weakly.** The accuracy endpoint
+is finished by task 4: the change from boundary 4 to boundary 9 is +0.44 points
+on CIFAR and -0.50 on Tiny ImageNet, both inside the noise. The speed share is
+not. On order A, over 165 matched pairs from five seeds, the share rises a
+further +0.076 from boundary 4 to boundary 9.
+
+The interval on that number depends on what is counted as an independent
+observation. Counting every repetition gives 0.044. The eleven repetitions of
+one seed probe the same two models, so they are not eleven independent readings
+of the difference between those models. Counting each seed once, with the
+correct small-sample multiplier for four degrees of freedom, gives 0.063. The
+gap clears that, about 3.3 standard errors, roughly p = 0.03.
+
+So this is real but thin: order A alone, five seeds, and one comparison among
+several this study has made. It should be reported as weak evidence that the
+speed gain continues past task 4 while the accuracy endpoint has stopped, not as
+a settled disagreement. Orders B and C of boundary 4 would settle it, and that
+is a GPU run the study has so far declined.
+
+**One correction to how intervals were being computed.** The script first used
+1.96 for every interval. On five seeds the right multiplier is 2.776. Using 1.96
+there makes the interval about 40 percent too narrow, which is exactly the
+difference between the boundary 4 to 9 result standing and not standing. The
+script now picks the multiplier from the number of observations and carries a
+runnable check on that function.
