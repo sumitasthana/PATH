@@ -723,3 +723,113 @@ boundary 9, 0.7400, against the study's 0.9811, which is a fixed-statistics
 number, and called the gap an architectural difference. On the matched route the
 ordinary network reads 0.9542, and 0.9736 at boundary 7. The printed verdict now
 reports both routes and compares only the matched one.
+
+## Result: both buffer routes on the saved hypernetwork models
+
+Notebook 52 finished. Order A, five seeds, boundaries 0 and 9, both the fixed
+reference code and the nine trained codes, no training. The ordinary network's
+columns are notebook 51's, read back from its own file.
+
+**Effective rank on the in-stream pictures.**
+
+| what | measured statistics | fixed statistics |
+|---|---|---|
+| hypernetwork t=0, reference code | 119.517 | 11.790 |
+| hypernetwork t=9, reference code | 143.001 | 2.789 |
+| hypernetwork t=9, trained codes | 137.542 | 3.837 |
+| ordinary ResNet50 t=0 | 7.300 | 7.300 |
+| ordinary ResNet50 t=9 | 115.664 | 1.181 |
+
+**Mean row share on the in-stream pictures.**
+
+| what | measured statistics | fixed statistics |
+|---|---|---|
+| hypernetwork t=0, reference code | 0.876 | 0.979 |
+| hypernetwork t=9, reference code | 0.865 | 0.983 |
+| hypernetwork t=9, trained codes | 0.814 | 0.983 |
+| ordinary ResNet50 t=0 | 0.982 | 0.982 |
+| ordinary ResNet50 t=9 | 0.740 | 0.954 |
+
+**Centred effective rank on the in-stream pictures.**
+
+| what | measured statistics | fixed statistics |
+|---|---|---|
+| hypernetwork t=0, reference code | 187.809 | 76.491 |
+| hypernetwork t=9, reference code | 193.857 | 17.173 |
+| hypernetwork t=9, trained codes | 176.627 | 26.909 |
+| ordinary ResNet50 t=0 | 57.836 | 57.836 |
+| ordinary ResNet50 t=9 | 141.625 | 1.566 |
+
+**The published fall does not exist under measured statistics.** At boundary 9
+the same five models, the same 256 pictures and the same arithmetic read 143.001
+through statistics measured from the generated weights and 2.789 through the
+fixed template. That is a factor of 51, a gap of 98 percent. Every effective
+rank figure in the draft is the second number. The claim that this study's
+models lose rank over the stream is a statement about the reading route.
+
+**The control network behaves the same way, which is the point.** The ordinary
+ResNet50 reads 115.664 and 1.181 at the same boundary. Two networks that share
+nothing but a backbone both collapse by about two orders of magnitude when read
+through statistics that never moved. The effect is the protocol.
+
+**The code effect is mostly the same effect.** At boundary 9 the trained codes
+read 3.837 and the reference code 2.789 under the fixed template, a ratio of
+1.38, which is the 1.4 times swing notebook 48 reported. Under measured
+statistics the same comparison is 137.542 against 143.001, a ratio of 0.96. So
+when each generated network is read through statistics that match it, which code
+you read through barely changes the answer. The code sensitivity is not a
+separate trap. It is the fixed-template trap seen from another angle, and the
+write-up should say so rather than list it as independent evidence.
+
+**The shared row is mostly the route, but not entirely.** The fixed template
+holds both networks between 0.95 and 0.98. Under measured statistics the
+hypernetwork falls to 0.865 and the ordinary network to 0.740. So most of the
+0.98 signature is the route. The remaining difference, 0.125, is the only
+route-matched architectural difference in the table, and it is small beside the
+route effect. Both numbers are still far above the 0.318 a stock ImageNet
+trained ResNet50 reads at 64 pixels.
+
+**With both confounds removed the hypernetwork is not the degenerate one.**
+Centred and read through measured statistics, the hypernetwork reads 193.857 at
+boundary 9 and the ordinary network 141.625. After taking out the reading route
+and the shared row, the generated features are more varied than the ordinary
+network's, not less. Nothing in this study supports a claim that these models
+are representationally impoverished.
+
+**Not everything here moves.** Under measured statistics the hypernetwork's
+centred rank goes from 187.809 to 193.857 while the ordinary network goes from
+57.836 to 141.625. The ordinary network's feature variety grows over the stream
+and the hypernetwork's does not. That is a real route-matched difference and it
+is worth a sentence, but see the open question below before using the boundary 0
+value for anything.
+
+### Open: the rebuilt boundary 0 does not match the logged boundary 0
+
+Notebook 52 rebuilds boundary 0 from the seed rather than from a file, because
+no boundary 0 checkpoint exists. Under the fixed template that rebuild reads
+11.790, while the live indicator logs record 5.563 at t=0 for order A on the
+same route. Boundary 9 matches to three decimals, 2.789 here against 2.788 in
+the logs, so the loading path and the picture sets are not the problem. Only the
+rebuild differs.
+
+Reading the code did not settle it. The study records boundary 0 inside
+`run_request` after `h.add_task(task)`, but `add_task` only creates a task code,
+and `weights_from_code` for the reference code depends on the trunk, the heads,
+the chunk codes, the scales and the offsets, none of which `add_task` touches.
+
+Until this is explained, no boundary 0 number from notebook 52 goes in the
+paper, and that includes the change columns for the hypernetwork. The decisive
+comparison does not need it: the 143.001 against 2.789 gap is measured at
+boundary 9 alone, on five loaded checkpoints.
+
+The next check is cheap and needs no GPU. Read the order A indicator logs
+directly and find what the t=0 rows actually contain: how many there are per
+seed, which code and which buffers produced them, and whether `t` indexes the
+boundary the way notebook 51's verdict cell assumed.
+
+One thing the table already explains. For the ordinary network the two columns
+are identical at t=0, which they must be, because an untrained network's own
+statistics are the ones it was born with. For the hypernetwork they differ,
+119.517 against 11.790, because at boundary 0 the generator already writes
+weights that are not the target's initialisation weights. So the two routes
+separate for these models before any task is learned.
