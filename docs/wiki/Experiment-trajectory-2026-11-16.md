@@ -986,3 +986,62 @@ there makes the interval about 40 percent too narrow, which is exactly the
 difference between the boundary 4 to 9 result standing and not standing. The
 script now picks the multiplier from the number of observations and carries a
 runnable check on that function.
+
+## Result: srank under both routes, and the one indicator still uncovered
+
+Read back from notebook 52's own file. No new run.
+
+**srank on the in-stream pictures.**
+
+| what | measured statistics | fixed statistics |
+|---|---|---|
+| hypernetwork t=0, reference code | 248.20 | 215.60 |
+| hypernetwork t=9, reference code | 248.40 | 120.40 |
+| hypernetwork t=9, trained codes | 248.36 | 160.60 |
+
+**srank, shared row removed.**
+
+| what | measured statistics | fixed statistics |
+|---|---|---|
+| hypernetwork t=0, reference code | 248.40 | 238.80 |
+| hypernetwork t=9, reference code | 248.60 | 182.20 |
+| hypernetwork t=9, trained codes | 248.16 | 212.51 |
+
+**srank does not move at all under measured statistics.** It reads 248.20 at
+boundary 0 and 248.40 at boundary 9. Through the fixed template the same models
+fall from 215.60 to 120.40, a drop of 44 percent. The published srank fall is
+the reading route in full. This is a cleaner result than effective rank, where
+the measured route gives a rise rather than a flat line.
+
+**One caveat on that flatness.** The feature matrix has 256 rows, so srank
+cannot exceed 256. A reading of 248 is close to that ceiling. "Flat at 248" and
+"saturated at the ceiling" cannot be told apart from this measurement alone, so
+the write-up should say srank shows no fall under measured statistics rather
+than claiming it is unchanged. Reading on more pictures would separate the two
+and costs one forward pass per model.
+
+**The code effect is the same effect here too.** Under the fixed template the
+trained codes read 160.60 and the reference code 120.40, a ratio of 1.33. Under
+measured statistics the same pair reads 248.36 and 248.40, a ratio of 1.00.
+
+### Still uncovered: dormant units
+
+The draft reports three indicators and the opening table carries all three:
+effective rank, srank and dormant units. The buffer route now explains the first
+two. Dormant units have never been measured under the two routes, because
+notebook 52 records effective rank, srank, the centred versions and the mean row
+share, and nothing about dormant units.
+
+This matters because the claim is that the indicators read the protocol. A
+reviewer who sees two of three indicators explained will ask about the third,
+and it is in the paper's own first table. The dormant unit count is also the
+most likely of the three to be a direct consequence of the mechanism, since a
+unit counted as dormant is one whose activation is small, and reading through
+statistics that do not match the weights is exactly what would make activations
+small.
+
+**What it needs.** One field added to notebook 52's reading loop and a re-run.
+The dormant count is already implemented in `uncle/plasticity_indicators.py` and
+is computed on the same features the other indicators use, so this is a small
+change rather than a new measurement. The cost is the same 2.7 GB of downloads
+and a few minutes of arithmetic. No training.
