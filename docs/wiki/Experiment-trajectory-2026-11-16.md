@@ -1061,3 +1061,57 @@ indicator as well, so the measurement is worth taking.
 
 **Cost.** The same 2.7 GB of downloads and a few minutes of arithmetic. No
 training.
+
+## Result: dormant units, and the one indicator the route does not explain
+
+Notebook 52 ran with the dormant count added. The ordinary network has no
+dormant column yet, because notebook 51 predates the measure.
+
+**Dormant units on the in-stream pictures, cut-off 0.01.**
+
+| what | measured statistics | fixed statistics |
+|---|---|---|
+| hypernetwork t=0, reference code | 0.000 | 0.160 |
+| hypernetwork t=9, reference code | 0.128 | 0.324 |
+| hypernetwork t=9, trained codes | 0.093 | 0.332 |
+
+**This one behaves differently from the other two.** Effective rank changes
+direction with the route and srank goes flat. Dormant units rise under both
+routes. Through the fixed template they go from 0.160 to 0.324, which is the
+doubling the draft reports. Through measured statistics they go from 0.000 to
+0.128.
+
+So the route inflates the level, by a factor of about 2.5 at boundary 9, but it
+does not create the movement. Something real is happening that the other two
+indicators do not see: with statistics matched to the weights, no unit is
+dormant at all in the untrained generator, and 12.8 percent of units are quiet
+by the end of the nine groups.
+
+**What this costs the story.** The clean claim was that all three indicators
+read the protocol. That is now true of two of them. The third shows a rise that
+survives the correction, and the write-up has to say so plainly. This is the
+honest version and it is still a strong result: the published doubling is 2.5
+times larger than what a matched reading gives, and the indicator that survives
+is the one the paper leans on least.
+
+**Why the control is now required, not optional.** A 12.8 percent dormant share
+after nine groups means nothing on its own. If an ordinary ResNet50 trained on
+the same nine groups reads the same, the movement is ordinary training and not
+the generator. If it reads near zero, the hypernetwork genuinely puts units to
+sleep and that is a real architectural finding, the second one in this study
+after the mean row share. Nothing can be written about this number until that
+comparison exists.
+
+**Added to notebook 51.** `read_dormant` counts dormant units for the ordinary
+trunk using the same library functions, recorded on every row at every boundary
+and in both buffer modes. The results key moves to
+`plain_network_stream_v2.jsonl`, because the existing rows have no dormant count
+and the run loop skips a seed already in the file. The old file stays in place.
+Notebook 52 now reads the newer file when it exists and falls back to the older
+one, so it runs either way.
+
+**Cost.** Three seeds, about five minutes each, the same run as before.
+
+**One crash fixed.** Notebook 52's joint table raised a KeyError when it reached
+the dormant row for notebook 51's file, which has no such key. It now skips a
+measure a file does not carry and prints a dot instead of stopping.
