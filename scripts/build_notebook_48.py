@@ -431,7 +431,7 @@ def read_one_model(order, seed, point):
     target, hypernet, trainer, path = build(order, seed, point)
     try:
         codes = {"reference": reference_code(hypernet)}
-        for task in hypernet.known_tasks():
+        for task in hypernet.task_codes:
             codes[f"task_{task}"] = hypernet.task_codes[task].detach()
 
         rows = []
