@@ -646,7 +646,7 @@ moved its statistics, and they separate from the first group onward.
 
 The control is learning throughout the stream that produces its fall. Its fixed
 reading of 1.14 at boundary 9 is lower than any value the hypernetwork reaches,
-and it is taken from a network that reaches the accuracy in Table 12 on each
+and it is taken from a network that reaches the accuracy in Table 14 on each
 group at the moment that group is learned. An indicator that reports a severe
 loss on a network with no loss to report is not measuring the quantity it is
 read for.
@@ -703,11 +703,107 @@ before the ReLU against 2.79 after it, and the control reads 1.10 against 1.14.
 The mean row share is unchanged by the ReLU to three decimals on both networks
 at both boundaries. The ReLU is nevertheless doing work, removing between 0.331
 and 0.751 of all values, so this is not a case of a nonlinearity with nothing to
-remove. The collapse therefore occurs in the linear part of the network, where
-dividing by a running variance of one that does not match the variance the
-weights produce compounds layer by layer.
+remove. The collapse therefore occurs in the linear part of the network. Where in that
+part, and which half of the BatchNorm operation is responsible, are the two
+questions the rest of this section answers.
 
-Table 12. Accuracy of the control network, to be read from the run log.
+The error the protocol makes grows with depth. Each BatchNorm layer is told to
+divide by a spread of one. The measured spread at boundary 9 runs from 0.838 to
+5.752 across the 53 layers, so most layers pass their signal on several times
+larger than they should, and the next layer repeats the mistake. Table 12 reads
+the average size of the values at the output of each of the 16 blocks, under the
+fixed route and under matched statistics, at the end of the stream.
+
+Table 12. The average size of the values at each block output, on the five
+ordering A models at boundary 9, before any averaging over the picture. The
+fixed column is the study's protocol and the measured column uses statistics
+taken from the model's own weights.
+
+| Block | Channels | Fixed | Measured |
+| --- | --- | --- | --- |
+| layer1.0 | 256 | 11.87 | 1.203 |
+| layer1.1 | 256 | 179 | 1.445 |
+| layer1.2 | 256 | 1169 | 1.593 |
+| layer2.0 | 512 | 1.816e+04 | 1.292 |
+| layer2.1 | 512 | 2.692e+05 | 1.600 |
+| layer2.2 | 512 | 1.579e+06 | 1.593 |
+| layer2.3 | 512 | 8.098e+06 | 1.452 |
+| layer3.0 | 1024 | 1.254e+08 | 1.075 |
+| layer3.1 | 1024 | 1.063e+09 | 1.382 |
+| layer3.2 | 1024 | 4.058e+09 | 1.654 |
+| layer3.3 | 1024 | 3.149e+10 | 1.755 |
+| layer3.4 | 1024 | 1.097e+11 | 1.937 |
+| layer3.5 | 1024 | 7.898e+11 | 2.120 |
+| layer4.0 | 2048 | 4.305e+12 | 0.4835 |
+| layer4.1 | 2048 | 2.468e+13 | 0.5234 |
+| layer4.2 | 2048 | 1.090e+14 | 0.4676 |
+
+The fixed route grows by roughly a factor of ten at each block and ends about
+thirteen orders of magnitude above where it started. The measured route stays
+near one across all sixteen. At boundary 0 the same fixed column ends at
+2.968e4 rather than 1.090e14, so the error is small on an untrained generator
+and grows as the weights travel. That is the direct explanation for why the
+reading gets worse over the stream.
+
+The rank does not follow the same shape. On the fixed route at boundary 9
+effective rank reads 5.135 at the first block, 2.337 at the second, and 2.789 at
+the sixteenth. Mean row share reads 0.983 at the first block and 0.983 at the
+sixteenth. Almost all of the collapse is present after one block, and fifteen
+further blocks of a growing scale do not lower it. So the growth in Table 12
+explains the size of the values and not the rank, and the two have to be
+reported separately.
+
+A BatchNorm layer performs two operations, subtracting a running mean and
+dividing by the square root of a running variance, and the protocol supplies a
+wrong value for each. Table 13 separates them. The same five models are read
+four ways: with the protocol's values for both, with the measured mean and the
+protocol's variance, with the protocol's mean and the measured variance, and
+with both measured. The last column gives each arm's recovery as a share of the
+distance between the protocol reading and the fully measured one at boundary 9.
+
+Table 13. Effective rank at the classifier under each set of BatchNorm
+statistics, averaged over the five ordering A models, on the in_stream images.
+
+| Statistics supplied | Boundary 0 | Boundary 9 | Share of the gap at boundary 9 |
+| --- | --- | --- | --- |
+| Mean 0, variance 1 (the protocol) | 5.563 | 2.789 | . |
+| Measured mean, variance 1 | 63.615 | 3.093 | 0.2 |
+| Mean 0, measured variance | 32.960 | 8.860 | 4.3 |
+| Both measured | 106.274 | 143.001 | 100.0 |
+
+Neither operation accounts for the result on its own. At boundary 9 the gap
+between the protocol reading and the measured one is 140.212. Correcting only
+the subtraction recovers 0.2 percent of it and correcting only the division
+recovers 4.3 percent, while correcting both recovers all of it. The failure is
+therefore not attributable to either operation separately.
+
+The two operations are close to separable at the start of the stream and are not
+separable at the end. At boundary 0 the same two corrections recover 57.6 and
+27.2 percent of a gap of 100.711, which sums to 84.8 percent; at boundary 9 they
+sum to 4.5 percent. The measured statistics give the same account from the other
+side, with spreads running 0.362 to 2.358 at boundary 0 and 0.838 to 5.752 at
+boundary 9.
+
+Each single correction also introduces a second fault. Correcting the division
+alone brings the average size of the values at the last block down from 1.090e14
+to 1.969, close to the measured arm's 0.4676, but raises mean row share to
+0.993, the highest of the four arms, because the offset that is never subtracted
+is then the largest remaining structure in the signal. Correcting the
+subtraction alone lowers mean row share to 0.964 and raises the average size to
+1.674e14. Neither arm is a partial repair of the protocol.
+
+The practical consequence is the one a reader is most likely to need. A
+correction to one half of the protocol, such as centring the features before
+measuring, does not restore the reading at the end of a stream.
+
+One limit is stated rather than tested. On the fixed route the values reach the
+order of 1e14 in a single-precision forward pass. That is far inside the range
+of the format, and the rank arithmetic itself is carried out in double
+precision, so no overflow occurs. How much relative precision remains at that
+magnitude has not been measured. The measured arm, on which every comparison in
+this section rests, stays near one throughout.
+
+Table 14. Accuracy of the control network, to be read from the run log.
 
 **Table to include.** Three rows, one per seed, with the mean accuracy over the
 nine groups at the moment each group is learned, and the mean accuracy of those
@@ -721,8 +817,9 @@ results.
 **Notebooks.** `51_an_ordinary_network_on_the_same_stream.ipynb`,
 `52_both_buffer_routes_on_the_hypernetwork.ipynb`.
 
-**Status.** Written except for Table 12. Ordering A only on both halves, and
-the control has three seeds against the hypernetwork's five.
+**Status.** Written except for Table 14. Ordering A only throughout. The
+control has three seeds against the hypernetwork's five, and the depth and
+four-arm readings in Tables 12 and 13 are on the hypernetwork alone.
 
 ---
 
@@ -743,7 +840,7 @@ the same fresh task code and saw the same batches in the same order, so they
 differ only in the model being probed. Pairing removes the spread that comes from
 the starting code, which is the largest source of noise in this measurement.
 
-Table 13. Test accuracy on the held-out group at each of the four readings,
+Table 15. Test accuracy on the held-out group at each of the four readings,
 averaged over the runs at that boundary, with the paired gap against boundary 0
 beneath. Boundaries 0 and 9 use all fifteen streams; boundary 4 is ordering A
 only. A star marks a gap larger than its own 95 percent interval.
@@ -773,13 +870,13 @@ budget. At boundary 9 it moves from 1.91 to 0.70. The model late in the stream
 starts lower and falls further, so the effect is present in fitting the probe
 task and not only in generalising from it.
 
-Table 14 separates speed from the ceiling directly. For each run, its accuracy at
+Table 16 separates speed from the ceiling directly. For each run, its accuracy at
 step 62 is divided by its own accuracy at step 250. The result says how much of
 that run's own final result was already reached early. Dividing each run by its
 own ceiling is what makes this a measure of speed: a model that ends higher while
 moving at the same pace gives the same share.
 
-Table 14. Share of a run's own step-250 accuracy already reached at step 62,
+Table 16. Share of a run's own step-250 accuracy already reached at step 62,
 averaged over the runs at that boundary, with the paired gap against boundary 0
 and its 95 percent interval.
 
