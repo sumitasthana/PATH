@@ -252,7 +252,21 @@ control has three seeds against the hypernetwork's five.
 
 # References
 
-Carried over from version 1 and not yet transcribed into this file.
+Kumar, A., Agarwal, R., Ghosh, D., and Levine, S. Implicit under-parameterization
+inhibits data-efficient deep reinforcement learning. In International Conference
+on Learning Representations (ICLR), 2021. arXiv:2010.14498.
+
+Roy, O. and Vetterli, M. The effective rank: a measure of effective
+dimensionality. In Proceedings of the 15th European Signal Processing Conference
+(EUSIPCO), pages 606-610, Poznan, Poland, 2007.
+
+Sokar, G., Agarwal, R., Castro, P. S., and Evci, U. The dormant neuron
+phenomenon in deep reinforcement learning. In Proceedings of the 40th
+International Conference on Machine Learning (ICML), PMLR 202:32145-32168, 2023.
+arXiv:2302.12902.
+
+These are the three works cited in the body. The wider plasticity references
+carried in version 1 return when the Introduction cites them.
 
 # Appendix A Indicator trajectories over the stream
 
