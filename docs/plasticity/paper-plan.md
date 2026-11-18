@@ -72,6 +72,68 @@ What each part is for:
     This runs before the spacing pass, because a paragraph that still carries
     a style is left alone by it.
 
+## Structure as of 18 November 2026
+
+The draft was compressed to a five-page main body with everything else moved
+into appendices. The planning scaffolding and the section dividers were
+removed. The main body is pages 1 to 5 of the built document and Appendix A
+starts on page 6.
+
+| Main body | Holds |
+| --- | --- |
+| Abstract | Leads with the protocol result. |
+| 1 Introduction | The problem, the three measures, the four results. |
+| 2 Method | Model, stream, protocol, measures, probe, damaged model, control. |
+| 3.1 The reading protocol decides the direction | Table 1. |
+| 3.2 The indicators fall while measured learning rises | Table 2. |
+| 3.3 The size of the fall does not rank the runs | Table 3, Figure 1. |
+| 3.4 The indicators call a damaged model healthy | Table 4. |
+| 4 Discussion, 5 Limitations, References | Short. |
+
+| Appendix | Was | Tables |
+| --- | --- | --- |
+| A Indicator trajectories | 5.1 | A1, A2, Figure A1 |
+| B The reading protocol in full | 5.2 | B1 to B6 |
+| C The direct probe | 5.3 | C1, C2, Figure C1 |
+| D Correlations in full | 5.4 | D1, D2 |
+| E The unlearning step | 5.5 | E1 |
+| F The contribution of weight scale | 5.6 | F1 |
+| G Learning speed | 5.9 | G1, G2 |
+| H Work not yet carried out | 8 | one table |
+
+Main-body Tables 1 and 3 are extracts of Tables B1 and D2. The appendices keep
+their own full versions so that no appendix quotes a number whose table sits
+only in the main body.
+
+**What the compression settled, which was open before.** The abstract now leads
+with the protocol result rather than with the fall. Say the word and it goes
+back.
+
+**What the compression dropped, and where it went.**
+
+- Old 5.7, the ordering retraction, had no written section. The retraction is
+  now three sentences at the end of Appendix A, beside Table A2, which is its
+  evidence.
+- Old 5.8, probe reproducibility, had no written section. The spread between
+  the three orderings of one seed is stated in Appendix C and in Limitations.
+- Old Section 2, Related work, was a stub and is gone. The three measures are
+  cited in the Introduction. A five-page body has no room for a separate
+  section, so the positioning against prior work is still owed and belongs in
+  the Introduction.
+- Old Sections 3.1 to 3.6 and 4.1 to 4.2 were stubs. Their content is written
+  into Section 2 Method, except the table of the three orderings by partition
+  index, which is still owed and belongs in Appendix A.
+- The References list is still not transcribed from version 1.
+- The old Appendix A of per-run tables is gone. Per-run values are in the
+  stored records.
+
+**Mean row share** is no longer in the main body. It is a diagnostic rather than
+a plasticity measure and nothing in the five pages rests on it. It stays in
+Appendix B.
+
+The section and table numbers used below this point refer to the draft before
+the compression, and are kept as a record of how it was built.
+
 ## Numbering
 
 Tables run in reading order: Table 1 in Section 4, Tables 2 and 3 in 5.1,
