@@ -138,10 +138,11 @@ they depend on, then the framing sections last.
 | 5 | 5.5 The contribution of weight scale | Depends on 5.4. |
 | 6 | 5.6 Orderings and the retraction | Independent. |
 | 7 | 5.7 Reproducibility of the probe | Independent. Short. |
-| 8 | 3.1, 3.2, 3.5, 3.6 Method sections | Write once the results fix what must be described. |
-| 9 | 4.1, 4.2 Experimental design | Same reason. |
-| 10 | 1 Introduction, 6 Discussion, 7 Limitations | Last. Claims must already be fixed. |
-| 11 | Appendix A | Assemble from the result tables. |
+| 8 | 5.8 The reading protocol and the indicator values | Written 17 November. Tables 8, 9 and 10. Table 10 still a stub. |
+| 9 | 3.1, 3.2, 3.5, 3.6 Method sections | Write once the results fix what must be described. |
+| 10 | 4.1, 4.2 Experimental design | Same reason. |
+| 11 | 1 Introduction, 6 Discussion, 7 Limitations | Last. Claims must already be fixed. |
+| 12 | Appendix A | Assemble from the result tables. |
 
 Sections 2, 3.3, 3.4 and References are carried over from version 1 with small
 changes. They do not need to be rewritten.
@@ -158,11 +159,34 @@ section in the table above, with the single exception noted under 5.4.
 | 5.4, 5.5 | `docs/wiki/Experiment-trajectory-2026-11-14b.md` | `46_rescaling_control` |
 | 5.6 | `docs/wiki/Experiment-trajectory-2026-11-14.md` | `44`, `45` |
 | 3.2 | `docs/wiki/Experiment-trajectory-2026-11-13.md` | `43_learning_rate_sweep` |
+| 5.8 | `docs/wiki/Experiment-trajectory-2026-11-16.md` | `51_an_ordinary_network_on_the_same_stream`, `52_both_buffer_routes_on_the_hypernetwork` |
 
 A plain-English walkthrough of all six experiments, with every table, is in
 `ops-docs/revised-regime-explainer.md`. It is a useful source for the result
 sections, but its headings are declarative and must not be copied into the
 paper.
+
+## Section 5.8 and what it does to the rest
+
+Section 5.8 was written on 17 November, after this plan. It reads the Section
+5.1 models a second way, through BatchNorm statistics measured from their own
+weights rather than the fixed initialisation template, and adds an ordinary
+ResNet50 control trained on the same nine groups. On the matched route the
+indicators move the opposite way, and the control reproduces the published fall
+while learning normally.
+
+This changes the reading of Section 5.1 but not its numbers. The one sentence
+in 5.1 that treated the fall as a property of the stream now points forward to
+5.8. Two decisions are open and are the user's to make.
+
+1. **Where the section goes.** It is at the end of Results because that needed
+   no renumbering. Its argument conditions Sections 5.1 and 5.3, so it reads
+   better immediately after 5.1. Moving it renumbers six sections and three
+   tables.
+2. **What the abstract claims.** The abstract still says the indicators fall in
+   every run and treats that as the finding. With 5.8 the stronger and more
+   defensible claim is that the protocol decides the direction, demonstrated on
+   a control that has no plasticity problem. The abstract has not been touched.
 
 ## The one number still missing
 

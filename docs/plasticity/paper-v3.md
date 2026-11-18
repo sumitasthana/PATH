@@ -258,9 +258,12 @@ orderings to within floating-point noise. The indicator reading at boundary 0
 therefore repeats exactly, which matters for Section 5.7, where the probe's
 reading of the same point does not.
 
-The stream does produce the fall these measures were built to detect, then.
-Whether the size of that fall tracks how well the model can still learn is the
-question Section 5.3 puts to it. Appendix A gives the per-run values.
+Under this reading protocol the stream does produce the fall these measures
+were built to detect. Section 5.8 reads the same models through statistics
+measured from their own weights and finds the opposite direction, so the
+protocol is part of what Table 2 reports. Whether the size of the fall tracks
+how well the model can still learn is the question Section 5.3 puts to it.
+Appendix A gives the per-run values.
 
 ## 5.2 Measured learning ability rises over the same stream
 
@@ -507,6 +510,136 @@ both open. This should be stated as open, not resolved.
 largest gap.
 
 **Status.** To write. The cause should be checked before submission.
+
+---
+
+## 5.8 The reading protocol and the indicator values
+
+Every reading in Sections 5.1 to 5.7 is taken through one fixed set of
+BatchNorm statistics. The hypernetwork generates the target network's weights
+but writes no BatchNorm running statistics, so the trainer keeps the statistics
+that a freshly built ResNet50 has, a running mean of zero and a running
+variance of one at every layer, and passes those to every forward pass. They
+are never updated. This section asks what the indicators read when the
+statistics are measured from the model's own weights instead.
+
+Two models are read. The first is the five ordering A streams of Section 5.1,
+read at boundary 0 and boundary 9 from the saved checkpoints, with the weights
+generated from the same fixed reference code used throughout. The second is a
+control: an ordinary ResNet50 with one classifier head per group, trained on the
+same nine groups in the same order with the same settings, three seeds. The
+control shares no component with the hypernetwork, so any behaviour common to
+both belongs to the reading and not to the architecture. Nothing is trained for
+the hypernetwork half; both routes are forward passes over the same 256
+in-stream images. The matched statistics are measured on 2048 training images
+from the nine learned groups, with the BatchNorm layers in training mode and a
+cumulative average, so the result does not depend on the order of the batches.
+
+Table 8. Each measure at the start and the end of the stream, read twice from
+the same models. The fixed columns use the protocol of Sections 5.1 to 5.7. The
+matched columns use statistics measured from the model's own weights. The
+hypernetwork rows are the mean over five seeds of ordering A, the control rows
+the mean over three seeds.
+
+| Measure | Network | Fixed, b0 | Fixed, b9 | Matched, b0 | Matched, b9 |
+| --- | --- | --- | --- | --- | --- |
+| Effective rank | Hypernetwork | 5.56 | 2.79 | 106.27 | 143.00 |
+| Effective rank | Ordinary ResNet50 | 7.30 | 1.14 | 7.30 | 110.51 |
+| srank | Hypernetwork | 215.6 | 120.4 | 248.2 | 248.4 |
+| srank | Ordinary ResNet50 | 226.0 | 2.7 | 226.0 | 245.3 |
+| Mean row share | Hypernetwork | 0.981 | 0.983 | 0.805 | 0.865 |
+| Mean row share | Ordinary ResNet50 | 0.982 | 0.960 | 0.982 | 0.709 |
+| Dormant units, cut-off 0.01 | Hypernetwork | 0.160 | 0.324 | 0.000 | 0.128 |
+| Dormant units, cut-off 0.01 | Ordinary ResNet50 | 0.156 | 0.527 | 0.156 | 0.000 |
+
+The reading route decides the direction of travel, not only its size. Read
+through the fixed statistics the hypernetwork's effective rank falls from 5.56
+to 2.79 over the nine groups, which is the result Section 5.1 reports. Read
+through matched statistics the same five checkpoints rise from 106.27 to 143.00.
+The control behaves the same way, falling from 7.30 to 1.14 on the fixed route
+and rising from 7.30 to 110.51 on the matched one. The two routes agree at
+boundary 0 for the control, because a network that has not trained yet has not
+moved its statistics, and they separate from the first group onward.
+
+The control is learning throughout the stream that produces its fall. Its fixed
+reading of 1.14 at boundary 9 is lower than any value the hypernetwork reaches,
+and it is taken from a network that reaches the accuracy in Table 10 on each
+group at the moment that group is learned. An indicator that reports a severe
+loss on a network with no loss to report is not measuring the quantity it is
+read for.
+
+srank behaves the same way and reaches a floor. On the fixed route the control
+falls from 226.0 to 2.7, so it uses three of the 256 available directions. On
+the matched route it ends at 245.3. The hypernetwork's matched readings sit at
+248.2 and 248.4, which is close enough to the 256 ceiling that this measure
+cannot separate a model that is flat from one that is saturated, and no claim is
+made from the matched srank column.
+
+The dormant-unit fraction gives the same verdict on the fixed route and a
+different result on the matched one. On the fixed route the control rises from
+0.156 to 0.527, a larger rise than the hypernetwork's 0.160 to 0.324, so the
+reported rise is reproduced more strongly by the network that has no problem.
+On the matched route the two architectures move in opposite directions. The
+control starts at 0.156 and reads 0.000 from the first group onward in all three
+seeds and at all nine boundaries. The hypernetwork starts at 0.000 in all five
+seeds and ends at 0.128, with per-seed values between 0.109 and 0.181. Ordinary
+sequential training removes every dormant unit in this setting, and generating
+the weights from a task code creates them. The control's floor at zero means
+this comparison establishes a difference in direction and not a difference in
+size.
+
+The mean row share is the one measure whose matched readings separate the two
+architectures by level as well. Both networks read about 0.98 on the fixed
+route at both boundaries, which is the shared-direction result of Section 5.3.
+On the matched route the hypernetwork rises from 0.805 to 0.865 while the
+control falls from 0.982 to 0.709.
+
+Table 9 locates where the fall on the fixed route happens. The 256 by 2048
+feature matrix is read at the classifier's input, which in a ResNet50 is the
+output of the last ReLU, so every value in it is non-negative. If the fixed
+statistics shift the whole signal upward, the ReLU removes little, every image
+gives a similar row, and effective rank falls for that reason alone. The same
+matrix was therefore read one step earlier, at the input of the last ReLU, where
+negative values are still present.
+
+Table 9. Effective rank and mean row share on the fixed route, read at the input
+of the last ReLU and at its output, with the share of values the ReLU sets to
+zero. Same models and same images as Table 8.
+
+| Measure | Network | Before, b0 | Before, b9 | After, b0 | After, b9 |
+| --- | --- | --- | --- | --- | --- |
+| Effective rank | Hypernetwork | 6.17 | 2.47 | 5.56 | 2.79 |
+| Effective rank | Ordinary ResNet50 | 8.34 | 1.10 | 7.30 | 1.14 |
+| Mean row share | Hypernetwork | 0.981 | 0.984 | 0.981 | 0.983 |
+| Mean row share | Ordinary ResNet50 | 0.982 | 0.960 | 0.982 | 0.960 |
+| Share the ReLU sets to zero | Hypernetwork | 0.331 | 0.492 | . | . |
+| Share the ReLU sets to zero | Ordinary ResNet50 | 0.338 | 0.751 | . | . |
+
+The fall is already complete before the ReLU runs. The hypernetwork reads 2.47
+before the ReLU against 2.79 after it, and the control reads 1.10 against 1.14.
+The mean row share is unchanged by the ReLU to three decimals on both networks
+at both boundaries. The ReLU is nevertheless doing work, removing between 0.331
+and 0.751 of all values, so this is not a case of a nonlinearity with nothing to
+remove. The collapse therefore occurs in the linear part of the network, where
+dividing by a running variance of one that does not match the variance the
+weights produce compounds layer by layer.
+
+Table 10. Accuracy of the control network, to be read from the run log.
+
+**Table to include.** Three rows, one per seed, with the mean accuracy over the
+nine groups at the moment each group is learned, and the mean accuracy of those
+same groups at the end of the stream. The control has no preservation term, so
+the second column is expected to be much lower; that difference is a property of
+the training objective and is not a plasticity measurement.
+
+**Experiment.** The 16 November record, the ordinary-network and buffer-route
+results.
+
+**Notebooks.** `51_an_ordinary_network_on_the_same_stream.ipynb`,
+`52_both_buffer_routes_on_the_hypernetwork.ipynb`.
+
+**Status.** Written except for Table 10. Ordering A only on both halves, and
+the control has three seeds against the hypernetwork's five.
 
 ---
 
