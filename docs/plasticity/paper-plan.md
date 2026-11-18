@@ -134,11 +134,12 @@ they depend on, then the framing sections last.
 | 1 | 5.3 Relation between indicator change and measured learning | Written. Tables 6 and 7, Figure 3. |
 | 2 | 5.1 Indicator trajectories | Written. Tables 2 and 3, Figure 1. |
 | 3 | 5.2 Directly measured learning ability | Written. Tables 4 and 5, Figure 2. |
-| 4 | 5.4 Indicator response to a damaged model | Independent of 5.1 to 5.3. One srank number still to extract. |
-| 5 | 5.5 The contribution of weight scale | Depends on 5.4. |
+| 4 | 5.4 Indicator response to a damaged model | Written 17 November. Table 8. |
+| 5 | 5.5 The contribution of weight scale | Written 17 November. Table 9. |
 | 6 | 5.6 Orderings and the retraction | Independent. |
 | 7 | 5.7 Reproducibility of the probe | Independent. Short. |
-| 8 | 5.8 The reading protocol and the indicator values | Written 17 November. Tables 8, 9 and 10. Table 10 still a stub. |
+| 8 | 5.8 The reading protocol and the indicator values | Written 17 November. Tables 10, 11 and 12. Table 12 still a stub. |
+| 8b | 5.9 Learning speed on the held-out group | Written 17 November. Tables 13 and 14. |
 | 9 | 3.1, 3.2, 3.5, 3.6 Method sections | Write once the results fix what must be described. |
 | 10 | 4.1, 4.2 Experimental design | Same reason. |
 | 11 | 1 Introduction, 6 Discussion, 7 Limitations | Last. Claims must already be fixed. |
@@ -188,12 +189,25 @@ in 5.1 that treated the fall as a property of the stream now points forward to
    defensible claim is that the protocol decides the direction, demonstrated on
    a control that has no plasticity problem. The abstract has not been touched.
 
-## The one number still missing
+## The number that was missing is now read
 
-Section 5.4 needs srank's movement at the unlearn step. The 14 November record
-states that srank moves in the same direction as effective rank but gives no
-value. It can be read from the rescaling-control records in R2 with no new
-run. Do this before writing 5.4.
+Section 5.4 needed srank's movement at the unlearn step, which earlier records
+gave only as a direction. It was read from the rescaling-control file in R2 on
+17 November with no new run. srank moves +73.6 at the unlearn in 15 of 15
+streams, against +1.580 for effective rank, and the two interventions give
+48.8 percent and 73.3 percent against effective rank's 52.3 and 83.2.
+
+The size of an ordinary learning step, which Section 5.4 needs for scale, was
+read the same way from the per-stream indicator logs: 0.162 for effective rank
+and 10.025 for srank, as the average absolute change over the 120 learning
+steps after the first.
+
+## Table numbering, and the pass still owed
+
+Tables now run 2 to 14 in reading order with no gaps. Sections 5.6 and 5.7 are
+still stubs and 5.7 carries a table. When they are written they take the numbers
+their position gives them, which shifts the tables in 5.8 and 5.9 again. Do that
+shift once, when both are written, rather than after each one.
 
 ## Where version 3 stands against the 14 November shortlist
 

@@ -430,42 +430,125 @@ gives the per-run values.
 
 ## 5.4 Indicator response to a deliberately damaged model
 
-**Contents.** Accuracy of the destroyed group after unlearning. The movement
-of each indicator, and its direction relative to the direction the indicator
-reports as healthy. The comparison against the movement produced by an
-ordinary learning step.
+Sections 5.1 to 5.3 ask whether the indicators track ordinary change. This
+section asks an easier question. After the ninth group, each stream performs an
+unlearning step that destroys one group it has already learned. The destroyed
+group reads 5.00 percent afterwards in all fifteen streams, which is exactly
+chance for a twenty-class task, so the damage is complete rather than partial.
+If the indicators report anything about the health of a model, a model with one
+group destroyed should read worse than the same model one step earlier.
 
-**Experiment.** Experiment 4 in the explainer.
+The comparison is between boundary 9 and boundary 10 of the same stream. These
+differ by the unlearning step alone. Both readings are taken on the same
+in-stream images through the same protocol, so nothing but the model changes.
+
+Table 8 also gives the size of an ordinary learning step, for scale. That number
+is the average absolute change in the indicator from one boundary to the next
+over the stream, excluding the first step, because Section 5.1 shows the first
+step is not an ordinary one. Without it there is no way to judge whether the
+movement at the unlearn is large or small.
+
+Table 8. The unlearning step, averaged over the fifteen streams, on the
+in-stream images. The last column counts streams in which the indicator moved in
+the direction the measure reports as healthy. The final row of each block is the
+average absolute change across one ordinary learning step, over the 120 steps
+after the first.
+
+| Quantity | Boundary 9 | Boundary 10 | Change | Healthy direction |
+| --- | --- | --- | --- | --- |
+| Accuracy of the destroyed group, percent | . | 5.00 | . | . |
+| Effective rank | 2.095 | 3.675 | +1.580 | 15 of 15 |
+| Effective rank, one ordinary learning step | . | . | 0.162 | . |
+| srank | 81.1 | 154.7 | +73.6 | 15 of 15 |
+| srank, one ordinary learning step | . | . | 10.025 | . |
+
+Both rank measures rise at the unlearning step, in every stream. A rise is the
+direction these measures report as healthy. So on a model whose accuracy on one
+group has just been reduced to chance, both indicators read better than they did
+before the damage.
+
+The movement is also large beside ordinary learning. Effective rank moves 1.580
+at the unlearn against 0.162 for a typical learning step, which is 9.8 times as
+far and in the opposite direction. srank moves 73.6 against 10.025, which is 7.3
+times as far. A measure that barely responds to eight groups of learning and then
+moves roughly ten times further, in the healthy direction, when a group is
+destroyed is not reporting the health of the model.
+
+The accuracy of the destroyed group before the unlearning step is not recorded in
+the rescaling-control file, which is why that cell is empty. It is not needed for
+the comparison: a reading of exactly chance establishes that the group is gone.
+
+Section 5.5 asks what the indicators are responding to instead.
+
+**Experiment.** The rescaling control, boundary 9 against boundary 10.
 
 **Notebook.** `46_rescaling_control.ipynb`.
 
-**Tables to include.** Accuracy after unlearning against chance. Indicator
-movement for an ordinary step and for the unlearn, with the ratio between
-them. srank needs a numeric row; the 14 November record gives only its
-direction, so the number must be read from the stored records before this
-section is written.
-
-**Figure.** The three movements as a bar chart on one axis.
-
-**Status.** To write. One number still to be extracted.
+**Status.** Written. The srank row was read from the stored records on 17
+November; earlier records gave its direction only.
 
 ## 5.5 The contribution of weight scale
 
-**Contents.** The mechanism: both rank measures divide the singular values by
-their sum, so rescaling the feature matrix cannot move them, but the path from
-generated weights to features passes through ReLU and through fixed batch
-statistics, so a change in weight scale does move them. The measured share of
-the unlearn movement that weight scale accounts for, across fifteen pairs.
-The earlier single-pair figure and why it did not replicate.
+Both rank measures divide the singular values of the feature matrix by their
+sum, so multiplying the whole feature matrix by a constant cannot change either
+of them. That property is usually read as meaning the measures are free of
+scale. It does not follow. The path from the generated weights to the feature
+matrix passes through a ReLU, which is not linear, and through BatchNorm
+statistics that are held fixed, so a change in the size of the weights does not
+reach the features as a single multiplying constant and the normalisation does
+not remove it.
 
-**Experiment.** Experiment 4 in the explainer, rescaling arm.
+The unlearning step changes the size of the generated weights. Averaged over the
+fifteen streams, the weight norm after the unlearn is 0.757 of its value before.
+That is a large change in one step, and it is in the shrinking direction. So the
+rise reported in Section 5.4 has a second possible explanation that has nothing
+to do with the representation.
+
+Two interventions separate the two explanations, and they are not equivalent.
+The first takes the damaged model and scales its generated weights back up to the
+norm they had before the unlearn, which asks how much of the rise survives when
+the size is held fixed. The second takes the undamaged model and shrinks its
+weights by the same factor the unlearn produced, changing nothing else, which
+asks how much of the rise the size alone can produce.
+
+Table 9. The two interventions, averaged over the fifteen streams, on the
+in-stream images. The share is the ratio of the averages, not the average of the
+per-run ratios, because several runs have a change near zero and dividing by it
+gives per-run shares ranging from below minus one to above one.
+
+| Quantity | Effective rank | srank |
+| --- | --- | --- |
+| Change at the unlearn | +1.580 | +73.6 |
+| Change with the weight norm held at its boundary 9 value | +0.754 | +37.7 |
+| Change produced by shrinking the undamaged model alone | +1.314 | +53.9 |
+| Share carried by the weight norm, first intervention | 52.3 percent | 48.8 percent |
+| Share carried by the weight norm, second intervention | 83.2 percent | 73.3 percent |
+
+The weight norm carries a large part of the movement on both measures, and the
+two interventions do not agree on how large. On effective rank they give 52.3
+percent and 83.2 percent, a gap of about a third of the whole change. On srank
+they give 48.8 percent and 73.3 percent. The two paths would agree if the size
+and the direction contributed independently. They do not, so there is no single
+number for the share and both have to be reported.
+
+What survives the first intervention is still in the unhealthy direction for the
+argument of Section 5.4. Holding the norm fixed leaves +0.754 on effective rank,
+which is 4.7 times the size of an ordinary learning step from Table 8, in 14 of
+the 15 streams. So the weight scale does not explain the result away. The reading
+still improves after the damage.
+
+Two limits. The interventions change the weight norm by rescaling, which is a
+single global factor and not the kind of change training produces, so they bound
+the contribution rather than measure it as training would. And the second
+intervention moves in the same direction in 11 of 15 streams against 14 of 15 for
+the first, so it is the less consistent of the two.
+
+**Experiment.** The rescaling control, all four arms.
 
 **Notebook.** `46_rescaling_control.ipynb`.
 
-**Table to include.** Movement as measured, movement with weight scale held
-fixed, and the share explained.
-
-**Status.** To write.
+**Status.** Written. The srank column was read from the stored records on 17
+November.
 
 ## 5.6 Comparison across task orderings, and a retraction
 
@@ -535,7 +618,7 @@ in-stream images. The matched statistics are measured on 2048 training images
 from the nine learned groups, with the BatchNorm layers in training mode and a
 cumulative average, so the result does not depend on the order of the batches.
 
-Table 8. Each measure at the start and the end of the stream, read twice from
+Table 10. Each measure at the start and the end of the stream, read twice from
 the same models. The fixed columns use the protocol of Sections 5.1 to 5.7. The
 matched columns use statistics measured from the model's own weights. The
 hypernetwork rows are the mean over five seeds of ordering A, the control rows
@@ -563,7 +646,7 @@ moved its statistics, and they separate from the first group onward.
 
 The control is learning throughout the stream that produces its fall. Its fixed
 reading of 1.14 at boundary 9 is lower than any value the hypernetwork reaches,
-and it is taken from a network that reaches the accuracy in Table 10 on each
+and it is taken from a network that reaches the accuracy in Table 12 on each
 group at the moment that group is learned. An indicator that reports a severe
 loss on a network with no loss to report is not measuring the quantity it is
 read for.
@@ -594,7 +677,7 @@ route at both boundaries, which is the shared-direction result of Section 5.3.
 On the matched route the hypernetwork rises from 0.805 to 0.865 while the
 control falls from 0.982 to 0.709.
 
-Table 9 locates where the fall on the fixed route happens. The 256 by 2048
+Table 11 locates where the fall on the fixed route happens. The 256 by 2048
 feature matrix is read at the classifier's input, which in a ResNet50 is the
 output of the last ReLU, so every value in it is non-negative. If the fixed
 statistics shift the whole signal upward, the ReLU removes little, every image
@@ -602,9 +685,9 @@ gives a similar row, and effective rank falls for that reason alone. The same
 matrix was therefore read one step earlier, at the input of the last ReLU, where
 negative values are still present.
 
-Table 9. Effective rank and mean row share on the fixed route, read at the input
+Table 11. Effective rank and mean row share on the fixed route, read at the input
 of the last ReLU and at its output, with the share of values the ReLU sets to
-zero. Same models and same images as Table 8.
+zero. Same models and same images as Table 10.
 
 | Measure | Network | Before, b0 | Before, b9 | After, b0 | After, b9 |
 | --- | --- | --- | --- | --- | --- |
@@ -624,7 +707,7 @@ remove. The collapse therefore occurs in the linear part of the network, where
 dividing by a running variance of one that does not match the variance the
 weights produce compounds layer by layer.
 
-Table 10. Accuracy of the control network, to be read from the run log.
+Table 12. Accuracy of the control network, to be read from the run log.
 
 **Table to include.** Three rows, one per seed, with the mean accuracy over the
 nine groups at the moment each group is learned, and the mean accuracy of those
@@ -638,8 +721,98 @@ results.
 **Notebooks.** `51_an_ordinary_network_on_the_same_stream.ipynb`,
 `52_both_buffer_routes_on_the_hypernetwork.ipynb`.
 
-**Status.** Written except for Table 10. Ordering A only on both halves, and
+**Status.** Written except for Table 12. Ordering A only on both halves, and
 the control has three seeds against the hypernetwork's five.
+
+---
+
+## 5.9 Learning speed on the held-out group
+
+Section 5.2 reports one number per probe run: the accuracy reached after a fixed
+budget of 250 steps. That number mixes two quantities that the loss-of-plasticity
+literature keeps apart. The first is speed, meaning how quickly the model fits
+the new task. The second is the ceiling, meaning how well it can do once it has
+finished. A model that has lost plasticity is expected to be slower, and the
+usual evidence for that is a learning curve rather than a single endpoint.
+
+No new run was needed. The probe already recorded four readings on every curve,
+at steps 62, 125, 188 and 250, each with the training loss and the test accuracy.
+Runs are compared in matched pairs. A boundary 0 run and a boundary 9 run that
+share an ordering, a seed, a learning rate and a repetition number started from
+the same fresh task code and saw the same batches in the same order, so they
+differ only in the model being probed. Pairing removes the spread that comes from
+the starting code, which is the largest source of noise in this measurement.
+
+Table 13. Test accuracy on the held-out group at each of the four readings,
+averaged over the runs at that boundary, with the paired gap against boundary 0
+beneath. Boundaries 0 and 9 use all fifteen streams; boundary 4 is ordering A
+only. A star marks a gap larger than its own 95 percent interval.
+
+| Boundary | Step 62 | Step 125 | Step 188 | Step 250 | Runs |
+| --- | --- | --- | --- | --- | --- |
+| t = 0 | 9.78 | 15.07 | 18.47 | 21.27 | 495 |
+| t = 4 | 30.58 | 36.33 | 36.44 | 38.84 | 165 |
+| t = 9 | 32.85 | 36.96 | 38.25 | 39.57 | 495 |
+| gap, t = 4 minus t = 0 | +20.78* | +21.15* | +17.69* | +17.63* | 165 |
+| gap, t = 9 minus t = 0 | +23.07* | +21.89* | +19.78* | +18.29* | 495 |
+
+The gap between the end of the stream and the start is widest at the first
+reading and narrows from there. It is +23.07 points at step 62 and +18.29 points
+at step 250. That is the shape of a difference in speed. A difference in ceiling
+alone would show the opposite shape, with the two curves close early and
+separating as they approach their limits.
+
+The first reading also lies outside the range the untrained generator reaches at
+all. At step 62 the end-of-stream model is at 32.85 percent, which is higher than
+the 21.27 percent the untrained generator reaches after the whole budget of 250
+steps. One quarter of the budget at boundary 9 beats the full budget at boundary
+0.
+
+The training loss agrees. At boundary 0 it moves from 3.00 to 2.31 over the
+budget. At boundary 9 it moves from 1.91 to 0.70. The model late in the stream
+starts lower and falls further, so the effect is present in fitting the probe
+task and not only in generalising from it.
+
+Table 14 separates speed from the ceiling directly. For each run, its accuracy at
+step 62 is divided by its own accuracy at step 250. The result says how much of
+that run's own final result was already reached early. Dividing each run by its
+own ceiling is what makes this a measure of speed: a model that ends higher while
+moving at the same pace gives the same share.
+
+Table 14. Share of a run's own step-250 accuracy already reached at step 62,
+averaged over the runs at that boundary, with the paired gap against boundary 0
+and its 95 percent interval.
+
+| Boundary | Share at step 62 | Paired gap against t = 0 | 95 percent interval | Runs |
+| --- | --- | --- | --- | --- |
+| t = 0 | 0.476 | . | . | 495 |
+| t = 4 | 0.787 | +0.299 | 0.052 | 165 |
+| t = 9 | 0.837 | +0.361 | 0.028 | 495 |
+
+The share rises from 0.476 to 0.837 over the stream, and the paired gain of
++0.361 is more than twelve times its own interval. The model late in the stream
+is faster at the held-out group, not only better at it. This is the opposite of
+the behaviour a loss of plasticity predicts, measured on the quantity that
+literature asks about.
+
+One comparison in this section disagrees with Section 5.3 and both numbers are
+reported. Section 5.3 finds the accuracy endpoint complete at boundary 4, with no
+detectable change from boundary 4 to boundary 9. The speed share does change over
+that interval. On ordering A, where boundary 4 was measured, the share rises by
++0.076 from boundary 4 to boundary 9. Counting every repetition as an observation
+gives a 95 percent interval of 0.044, and counting each seed once, which is the
+conservative treatment because the eleven repetitions of one seed probe the same
+two models, gives 0.063. The gain is larger than both intervals, but it is larger
+than the conservative one by a small margin, and it rests on five seeds of a
+single ordering. It is reported as evidence that the speed gain continues past the
+point where the accuracy endpoint stops, and not as a settled result.
+
+**Experiment.** No new run. Read from the probe records already in storage.
+
+**Script.** `scripts/learning_speed.py`.
+
+**Status.** Written. The boundary 4 rows are ordering A only, which is stated in
+the captions.
 
 ---
 
