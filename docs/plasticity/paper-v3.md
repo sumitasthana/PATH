@@ -496,14 +496,16 @@ Table 8. Effective rank at the classifier at boundary 9, read through the fixed
 reference code and through the codes each stream trained. The five-stream rows
 are ordering A and are the same models and images as Tables 4 to 7. The
 fifteen-stream rows are all three orderings, and the matched route was not run
-on them.
+on them. The last column is the sum over the 53 BatchNorm layers of the base-10
+logarithm of the measured spread, which is zero if the protocol's assumption
+holds at every layer.
 
-| Streams | Code | Fixed statistics | Matched statistics |
-| --- | --- | --- | --- |
-| Five, ordering A | reference | 2.789 | 143.001 |
-| Five, ordering A | trained, averaged | 3.837 | 137.542 |
-| Fifteen, all orderings | reference | 2.095 | . |
-| Fifteen, all orderings | trained, averaged | 2.792 | . |
+| Streams | Code | Fixed statistics | Matched statistics | Total log spread |
+| --- | --- | --- | --- | --- |
+| Five, ordering A | reference | 2.789 | 143.001 | 20.42 |
+| Five, ordering A | trained, averaged | 3.837 | 137.542 | 13.17 |
+| Fifteen, all orderings | reference | 2.095 | . | . |
+| Fifteen, all orderings | trained, averaged | 2.792 | . | . |
 
 Under the fixed statistics the code matters. A trained code reads 3.837 against
 the reference code's 2.789, a ratio of 1.38, on the same model and the same
@@ -515,6 +517,17 @@ Under matched statistics the code stops mattering. The same comparison reads
 137.542 against 143.001, a ratio of 0.96. When each generated network is read
 through statistics that match it, which code produced the weights barely
 changes the answer.
+
+The reason is that a trained code sits closer to what the protocol assumes. The
+last column of Table 8 adds up, across the 53 BatchNorm layers, how far each
+layer's measured spread is from the assumed value of one, on a logarithmic
+scale so that layers above and below one do not cancel. The reference code
+reaches 20.42 and the trained codes 13.17. Per layer the average distance is
+0.393 against 0.268. The protocol is wrong about both, and it is less wrong
+about a code the generator has trained, which is why that code is penalised
+less. This quantity is a measure of the mismatch and not the growth itself: the
+spreads are measured along the matched path, so their sum does not predict the
+size of the values in Table 6.
 
 The code sensitivity is therefore not a second trap. It is the fixed-statistics
 result seen from another angle, and a reader who corrects the statistics has
@@ -540,7 +553,9 @@ results.
 control has three seeds against the hypernetwork's five, and the depth and
 four-arm readings in Tables 6 and 7 are on the hypernetwork alone. The
 matched route has not been read through the trained codes on orderings B and C,
-which is why two cells of Table 8 are empty.
+which is why two cells of Table 8 are empty. The layer spreads in the last
+column were read on 18 November, five seeds of ordering A at boundary 9, one
+set of measured statistics per code.
 
 ---
 

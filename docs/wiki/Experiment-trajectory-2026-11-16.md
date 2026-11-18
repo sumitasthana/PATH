@@ -1407,3 +1407,41 @@ arm, which is the one every comparison rests on, stays near 1 throughout and is
 not affected.
 
 **Cost.** Five model files, forward passes only, no training.
+
+## The code gap has a measured reason: a trained code sits closer to a spread of one
+
+Notebook 52, three new cells, five seeds of ordering A at boundary 9. For each
+model the per-layer BatchNorm spread was read under the fixed reference code
+and under each of the nine codes the stream actually trained. No training, one
+set of measured statistics per code.
+
+The protocol assumes a spread of 1.000 at every layer. The question is how far
+each code's weights put the real spread from that, added up over the 53 layers.
+A sum of logarithms is used so that a layer at 0.5 and a layer at 2.0 count as
+equally wrong instead of cancelling.
+
+| Code | Readings | Mean spread | Mean distance per layer, log10 | Total, log10 | Layers off by more than 0.1 |
+| --- | --- | --- | --- | --- | --- |
+| reference | 5 | 2.753 | 0.393 | 20.42 | 51.0 |
+| trained, each counted once | 45 | 2.021 | 0.268 | 13.17 | 46.4 |
+
+**The guess was right.** A trained code sits closer to what the protocol
+assumes, on every one of the three summaries. So the 1.38 times gap between a
+trained code and the reference code under the fixed statistics has a measured
+reason, and the sentence can go in the paper. It is now the last column of
+Table 8 in Section 5.2.
+
+**What the total does not say.** It is a measure of the mismatch, not of the
+growth. The spreads are measured along the matched path, so their sum does not
+predict the size of the values on the protocol route: the sum gives 20.42 while
+the measured scale at the last block is 1.09e14. The two are related but they
+are not the same quantity, and the write-up says so.
+
+**One thing to look at next.** Under matched statistics srank reads 248.200 at
+boundary 0 and 248.400 at boundary 9, against a ceiling of 256, which is the
+number of pictures in the reading set. A measure sitting at 97 percent of its
+ceiling cannot report a change in either direction. Whether srank is saturated
+on this route has not been tested and would change how its matched-route rows
+should be read.
+
+**Cost.** Five model files, forward passes only, no training.
