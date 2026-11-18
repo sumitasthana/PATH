@@ -75,8 +75,8 @@ What each part is for:
 ## Numbering
 
 Tables run in reading order: Table 1 in Section 4, Tables 2 and 3 in 5.1,
-Tables 4 and 5 in 5.2, Tables 6 and 7 in 5.3. Figures the same way: Figure 1
-in 5.1, Figure 2 in 5.2, Figure 3 in 5.3. A section written out of order must
+Tables 4 to 8 in 5.2, Tables 9 and 10 in 5.3. Figures the same way: Figure 1
+in 5.1, Figure 2 in 5.3, Figure 3 in 5.4. A section written out of order must
 take the numbers its position gives it, not the next free number.
 
 ## Captions
@@ -91,7 +91,7 @@ figure. Keep that. Both are plain Normal paragraphs, not Word caption fields.
   once, in the sentence "Dormant units rise on every run of every ordering",
   which no table supports. Do not repeat that.
 - **No number from the retired eight-task design**, anywhere except the
-  Section 8 table of work not yet repeated, and the Section 5.6 retraction
+  Section 8 table of work not yet repeated, and the Section 5.7 retraction
   where the old value is the thing being retracted.
 - **Do not invent a number.** If a record gives a direction but no value, read
   the value from the stored records or leave the row out and say so.
@@ -125,20 +125,20 @@ to learn", is the one rejected as sensational.
 
 ## Order to fill the sections
 
-Write 5.3 first. It is the central result, and the rest of the paper is
+Write 5.4 first. It is the central result, and the rest of the paper is
 arranged around it. Then the other result sections, then the method sections
 they depend on, then the framing sections last.
 
 | Order | Section | Why here |
 | --- | --- | --- |
-| 1 | 5.3 Relation between indicator change and measured learning | Written. Tables 6 and 7, Figure 3. |
+| 1 | 5.4 Relation between indicator change and measured learning | Written. Tables 11 and 12, Figure 3. |
 | 2 | 5.1 Indicator trajectories | Written. Tables 2 and 3, Figure 1. |
-| 3 | 5.2 Directly measured learning ability | Written. Tables 4 and 5, Figure 2. |
-| 4 | 5.4 Indicator response to a damaged model | Written 17 November. Table 8. |
-| 5 | 5.5 The contribution of weight scale | Written 17 November. Table 9. |
-| 6 | 5.6 Orderings and the retraction | Independent. |
-| 7 | 5.7 Reproducibility of the probe | Independent. Short. |
-| 8 | 5.8 The reading protocol and the indicator values | Written 17 and 18 November. Tables 10 to 14. Table 14 still a stub. |
+| 3 | 5.3 Directly measured learning ability | Written. Tables 9 and 10, Figure 2. |
+| 4 | 5.5 Indicator response to a damaged model | Written 17 November. Table 13. |
+| 5 | 5.6 The contribution of weight scale | Written 17 November. Table 14. |
+| 6 | 5.7 Orderings and the retraction | Independent. |
+| 7 | 5.8 Reproducibility of the probe | Independent. Short. |
+| 8 | 5.2 The reading protocol and the indicator values | Written 17 and 18 November. Tables 4 to 8. Table 8 still a stub. |
 | 8b | 5.9 Learning speed on the held-out group | Written 17 November. Tables 15 and 16. |
 | 9 | 3.1, 3.2, 3.5, 3.6 Method sections | Write once the results fix what must be described. |
 | 10 | 4.1, 4.2 Experimental design | Same reason. |
@@ -151,25 +151,25 @@ changes. They do not need to be rewritten.
 ## Where the data is
 
 All numbers for version 3 are already recorded. No run is needed to write any
-section in the table above, with the single exception noted under 5.4.
+section in the table above, with the single exception noted under 5.5.
 
 | Section | Record | Notebook |
 | --- | --- | --- |
 | 5.1 | `docs/wiki/Experiment-trajectory-2026-11-13.md`, `-2026-11-14.md` | `44_order_A_five_seeds`, `45_orders_B_and_C` |
-| 5.2, 5.3, 5.7 | `docs/wiki/Experiment-trajectory-2026-11-14c.md` | `47_probe_on_the_revised_streams` |
-| 5.4, 5.5 | `docs/wiki/Experiment-trajectory-2026-11-14b.md` | `46_rescaling_control` |
-| 5.6 | `docs/wiki/Experiment-trajectory-2026-11-14.md` | `44`, `45` |
+| 5.3, 5.4, 5.8 | `docs/wiki/Experiment-trajectory-2026-11-14c.md` | `47_probe_on_the_revised_streams` |
+| 5.5, 5.6 | `docs/wiki/Experiment-trajectory-2026-11-14b.md` | `46_rescaling_control` |
+| 5.7 | `docs/wiki/Experiment-trajectory-2026-11-14.md` | `44`, `45` |
 | 3.2 | `docs/wiki/Experiment-trajectory-2026-11-13.md` | `43_learning_rate_sweep` |
-| 5.8 | `docs/wiki/Experiment-trajectory-2026-11-16.md` | `51_an_ordinary_network_on_the_same_stream`, `52_both_buffer_routes_on_the_hypernetwork` |
+| 5.2 | `docs/wiki/Experiment-trajectory-2026-11-16.md` | `51_an_ordinary_network_on_the_same_stream`, `52_both_buffer_routes_on_the_hypernetwork` |
 
 A plain-English walkthrough of all six experiments, with every table, is in
 `ops-docs/revised-regime-explainer.md`. It is a useful source for the result
 sections, but its headings are declarative and must not be copied into the
 paper.
 
-## Section 5.8 and what it does to the rest
+## Section 5.2 and what it does to the rest
 
-Section 5.8 was written on 17 November, after this plan. It reads the Section
+Section 5.2 was written on 17 November, after this plan. It reads the Section
 5.1 models a second way, through BatchNorm statistics measured from their own
 weights rather than the fixed initialisation template, and adds an ordinary
 ResNet50 control trained on the same nine groups. On the matched route the
@@ -187,36 +187,37 @@ the section now reports the two separately.
 
 This changes the reading of Section 5.1 but not its numbers. The one sentence
 in 5.1 that treated the fall as a property of the stream now points forward to
-5.8. Two decisions are open and are the user's to make.
+5.2.
 
-1. **Where the section goes.** It is at the end of Results because that needed
-   no renumbering. Its argument conditions Sections 5.1 and 5.3, so it reads
-   better immediately after 5.1. Moving it renumbers six sections and three
-   tables.
-2. **What the abstract claims.** The abstract still says the indicators fall in
-   every run and treats that as the finding. With 5.8 the stronger and more
+The section was moved on 18 November. It now sits directly after 5.1 as
+Section 5.2, because its argument conditions 5.1 and 5.4. The move renumbered
+the six sections after it and all of Tables 4 to 14. One decision is still
+open and is the user's to make.
+
+1. **What the abstract claims.** The abstract still says the indicators fall in
+   every run and treats that as the finding. With 5.2 the stronger and more
    defensible claim is that the protocol decides the direction, demonstrated on
    a control that has no plasticity problem. The abstract has not been touched.
 
 ## The number that was missing is now read
 
-Section 5.4 needed srank's movement at the unlearn step, which earlier records
+Section 5.5 needed srank's movement at the unlearn step, which earlier records
 gave only as a direction. It was read from the rescaling-control file in R2 on
 17 November with no new run. srank moves +73.6 at the unlearn in 15 of 15
 streams, against +1.580 for effective rank, and the two interventions give
 48.8 percent and 73.3 percent against effective rank's 52.3 and 83.2.
 
-The size of an ordinary learning step, which Section 5.4 needs for scale, was
+The size of an ordinary learning step, which Section 5.5 needs for scale, was
 read the same way from the per-stream indicator logs: 0.162 for effective rank
 and 10.025 for srank, as the average absolute change over the 120 learning
 steps after the first.
 
 ## Table numbering, and the pass still owed
 
-Tables now run 2 to 14 in reading order with no gaps. Sections 5.6 and 5.7 are
-still stubs and 5.7 carries a table. When they are written they take the numbers
-their position gives them, which shifts the tables in 5.8 and 5.9 again. Do that
-shift once, when both are written, rather than after each one.
+Tables now run 2 to 14 in reading order with no gaps. Sections 5.7 and 5.8 are
+still stubs and 5.8 carries a table. When they are written they take the numbers
+their position gives them, which shifts the tables in 5.9 and the appendix
+again. Do that shift once, when both are written, rather than after each one.
 
 ## Where version 3 stands against the 14 November shortlist
 
@@ -225,11 +226,11 @@ are fully re-measured on the present design, two partly, one not at all.
 
 | Shortlist finding | Section in version 3 | State |
 | --- | --- | --- |
-| 1. The diagnostics do not match direct measurement | 5.2, 5.3 | One of six arms repeated |
-| 2. The diagnostics call a damaged model healthy | 5.4 | Repeated, fifteen pairs |
-| 3. The mechanism | 5.5 | Rescaling arm repeated, random-direction arm not |
+| 1. The diagnostics do not match direct measurement | 5.3, 5.4 | One of six arms repeated |
+| 2. The diagnostics call a damaged model healthy | 5.5 | Repeated, fifteen pairs |
+| 3. The mechanism | 5.6 | Rescaling arm repeated, random-direction arm not |
 | 4. Curvature depends on the measuring point | not in version 3 | Not repeated |
-| 5. Single-run comparisons manufacture effects | 5.6 | Repeated |
+| 5. Single-run comparisons manufacture effects | 5.7 | Repeated |
 
 Findings 3 and 4 are therefore thin. Section 8 lists what would close them.
 Whether to run those arms before submission is an open decision, not something
