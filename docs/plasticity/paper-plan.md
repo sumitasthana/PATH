@@ -75,7 +75,7 @@ What each part is for:
 ## Numbering
 
 Tables run in reading order: Table 1 in Section 4, Tables 2 and 3 in 5.1,
-Tables 4 to 8 in 5.2, Tables 9 and 10 in 5.3. Figures the same way: Figure 1
+Tables 4 to 9 in 5.2, Tables 10 and 11 in 5.3. Figures the same way: Figure 1
 in 5.1, Figure 2 in 5.3, Figure 3 in 5.4. A section written out of order must
 take the numbers its position gives it, not the next free number.
 
@@ -131,15 +131,15 @@ they depend on, then the framing sections last.
 
 | Order | Section | Why here |
 | --- | --- | --- |
-| 1 | 5.4 Relation between indicator change and measured learning | Written. Tables 11 and 12, Figure 3. |
+| 1 | 5.4 Relation between indicator change and measured learning | Written. Tables 12 and 13, Figure 3. |
 | 2 | 5.1 Indicator trajectories | Written. Tables 2 and 3, Figure 1. |
-| 3 | 5.3 Directly measured learning ability | Written. Tables 9 and 10, Figure 2. |
-| 4 | 5.5 Indicator response to a damaged model | Written 17 November. Table 13. |
-| 5 | 5.6 The contribution of weight scale | Written 17 November. Table 14. |
+| 3 | 5.3 Directly measured learning ability | Written. Tables 10 and 11, Figure 2. |
+| 4 | 5.5 Indicator response to a damaged model | Written 17 November. Table 14. |
+| 5 | 5.6 The contribution of weight scale | Written 17 November. Table 15. |
 | 6 | 5.7 Orderings and the retraction | Independent. |
 | 7 | 5.8 Reproducibility of the probe | Independent. Short. |
-| 8 | 5.2 The reading protocol and the indicator values | Written 17 and 18 November. Tables 4 to 8. Table 8 still a stub. |
-| 8b | 5.9 Learning speed on the held-out group | Written 17 November. Tables 15 and 16. |
+| 8 | 5.2 The reading protocol and the indicator values | Written 17 and 18 November. Tables 4 to 9. Table 9 still a stub. |
+| 8b | 5.9 Learning speed on the held-out group | Written 17 November. Tables 16 and 17. |
 | 9 | 3.1, 3.2, 3.5, 3.6 Method sections | Write once the results fix what must be described. |
 | 10 | 4.1, 4.2 Experimental design | Same reason. |
 | 11 | 1 Introduction, 6 Discussion, 7 Limitations | Last. Claims must already be fixed. |
@@ -191,8 +191,15 @@ in 5.1 that treated the fall as a property of the stream now points forward to
 
 The section was moved on 18 November. It now sits directly after 5.1 as
 Section 5.2, because its argument conditions 5.1 and 5.4. The move renumbered
-the six sections after it and all of Tables 4 to 14. One decision is still
-open and is the user's to make.
+the six sections after it and all of Tables 4 to 14.
+
+On the same day the task-code result was written in. The conceptual half, that
+a rank value for a hypernetwork belongs to the model and the code together,
+went into 3.3. The measured half became Table 8 in 5.2, which moved every table
+from 8 onward up by one. The 1.4 times code gap holds under the fixed
+statistics and disappears under matched ones, so it is reported as the same
+result seen from another angle rather than as separate evidence. One decision
+is still open and is the user's to make.
 
 1. **What the abstract claims.** The abstract still says the indicators fall in
    every run and treats that as the finding. With 5.2 the stronger and more
@@ -214,7 +221,7 @@ steps after the first.
 
 ## Table numbering, and the pass still owed
 
-Tables now run 2 to 14 in reading order with no gaps. Sections 5.7 and 5.8 are
+Tables now run 2 to 17 in reading order with no gaps. Sections 5.7 and 5.8 are
 still stubs and 5.8 carries a table. When they are written they take the numbers
 their position gives them, which shifts the tables in 5.9 and the appendix
 again. Do that shift once, when both are written, rather than after each one.

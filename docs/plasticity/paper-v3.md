@@ -118,6 +118,14 @@ fixed BatchNorm statistics with the model in evaluation mode, one layer (the
 sets of 256 images each. What the three image sets are and why they differ in
 distance from the training distribution.
 
+Two of those four choices change the value that is read, not only which model
+is read. The fixed BatchNorm statistics decide the direction of every result in
+Section 5.1, and the choice of code shifts the level. Section 5.2 measures
+both. This section should therefore state plainly that a rank value reported
+for a hypernetwork is a property of the model and the code together, and that
+the reference code is a choice made to keep the comparison across boundaries
+honest rather than a neutral default.
+
 **Carry over.** Section 3.2 of version 1 is correct as written and applies
 unchanged to the present design.
 
@@ -315,7 +323,7 @@ moved its statistics, and they separate from the first group onward.
 
 The control is learning throughout the stream that produces its fall. Its fixed
 reading of 1.14 at boundary 9 is lower than any value the hypernetwork reaches,
-and it is taken from a network that reaches the accuracy in Table 8 on each
+and it is taken from a network that reaches the accuracy in Table 9 on each
 group at the moment that group is learned. An indicator that reports a severe
 loss on a network with no loss to report is not measuring the quantity it is
 read for.
@@ -472,7 +480,49 @@ precision, so no overflow occurs. How much relative precision remains at that
 magnitude has not been measured. The measured arm, on which every comparison in
 this section rests, stays near one throughout.
 
-Table 8. Accuracy of the control network, to be read from the run log.
+One further choice is specific to a hypernetwork and is settled by the same
+result. The generator does not hold one set of weights. It writes a set from
+whatever 32-number task code it is handed, so a different code gives a
+different ResNet50 from the same generator. An instruction to read the rank of
+such a model is incomplete until the code is named. Every reading in this paper
+uses one fixed reference code, drawn from seed 20261030 and never trained, so
+that a change between boundaries is a change in the generator and not in the
+code.
+
+Table 8 asks what that choice costs. The same models are read a second time
+through the nine codes each stream actually trained, averaged over the nine.
+
+Table 8. Effective rank at the classifier at boundary 9, read through the fixed
+reference code and through the codes each stream trained. The five-stream rows
+are ordering A and are the same models and images as Tables 4 to 7. The
+fifteen-stream rows are all three orderings, and the matched route was not run
+on them.
+
+| Streams | Code | Fixed statistics | Matched statistics |
+| --- | --- | --- | --- |
+| Five, ordering A | reference | 2.789 | 143.001 |
+| Five, ordering A | trained, averaged | 3.837 | 137.542 |
+| Fifteen, all orderings | reference | 2.095 | . |
+| Fifteen, all orderings | trained, averaged | 2.792 | . |
+
+Under the fixed statistics the code matters. A trained code reads 3.837 against
+the reference code's 2.789, a ratio of 1.38, on the same model and the same
+images. The fifteen-stream rows give the same ratio, 2.792 against 2.095. The
+two subsets differ because ordering A falls least of the three (Table 3), and
+the fifteen-stream reference value is the one Table 2 reports.
+
+Under matched statistics the code stops mattering. The same comparison reads
+137.542 against 143.001, a ratio of 0.96. When each generated network is read
+through statistics that match it, which code produced the weights barely
+changes the answer.
+
+The code sensitivity is therefore not a second trap. It is the fixed-statistics
+result seen from another angle, and a reader who corrects the statistics has
+corrected it too. What survives is the reporting rule: a rank level published
+for a hypernetwork is a property of the model and the code together, so the
+code has to be stated for the number to be comparable with anyone else's.
+
+Table 9. Accuracy of the control network, to be read from the run log.
 
 **Table to include.** Three rows, one per seed, with the mean accuracy over the
 nine groups at the moment each group is learned, and the mean accuracy of those
@@ -486,9 +536,11 @@ results.
 **Notebooks.** `51_an_ordinary_network_on_the_same_stream.ipynb`,
 `52_both_buffer_routes_on_the_hypernetwork.ipynb`.
 
-**Status.** Written except for Table 8. Ordering A only throughout. The
+**Status.** Written except for Table 9. Ordering A only throughout. The
 control has three seeds against the hypernetwork's five, and the depth and
-four-arm readings in Tables 6 and 7 are on the hypernetwork alone.
+four-arm readings in Tables 6 and 7 are on the hypernetwork alone. The
+matched route has not been read through the trained codes on orderings B and C,
+which is why two cells of Table 8 are empty.
 
 ---
 
@@ -509,13 +561,13 @@ the question the two endpoints put is whether a model that has learned nine
 tasks fits a new one better or worse than a freshly started model given the
 same budget. A loss of plasticity is the case where it does worse.
 
-Every run ends better than it started (Table 9, Figure 2). Accuracy goes from
+Every run ends better than it started (Table 10, Figure 2). Accuracy goes from
 26.20% before any task to 44.08% after nine, a gain of 17.87 points against a
 chance level of 5%. The smallest gain in the fifteen runs is 15.90 points and
 the largest is 20.49. The spread between runs is small next to the gain
 itself.
 
-Table 9. Probe accuracy on the held-out group, averaged over the fifteen runs
+Table 10. Probe accuracy on the held-out group, averaged over the fifteen runs
 and over the eleven repetitions at each point.
 
 | Point in the stream | Probe accuracy | Gain over chance |
@@ -527,10 +579,10 @@ The gain is far larger than the measurement can produce on its own. Each run
 carries its own floor, built from the spread of its eleven repetitions at
 boundary 0 and read as the smallest change that would survive that spread at
 the 5% level. The largest floor in the fifteen runs is 2.72 points, and the
-smallest gain is 15.90 (Table 10). No run comes close to its floor, so the rise
+smallest gain is 15.90 (Table 11). No run comes close to its floor, so the rise
 is not a reading error.
 
-Table 10. The gain for each run against its own noise floor. The floor is
+Table 11. The gain for each run against its own noise floor. The floor is
 1.96 s sqrt(1/11 + 1/11), where s is the standard deviation of the eleven
 boundary-0 repetitions for that run.
 
@@ -581,11 +633,11 @@ runs that gained least.
 Each of the fifteen runs gives a pair of numbers: how far an indicator moved
 over the nine tasks, and how far probe accuracy moved over the same span. Both
 vary widely. The effective-rank fall runs from 29.8% to 80.6%, a factor of
-2.7, and the probe gain from 15.90 to 20.49 points (Table 11). If the fall
+2.7, and the probe gain from 15.90 to 20.49 points (Table 12). If the fall
 reports the ability to learn, the runs that fell furthest should be the runs
 that gained least.
 
-Table 11. Change from boundary 0 to boundary 9 on the in_stream images, across
+Table 12. Change from boundary 0 to boundary 9 on the in_stream images, across
 the fifteen runs. Indicator changes are a percent of the boundary 0 value; the
 probe change is in accuracy points.
 
@@ -599,7 +651,7 @@ probe change is in accuracy points.
 | Probe accuracy | +17.87 | +15.90 | +20.49 |
 
 They are not. The correlation between the effective-rank fall and the probe
-gain is -0.054, which accounts for 0.3% of the spread in the gain (Table 12,
+gain is -0.054, which accounts for 0.3% of the spread in the gain (Table 13,
 Figure 3). srank gives -0.178 and the three dormant-unit cut-offs give +0.112
 to +0.129.
 
@@ -608,7 +660,7 @@ ability left, so the rank measures predict a positive correlation; dormant
 units are read the other way and predict a negative one. All five come out
 with the wrong sign, and the largest of them accounts for 3.2% of the spread.
 
-Table 12. Correlation between each indicator's change and the probe's change,
+Table 13. Correlation between each indicator's change and the probe's change,
 over the fifteen runs. The last column repeats the test on the boundary-9
 values themselves rather than on the changes.
 
@@ -628,7 +680,7 @@ from eleven repetitions. The dashed line is the least-squares fit. The runs
 furthest left fell most; they did not gain least.
 
 Both quantities in that test are differences, and a difference inherits the
-noise of both of its endpoints. The last column of Table 12 therefore sets the
+noise of both of its endpoints. The last column of Table 13 therefore sets the
 differences aside and asks the plainer question: among the fifteen finished
 models, does the one with the higher indicator reading fit the unseen task
 better? It does not. Effective rank gives -0.165 and srank -0.212 where a
@@ -644,7 +696,7 @@ between models, which is 46.2% of the spread by variance. An outcome measured
 that well caps any predictor at a correlation of 0.680, the square root of
 that share. That ceiling covers the change test only; the end-value test in
 the last column does not take a difference and so is not subject to it. It
-does not need to be: the largest value anywhere in Table 12 is 0.212, and at
+does not need to be: the largest value anywhere in Table 13 is 0.212, and at
 fifteen runs a correlation needs 0.514 to be separable from zero at the 5%
 level.
 
@@ -669,13 +721,13 @@ The comparison is between boundary 9 and boundary 10 of the same stream. These
 differ by the unlearning step alone. Both readings are taken on the same
 in-stream images through the same protocol, so nothing but the model changes.
 
-Table 13 also gives the size of an ordinary learning step, for scale. That number
+Table 14 also gives the size of an ordinary learning step, for scale. That number
 is the average absolute change in the indicator from one boundary to the next
 over the stream, excluding the first step, because Section 5.1 shows the first
 step is not an ordinary one. Without it there is no way to judge whether the
 movement at the unlearn is large or small.
 
-Table 13. The unlearning step, averaged over the fifteen streams, on the
+Table 14. The unlearning step, averaged over the fifteen streams, on the
 in-stream images. The last column counts streams in which the indicator moved in
 the direction the measure reports as healthy. The final row of each block is the
 average absolute change across one ordinary learning step, over the 120 steps
@@ -738,7 +790,7 @@ the size is held fixed. The second takes the undamaged model and shrinks its
 weights by the same factor the unlearn produced, changing nothing else, which
 asks how much of the rise the size alone can produce.
 
-Table 14. The two interventions, averaged over the fifteen streams, on the
+Table 15. The two interventions, averaged over the fifteen streams, on the
 in-stream images. The share is the ratio of the averages, not the average of the
 per-run ratios, because several runs have a change near zero and dividing by it
 gives per-run shares ranging from below minus one to above one.
@@ -760,7 +812,7 @@ number for the share and both have to be reported.
 
 What survives the first intervention is still in the unhealthy direction for the
 argument of Section 5.5. Holding the norm fixed leaves +0.754 on effective rank,
-which is 4.7 times the size of an ordinary learning step from Table 13, in 14 of
+which is 4.7 times the size of an ordinary learning step from Table 14, in 14 of
 the 15 streams. So the weight scale does not explain the result away. The reading
 still improves after the damage.
 
@@ -840,7 +892,7 @@ the same fresh task code and saw the same batches in the same order, so they
 differ only in the model being probed. Pairing removes the spread that comes from
 the starting code, which is the largest source of noise in this measurement.
 
-Table 15. Test accuracy on the held-out group at each of the four readings,
+Table 16. Test accuracy on the held-out group at each of the four readings,
 averaged over the runs at that boundary, with the paired gap against boundary 0
 beneath. Boundaries 0 and 9 use all fifteen streams; boundary 4 is ordering A
 only. A star marks a gap larger than its own 95 percent interval.
@@ -870,13 +922,13 @@ budget. At boundary 9 it moves from 1.91 to 0.70. The model late in the stream
 starts lower and falls further, so the effect is present in fitting the probe
 task and not only in generalising from it.
 
-Table 16 separates speed from the ceiling directly. For each run, its accuracy at
+Table 17 separates speed from the ceiling directly. For each run, its accuracy at
 step 62 is divided by its own accuracy at step 250. The result says how much of
 that run's own final result was already reached early. Dividing each run by its
 own ceiling is what makes this a measure of speed: a model that ends higher while
 moving at the same pace gives the same share.
 
-Table 16. Share of a run's own step-250 accuracy already reached at step 62,
+Table 17. Share of a run's own step-250 accuracy already reached at step 62,
 averaged over the runs at that boundary, with the paired gap against boundary 0
 and its 95 percent interval.
 
