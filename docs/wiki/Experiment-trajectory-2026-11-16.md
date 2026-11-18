@@ -1190,3 +1190,84 @@ Results moved to `buffer_route_on_hypernetwork_v5.jsonl`, because the notebook
 resumes by skipping any seed already in the file and v4 held the bad rows.
 
 **Cost.** Five model files, forward passes only, no training.
+
+## Result: the dormant unit control, and a correction to the entry above
+
+Notebook 51 re-ran with the dormant count and the pre-ReLU reading, three seeds,
+order A. The missing control exists. Both files were read straight from R2 and
+put side by side; nothing was trained for this comparison.
+
+**Dormant units, cut-off 0.01, on the in-stream pictures.**
+
+| network | t=0 measured | t=9 measured | t=0 fixed | t=9 fixed |
+|---|---|---|---|---|
+| hypernetwork, reference code | 0.0000 | 0.1278 | 0.1600 | 0.3236 |
+| hypernetwork, trained codes | . | 0.0926 | . | 0.3322 |
+| ordinary ResNet50 | 0.1562 | 0.0000 | 0.1562 | 0.5267 |
+
+**The published doubling is the reading route, and the control shows it more
+strongly than the study's own models do.** Through the fixed template the
+ordinary ResNet50 goes from 0.1562 to 0.5267, a rise of a factor of 3.4, while
+the hypernetwork goes from 0.1600 to 0.3236, a factor of 2.0. The control
+network is learning each new group of twenty classes to 57.7 percent against 5
+percent chance at the moment it reads 0.5267. So the strongest version of the
+published dormant claim is produced by a network with no plasticity problem at
+all. That is the same argument as the effective rank one and it now covers the
+third indicator.
+
+**The matched route leaves a real finding behind, and it is a sign flip.**
+Read through statistics that match the weights, the two networks move in
+opposite directions. The ordinary network starts with 15.6 percent of its units
+dormant and ends with none. The hypernetwork starts with none and ends with 12.8
+percent. Ordinary sequential training wakes units up. Generating the weights
+from a task code puts them to sleep. This is the second route-matched
+architectural difference in the study, after the mean row share, and unlike that
+one it is a difference in direction rather than in level.
+
+**The mechanism result holds on the control.** Effective rank before the last
+ReLU, through the fixed template, reads 8.3363 at boundary 0 and 1.0982 at
+boundary 9 for the ordinary network, against 7.2995 and 1.1385 after the ReLU.
+The collapse is already complete before the clipping, exactly as on the
+hypernetwork. So the claim that the rescaling causes it, not the ReLU, is now
+measured on both networks.
+
+### Correction to "the mechanism is the rescaling, not the clipping"
+
+The entry above read the rise in the share of values the ReLU cuts, 0.292 to
+0.693 under measured statistics, as a mechanism for the dormant unit rise, and
+as a property worth reporting. The control says both halves of that were wrong.
+
+**The sparsity rise is ordinary training.** The ordinary ResNet50 does the same
+thing: 0.3378 at boundary 0 to 0.5834 at boundary 9 under measured statistics.
+Both networks push more of their own signal below zero as they learn. Nothing
+about the generator is needed to explain it and it is not a finding.
+
+**It does not explain the dormant movement either.** Both networks grow this
+kind of sparsity, yet their dormant counts move in opposite directions on the
+same route. A unit counts as dormant when its average activation is small beside
+the average over all units in its layer, which is a different quantity from the
+share of values that are negative. The two can move together or apart, and here
+they move apart. The connection drawn in the entry above does not hold and
+nothing should be built on it.
+
+**One reading, also noted and not interpreted.** Mean row share before the last
+ReLU under measured statistics falls from 0.9817 to 0.4926 for the ordinary
+network and rises from 0.7271 to 0.8294 for the hypernetwork, the same split in
+direction the ordinary reading shows.
+
+**The exact zeros were checked against the per-seed rows and they hold.** The
+ordinary network reads 0.1676, 0.1471 and 0.1540 at boundary 0, drops to exactly
+0.0000 after the first group alone, and stays at 0.0000 in all three seeds at
+every one of the nine boundaries. The hypernetwork reads 0.0000 in all five
+seeds at boundary 0 and 0.1114, 0.1086, 0.1128, 0.1812 and 0.1250 at boundary 9.
+So the sign flip is not an averaging artefact and no seed disagrees with it. It
+also happens fast on the control: one group of twenty classes is enough to
+remove every dormant unit, and the remaining eight change nothing.
+
+**Limits.** Order A only, three seeds for the ordinary network against five for
+the hypernetwork. The ordinary network's floor at exactly zero means the
+measure cannot fall further, so this comparison shows a difference in direction
+and should not be read as a size.
+
+**Cost.** Three seeds trained on nine groups, about fifteen minutes each, plus
+forward passes.
