@@ -138,8 +138,8 @@ they depend on, then the framing sections last.
 | 5 | 5.5 The contribution of weight scale | Written 17 November. Table 9. |
 | 6 | 5.6 Orderings and the retraction | Independent. |
 | 7 | 5.7 Reproducibility of the probe | Independent. Short. |
-| 8 | 5.8 The reading protocol and the indicator values | Written 17 November. Tables 10, 11 and 12. Table 12 still a stub. |
-| 8b | 5.9 Learning speed on the held-out group | Written 17 November. Tables 13 and 14. |
+| 8 | 5.8 The reading protocol and the indicator values | Written 17 and 18 November. Tables 10 to 14. Table 14 still a stub. |
+| 8b | 5.9 Learning speed on the held-out group | Written 17 November. Tables 15 and 16. |
 | 9 | 3.1, 3.2, 3.5, 3.6 Method sections | Write once the results fix what must be described. |
 | 10 | 4.1, 4.2 Experimental design | Same reason. |
 | 11 | 1 Introduction, 6 Discussion, 7 Limitations | Last. Claims must already be fixed. |
@@ -175,6 +175,15 @@ weights rather than the fixed initialisation template, and adds an ordinary
 ResNet50 control trained on the same nine groups. On the matched route the
 indicators move the opposite way, and the control reproduces the published fall
 while learning normally.
+
+On 18 November the section gained the depth profile and the four-arm split.
+The protocol's error compounds to about thirteen orders of magnitude across the
+sixteen blocks, and correcting either half of it alone recovers 0.2 and 4.3
+percent of the gap at boundary 9, so the failure cannot be attributed to the
+subtraction or to the division on its own. An earlier draft said the error
+compounds layer by layer as if that explained the rank. It explains the size of
+the values and not the rank, which is already collapsed after one block, and
+the section now reports the two separately.
 
 This changes the reading of Section 5.1 but not its numbers. The one sentence
 in 5.1 that treated the fall as a property of the stream now points forward to
