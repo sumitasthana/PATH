@@ -1341,3 +1341,69 @@ all four with `mixed_buffers`, at five seeds, writing to
 
 **Cost.** One model file for the one-seed run. Five for the four-arm run, with
 boundary 0 needing none.
+
+## Result: the two BatchNorm mistakes are not separable at the end of the stream
+
+The four-arm run finished: order A, five seeds, boundaries 0 and 9, forward
+passes only. A BatchNorm layer subtracts a mean and divides by a spread, and the
+study's protocol gets both wrong. The arms fix one, the other, both, or neither.
+
+**Effective rank at the classifier, which is the last block's row.**
+
+| Arm | Boundary 0 | Boundary 9 |
+|---|---|---|
+| protocol, mean 0 and spread 1 | 5.563 | 2.789 |
+| mean only, the true mean with spread 1 | 63.615 | 3.093 |
+| spread only, mean 0 with the true spread | 32.960 | 8.860 |
+| matched, both true | 106.274 | 143.001 |
+
+**At boundary 9 neither half explains the collapse.** The gap between the
+protocol and the matched reading is 140.212. Fixing only the subtraction
+recovers 0.2 percent of it. Fixing only the division recovers 4.3 percent. The
+two together recover 100 percent. So the failure is not attributable to one of
+the two operations, and the hypothesis written before the run, that the
+un-subtracted mean kills the rank, is wrong.
+
+**At boundary 0 they almost are separable.** The same two fixes recover 57.6 and
+27.2 percent of a gap of 100.711, which sums to 84.8 percent. So the two
+mistakes add up when they are small and stop adding up when they are large. The
+measured spreads say the same thing from the other side: at boundary 0 they run
+0.362 to 2.358, and at boundary 9 they run 0.838 to 5.752.
+
+**Each fix does something visible, and each creates a new problem.** At boundary
+9, fixing the division tames the scale: the average size of the values at the
+last block falls from 1.09e14 to 1.969, close to the matched arm's 0.468. But
+the mean row share rises to 0.993, the highest of the four arms, because the
+offset that is never subtracted now dominates a signal that is no longer
+exploding. Fixing the subtraction does the opposite: mean row share falls from
+0.983 to 0.964, the lowest of the three broken arms, while the scale grows from
+1.09e14 to 1.674e14. Neither arm is a partial repair; each trades one failure
+for another.
+
+**The compounding, confirmed on five seeds.** On the protocol route at boundary
+9 the average size of the values grows from 11.87 at the first block to 1.09e14
+at the sixteenth. The matched route runs 1.203 to 0.468 across the same sixteen.
+At boundary 0 the protocol route ends at 2.968e4 rather than 1.09e14.
+
+**The rank still does not fall with depth, confirmed on five seeds.** On the
+protocol route at boundary 9 it reads 5.135 at the first block, drops to 2.337
+at the second, and ends at 2.789. Almost all of the collapse is in the first
+block, and fifteen more blocks of a scale that multiplies by ten each time do
+not lower it further.
+
+**What this is worth.** The clean mechanism claim is not available. What is
+available is a statement with numbers behind it: the protocol's error compounds
+to a factor of about 1e13 across the depth, and it cannot be repaired by
+correcting either half of it, because at the end of the stream the two halves
+recover 4.5 percent of the gap between them. That is useful to anyone who might
+think a partial fix, such as centring the features, would be enough. It would
+not.
+
+**One limit, stated rather than tested.** The protocol route reaches values near
+1e14 in a float32 forward pass. That is far inside the range of the format, and
+the rank arithmetic itself runs in double precision, so no overflow occurs. How
+much relative precision is left at that size has not been measured. The matched
+arm, which is the one every comparison rests on, stays near 1 throughout and is
+not affected.
+
+**Cost.** Five model files, forward passes only, no training.
