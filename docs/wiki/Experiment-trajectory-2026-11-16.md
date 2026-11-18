@@ -1115,3 +1115,78 @@ one, so it runs either way.
 **One crash fixed.** Notebook 52's joint table raised a KeyError when it reached
 the dormant row for notebook 51's file, which has no such key. It now skips a
 measure a file does not carry and prints a dot instead of stopping.
+
+## Result: the mechanism is the rescaling, not the clipping
+
+The study reads 2048 numbers at the classifier's input. In a ResNet50 those
+numbers come out of the last ReLU, so none of them can be negative. That left
+one explanation for the rank collapse untested. If the fixed template pushes the
+whole signal upward, the ReLU cuts almost nothing, every picture produces nearly
+the same row, and effective rank falls to near 1 for that reason alone. Notebook
+52 now reads the same place one step earlier, before the last ReLU, where
+negative values still exist.
+
+**Effective rank, before and after the last ReLU, on the in-stream pictures.**
+
+| what | measured statistics | fixed statistics |
+|---|---|---|
+| t=0 reference code, before the ReLU | 127.400 | 6.165 |
+| t=0 reference code, after the ReLU | 106.272 | 5.563 |
+| t=9 reference code, before the ReLU | 133.591 | 2.472 |
+| t=9 reference code, after the ReLU | 143.001 | 2.789 |
+| t=9 trained codes, before the ReLU | 138.720 | 3.756 |
+| t=9 trained codes, after the ReLU | 137.542 | 3.837 |
+
+**The ReLU is not the cause.** Under the fixed template the rank is already
+collapsed before the ReLU runs: 6.165 at the start of the stream and 2.472 at
+the end, against 5.563 and 2.789 after it. Removing the clipping does not bring
+the rank back. The mean row share says the same thing even more plainly. It
+reads 0.981 before the ReLU and 0.981 after it at boundary 0, and 0.984 before
+and 0.983 after at boundary 9. The property that every picture gives almost the
+same row is fully formed in the signal that arrives at the ReLU.
+
+**The ReLU is not idle either, so this is not a trivial answer.** The share of
+values it sets to zero is 0.331 at boundary 0 and 0.492 at boundary 9 under the
+fixed template. It cuts between a third and a half of everything and the rank
+still does not recover. So the collapse happens in the linear part of the
+network. Dividing by a running variance of 1 when the true variance is far from
+1 compounds through fifty layers, and by the last block a single direction
+carries almost the whole signal.
+
+**A second result came with it, and it was not the one being looked for.** Under
+measured statistics the share of values the ReLU would cut rises from 0.292 at
+boundary 0 to 0.693 at boundary 9. As the model learns more groups it pushes
+more than twice as much of its own signal below zero, so more units output
+nothing. That is a mechanism for the dormant unit rise, which is the one
+indicator the buffer route does not explain. It is visible under both routes,
+rising from 0.331 to 0.492 through the fixed template as well, so it is a
+property of the trained network and not of the reading.
+
+**What that means for the dormant unit story.** The network becomes sparser as
+it learns, and it does this while learning new tasks faster than it did at the
+start, not slower. The plain reading is that the sparsity is not damage. This
+still cannot be written up, for the reason already recorded: notebook 51's file
+in R2 has no dormant column, so there is no ordinary ResNet50 control. The new
+number does not replace that control. It explains what the dormant count is
+counting; it does not say whether an ordinary network does the same.
+
+**One reading not interpreted.** At boundary 9 under measured statistics the
+mean row share before the ReLU is 0.829 for the reference code and 0.560 for the
+trained codes, a gap that does not appear after the ReLU, where the two read
+0.865 and 0.814. Nothing is claimed from it.
+
+**A bug found by its own result.** The first version of this measurement put an
+ordinary forward hook on every ReLU and took its input. A ResNet builds its ReLU
+layers with `inplace=True`, so the layer writes its result over the same memory
+it was given, and a hook that runs after the layer sees the clipped values. The
+function read the output twice and labelled one of them the input. The run made
+it obvious: every pre-ReLU number came back equal to its ordinary counterpart to
+three decimals, and the share of values the ReLU would cut came back exactly
+0.000 in all twelve cells. The hook is now a pre-hook, which runs before the
+layer, and it copies the tensor. The CPU check that missed this now asserts that
+the pre-ReLU matrix differs from the ordinary one and that the cut share is
+above zero. The cost of the mistake was one repeat of the five model downloads.
+Results moved to `buffer_route_on_hypernetwork_v5.jsonl`, because the notebook
+resumes by skipping any seed already in the file and v4 held the bad rows.
+
+**Cost.** Five model files, forward passes only, no training.
