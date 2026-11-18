@@ -1271,3 +1271,73 @@ and should not be read as a size.
 
 **Cost.** Three seeds trained on nine groups, about fifteen minutes each, plus
 forward passes.
+
+## Result: where along the depth the collapse happens, one seed
+
+Ruling out one of the 49 ReLU calls narrows almost nothing, so notebook 52 now
+reads two more things on the saved models: what the spread of the input really
+is at each of the 53 BatchNorm layers, and effective rank, mean row share and
+the average size of the values at the output of each of the 16 blocks, under
+both routes. Order A, seed 0, boundaries 0 and 9. Forward passes only.
+
+**The reading is verified against the published one.** The last block's pooled
+output is what the classifier sees, because the network's own pooling layer
+averages exactly what the depth read averages. At boundary 0 the last block
+reads 7.143 on the fixed route and seed 0's classifier reading is 7.143. At
+boundary 9 both read 5.021. So the depth profile sits on the same path as every
+other number in this study.
+
+**Seed 0 is the mildest seed.** At boundary 9 on the fixed route the five seeds
+read 5.021, 2.131, 3.249, 1.320 and 2.223, mean 2.789. The one-seed profile
+below is therefore the gentlest version of whatever is happening.
+
+**The compounding is real and it is enormous.** The average size of the values
+on the fixed route at boundary 9, by block:
+
+| Block | Fixed route | Matched route |
+|---|---|---|
+| layer1.0 | 11 | 1.127 |
+| layer2.0 | 2 566 | 1.160 |
+| layer3.0 | 3 339 000 | 1.015 |
+| layer4.2 | 8 299 000 000 000 | 0.573 |
+
+About six times larger at every block, sixteen blocks in a row. The matched
+route is flat across the same sixteen. The BatchNorm table says why: at boundary
+9 the measured spread runs from 1.233 to 5.796 while the protocol divides by 1,
+so every layer passes the signal on several times too large.
+
+**The blow-up grows with training.** The same column at boundary 0 ends at 40.7
+rather than 8.299e12, and the measured spreads there run 0.694 to 2.186, far
+closer to the assumed 1. So the protocol's error is small on an untrained
+generator and grows as the weights travel, which is why the reading gets worse
+over the stream.
+
+**The rank does not fall with depth, and that was not predicted.** On the fixed
+route at boundary 9 effective rank reads 5.119 at the first block and 5.021 at
+the sixteenth. Mean row share reads 0.987 at the first block and 0.980 at the
+sixteenth. The collapse is already complete at the first block and the next
+fifteen change nothing, while the scale keeps multiplying.
+
+So the compounding explains the scale and does not explain the rank. The
+prediction written before the run was that the rank would fall smoothly with
+depth. It does not, and the record said that shape would mean something more
+specific is happening.
+
+**What the numbers point at, which is not yet measured.** A BatchNorm layer
+subtracts a mean and divides by a spread, and the protocol gets both wrong. The
+mean size column at boundary 9 reaches 8.000 while the protocol subtracts 0, so
+every picture carries the same large offset in every channel from the first
+layers onward. That is a shared row added to every picture, which is what mean
+row share measures, and it reads 0.98 at the first block. The likely split is
+that the un-subtracted mean kills the rank at once while the un-divided spread
+blows up the scale gradually. Nothing here separates them.
+
+**The run that separates them.** Four arms instead of two: mean 0 with spread 1,
+the true mean with spread 1, mean 0 with the true spread, and both true. If the
+rank comes back when only the subtraction is fixed, the mean did it. If it comes
+back when only the division is fixed, the spread did it. Notebook 52 now builds
+all four with `mixed_buffers`, at five seeds, writing to
+`depth_profile_v2.jsonl`. The two-arm file stays in place.
+
+**Cost.** One model file for the one-seed run. Five for the four-arm run, with
+boundary 0 needing none.
