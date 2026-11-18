@@ -786,11 +786,22 @@ November; earlier records gave its direction only.
 Both rank measures divide the singular values of the feature matrix by their
 sum, so multiplying the whole feature matrix by a constant cannot change either
 of them. That property is usually read as meaning the measures are free of
-scale. It does not follow. The path from the generated weights to the feature
-matrix passes through a ReLU, which is not linear, and through BatchNorm
-statistics that are held fixed, so a change in the size of the weights does not
-reach the features as a single multiplying constant and the normalisation does
-not remove it.
+scale. It does not follow, because the property holds of the feature matrix and
+the weights sit upstream of it.
+
+A residual block adds its input to a branch of several weighted layers.
+Multiply every generated weight by a constant and the branch changes by a power
+of that constant, set by how many weight layers it contains, while the input
+path carries no weights and does not change at all. Their sum is therefore not
+the original sum multiplied by any single number. The generated bias terms and
+the generated BatchNorm scale and offset break the same symmetry a second time.
+So a change in the size of the weights does not reach the features as one
+multiplying constant, and a normalisation that only removes such a constant
+cannot remove it.
+
+The ReLU is not the reason. For any positive constant c, the ReLU of c times a
+value equals c times the ReLU of that value, so a positive rescale passes
+through it unchanged.
 
 The unlearning step changes the size of the generated weights. Averaged over the
 fifteen streams, the weight norm after the unlearn is 0.757 of its value before.
