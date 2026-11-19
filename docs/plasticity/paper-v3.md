@@ -12,7 +12,8 @@ taken to mean that two readings may be compared.
 We test the three against the quantity they stand for, on fifteen streams of
 nine 20-class Tiny ImageNet tasks in a hypernetwork continual learner, with the
 direct measurement repeated 990 times so that every model carries its own noise
-floor.
+floor. Curvature is read on the same models as a fourth measure, to separate
+what belongs to this family of measure from what belongs to the reading.
 
 The reading protocol decides the result. Every indicator value of this kind is
 read through one set of BatchNorm statistics, and which set is almost never
@@ -20,15 +21,17 @@ reported. Read through the fixed statistics of a freshly built network the
 indicators fall on every run; read through statistics measured from the same
 weights they rise, and at the end of the stream the two readings differ by a
 factor of 51. An ordinary ResNet50 reproduces the fall more strongly, while
-learning every group it is given. A curvature measure, which reads no features
-and shares none of the machinery, splits the same way at the same two points,
-so the choice is about where a model is read rather than about rank. Set the
-protocol aside and the measures still fail: every indicator reports a loss
-while measured fit to an unseen task improves on all fifteen runs, the largest
-correlation between the two is 0.212 and carries the wrong sign, and a model
-with one task destroyed to chance moves both rank measures in the direction
-they report as healthy. In this setting a reading of these measures is not
-evidence about the ability to learn.
+learning every group it is given. Curvature, which reads no features and
+divides by no norm, splits at the same two points and by a wider margin, so
+what the protocol selects is where a model is read and not which measure is
+used.
+
+Set the protocol aside and the measures still fail. Every indicator reports a
+loss while measured fit to an unseen task improves on all fifteen runs. The
+largest correlation between the two is 0.212 and carries the wrong sign. A
+model with one task destroyed to chance moves both rank measures in the
+direction they report as healthy. In this setting a reading of these measures
+is not evidence about the ability to learn.
 
 # 1 Introduction
 

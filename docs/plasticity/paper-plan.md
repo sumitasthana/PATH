@@ -262,13 +262,15 @@ a rank value for a hypernetwork belongs to the model and the code together,
 went into 3.3. The measured half became Table 8 in 5.2, which moved every table
 from 8 onward up by one. The 1.4 times code gap holds under the fixed
 statistics and disappears under matched ones, so it is reported as the same
-result seen from another angle rather than as separate evidence. One decision
-is still open and is the user's to make.
+result seen from another angle rather than as separate evidence.
 
-1. **What the abstract claims.** The abstract still says the indicators fall in
-   every run and treats that as the finding. With 5.2 the stronger and more
-   defensible claim is that the protocol decides the direction, demonstrated on
-   a control that has no plasticity problem. The abstract has not been touched.
+**What the abstract claims, settled on 19 November.** The compression had
+already made the abstract lead with the protocol result rather than with the
+fall, so the decision recorded here as open was closed before it was taken up.
+What the abstract needed instead was room for the curvature result: it now says
+a fourth measure is read, states that curvature splits at the same two points
+and by a wider margin, and puts the failures that survive the protocol in a
+paragraph of their own rather than at the end of an eleven-line one.
 
 ## The number that was missing is now read
 
