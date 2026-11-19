@@ -20,12 +20,15 @@ reported. Read through the fixed statistics of a freshly built network the
 indicators fall on every run; read through statistics measured from the same
 weights they rise, and at the end of the stream the two readings differ by a
 factor of 51. An ordinary ResNet50 reproduces the fall more strongly, while
-learning every group it is given. Set the protocol aside and the measures still
-fail: every indicator reports a loss while measured fit to an unseen task
-improves on all fifteen runs, the largest correlation between the two is 0.212
-and carries the wrong sign, and a model with one task destroyed to chance moves
-both rank measures in the direction they report as healthy. In this setting a
-reading of these measures is not evidence about the ability to learn.
+learning every group it is given. A curvature measure, which reads no features
+and shares none of the machinery, splits the same way at the same two points,
+so the choice is about where a model is read rather than about rank. Set the
+protocol aside and the measures still fail: every indicator reports a loss
+while measured fit to an unseen task improves on all fifteen runs, the largest
+correlation between the two is 0.212 and carries the wrong sign, and a model
+with one task destroyed to chance moves both rank measures in the direction
+they report as healthy. In this setting a reading of these measures is not
+evidence about the ability to learn.
 
 # 1 Introduction
 
@@ -44,7 +47,8 @@ models.
 This paper puts the three and the direct measurement side by side on the same
 models, in a setting where the direct measurement is cheap enough to repeat
 eleven times at every reading point. We report four results: a reading choice
-that nobody reports decides the sign of the indicator result; the reported fall
+that nobody reports decides the sign of the indicator result, for a curvature
+measure as well as for the three; the reported fall
 reproduces more strongly on an ordinary ResNet50 that learns every group it is
 given; the indicators and the direct measurement disagree in direction and the
 size of the indicator change does not rank the runs; and repeating the direct
@@ -126,13 +130,77 @@ the protocol supplies a wrong value for each; correcting either alone recovers
 0.2 and 4.3 percent of the gap at boundary 9, so a partial fix such as centring
 the features does not repair the reading.
 
-## 3.2 The indicators fall while measured learning rises
+## 3.2 The same split appears on a measure that reads no features
+
+The result above could be read narrowly, as a fact about three measures that
+all read the same features through the same normalisation. This section tests
+it on a measure that does none of those things.
+
+Curvature treats the training loss as a landscape and asks how sharply the
+ground bends where the model stands. A flat valley is easy to move around in; a
+narrow steep one is not, and the literature reads a rise in curvature as a loss
+of plasticity. It is measured here by stepping the generator a small distance in
+a random direction, reading the loss, stepping the same distance the other way,
+and reading it again. Averaging the two and subtracting the loss in the middle
+cancels the slope and leaves the bend, which averaged over random directions is
+the mean eigenvalue of the Hessian. It reads no features, divides by no norm,
+and shares no machinery with effective rank, srank or the dormant count.
+
+Where to stand is the same choice as before. Table 2 reads the same five models
+from the protocol's fixed code on fixed statistics, and from a code the stream
+trained on that group's own statistics.
+
+Table 2. Mean Hessian eigenvalue on five seeds of ordering A, read from two
+points, 40 random directions at each of three step sizes. Each entry is the
+range across the five seeds. The trained code is first in the ordering, and
+boundary 4 is the earliest boundary kept in storage at which its code exists.
+The last two rows divide each reading by the loss at the same point.
+
+| Quantity | Fixed code, fixed statistics | Trained code, own statistics |
+| --- | --- | --- |
+| Boundaries read | 0 and 9 | 4 and 9 |
+| Curvature at the earlier boundary | 0.0088 to 248.7 | -5.12e-7 to 2.67e-5 |
+| Curvature at boundary 9 | 5.73e5 to 1.13e12 | -2.20e-5 to 5.52e-5 |
+| Ratio, boundary 9 over the earlier one | 6.53e7 to 5.95e12 | . |
+| Seeds that rise past their own floor | 5 of 5 | 2 of 5 |
+| Step sizes on which all five seeds agree | 3 of 3 | 0 of 3 |
+| Loss at boundary 9, where chance is 3.00 | 1.39e9 to 3.52e15 | 2.20 to 2.49 |
+| Curvature over that loss, earlier boundary | 2.44e-4 to 3.75e-4 | -2.0e-7 to 1.18e-5 |
+| Curvature over that loss, boundary 9 | 3.20e-4 to 4.78e-4 | -9.28e-6 to 2.35e-5 |
+
+Read from the protocol's own point, curvature reports a sharpening of between
+seven and thirteen factors of ten, past each seed's own floor on 5 of 5 seeds,
+and all three step sizes agree. Read from a code the stream trained, there is no
+rise to report: 2 of 5 seeds rise past their floor, two of the others fall past
+it, and the three step sizes agree on 0 of 3. The two readings of the same five
+models differ by at least ten factors of ten.
+
+The loss says why. At the protocol's point it reaches 3.52e15 at boundary 9,
+where chance for a group of twenty classes is 3.00, so the network there is not
+merely performing badly but producing values far outside the range in which a
+loss means anything. At the trained code the same models read between 2.20 and
+2.49, below chance, which is what a model that knows the group should do.
+Dividing each curvature reading by the loss at the same point leaves a quantity
+that stays inside a single factor of two across both boundaries and all five
+seeds, while the readings it is built from span fourteen factors of ten. The
+sharpening is the loss scale.
+
+Two things follow. The reading point decides the direction here as it does in
+Table 1, on a measure that has nothing in common with the three this paper
+tests, so the finding is about where a model is read and not about rank. And
+the correction is not a normalisation: dividing out the loss removes the rise
+but leaves the two reading points one to two factors of ten apart, so the
+choice of point cannot be repaired after the fact.
+
+Appendix I gives the reading for each seed.
+
+## 3.3 The indicators fall while measured learning rises
 
 Read through the protocol, the stream produces the fall these measures were
 built to detect. Over the same stream the direct measurement moves the other
 way.
 
-Table 2. Each indicator and the direct probe, averaged over the fifteen runs.
+Table 3. Each indicator and the direct probe, averaged over the fifteen runs.
 The last column counts the runs that move in the stated direction.
 
 | Quantity | Boundary 0 | Boundary 9 | Runs |
@@ -150,14 +218,14 @@ Every run does better, by 17.87 points on average against a chance level of 5
 percent. The smallest gain is 15.90 points and the largest noise floor is 2.72,
 so no run comes close to its own floor.
 
-## 3.3 The size of the fall does not rank the runs
+## 3.4 The size of the fall does not rank the runs
 
 Both quantities vary widely across the fifteen runs. The effective-rank fall
 runs from 29.8 to 80.6 percent and the probe gain from 15.90 to 20.49 points.
 If the fall reports the ability to learn, the runs that fell furthest should be
 the runs that gained least.
 
-Table 3. Correlation between each indicator's change and the probe's change,
+Table 4. Correlation between each indicator's change and the probe's change,
 over the fifteen runs. The last column repeats the test on the boundary-9
 values themselves rather than on the changes.
 
@@ -183,17 +251,17 @@ It does not, in the same direction.
 The eleven repetitions show this is not the outcome's fault. Of the spread in
 the gain across the fifteen runs, 46.2 percent by variance is real difference
 between models rather than measurement noise, which caps any predictor at a
-correlation of 0.680. The largest value in Table 3 is 0.212, and at fifteen
+correlation of 0.680. The largest value in Table 4 is 0.212, and at fifteen
 runs a correlation needs 0.514 to be separable from zero at the 5 percent
 level.
 
-## 3.4 The indicators call a damaged model healthy
+## 3.5 The indicators call a damaged model healthy
 
 If the indicators report anything about the health of a model, a model with one
 group destroyed to chance should read worse than the same model one step
 earlier.
 
-Table 4. The unlearning step and the weight-scale controls, averaged over the
+Table 5. The unlearning step and the weight-scale controls, averaged over the
 fifteen streams. The ordinary learning step is the average absolute change from
 one boundary to the next over the 120 steps after the first.
 
@@ -229,12 +297,15 @@ reported, and the size of the generated weights, which reaches the reading
 along a path the measures' own normalisation does not cover.
 
 The protocol result travels furthest, because it does not depend on the
-architecture: the control contains no hypernetwork and reproduces the published
-fall more strongly while learning every group it is given. An indicator value
-is therefore incomplete without the protocol that produced it, and a change in
-one is not evidence about learning until the direct measurement has been run at
-least once on the same models. None of this shows the measures are meaningless
-everywhere: this is one architecture, one dataset and one kind of learning.
+architecture or on the family of measure: curvature, which reads no features
+at all, splits at the same two points and by a wider margin. Nor does it
+depend on the hypernetwork: the control contains no hypernetwork and
+reproduces the published fall more strongly while learning every group it is
+given. An indicator value is therefore incomplete without the protocol that
+produced it, and a change in one is not evidence about learning until the
+direct measurement has been run at least once on the same models. None of this
+shows the measures are meaningless everywhere: this is one architecture, one
+dataset and one kind of learning.
 
 # 5 Limitations
 
@@ -248,7 +319,10 @@ runs share five starting points, and the three orderings of one seed, which
 begin from the same model, differ by up to about two points on the boundary-0
 probe reading for reasons not established here. No test for srank was stated
 before the measurements were taken. Appendix B is on ordering A alone, and the
-control has three seeds against the hypernetwork's five.
+control has three seeds against the hypernetwork's five. The curvature reading
+is the mean eigenvalue of the Hessian and not the largest, which is what most of
+the sharpness literature reports; it covers one group, the first in ordering A,
+and its trained-code arm begins at boundary 4 because boundary 1 was not kept.
 
 # References
 
@@ -973,7 +1047,97 @@ point where the accuracy endpoint stops, and not as a settled result.
 | Random-label fitting | `41_matched_random_labels.ipynb` | forks and discards |
 | Learning speed of an unseen task | `40_probe_curve.ipynb` data | no new run needed |
 | Learning after deliberate damage | 7 November record | one stream |
-| Curvature at a trained code | `42_curvature.ipynb` | forks and discards |
 | Random-direction control | `39_random_direction_control.ipynb` | trains nothing |
 | Effective-rank convergence across seeds | stored records | no new run needed |
 | Probe at the middle of the stream | `47_probe_on_the_revised_streams.ipynb` | 495 probe runs |
+
+# Appendix I Curvature
+
+Curvature is measured without training anything. The generator is stepped a
+distance along a random direction drawn evenly over all of its parameters, the
+loss is read, the generator is restored, it is stepped the same distance the
+other way, and the loss is read again. Half the sum of the two readings, minus
+the loss in the middle, is the bend alone, because the two slope terms are equal
+and opposite and cancel. Dividing by the squared step gives the curvature along
+that direction, and the average over random directions is the mean eigenvalue of
+the Hessian.
+
+Three step sizes are used, 0.001, 0.003 and 0.01 of the generator's own length,
+with 40 directions at each. A central difference only measures curvature while
+the step is small enough that the surface still looks like a parabola, so three
+sizes that disagree about the direction of a change mean the reading is not
+converged. The same directions are drawn at both reading points, so nothing
+differs between the two arms except where they stand.
+
+The two arms are the same choice Appendix B makes for the rank measures. The
+fixed arm stands at the protocol's reference code, which belongs to no group and
+was never trained, on the fixed statistics of a freshly built network, reading
+held-out pictures of the group no stream learns. The trained arm stands at the
+code for group 0, which is first in ordering A, on the statistics the trainer
+kept for that group while learning it, reading held-out pictures of that group.
+Giving the trained arm the fixed statistics instead sends its loss to the eighth
+power of ten, because it runs a trained network on statistics it was never
+calibrated for; the measurement refuses to continue when that happens.
+
+Table I1. Curvature at the fixed code on fixed statistics, with the loss at the
+same point. Chance for a group of twenty classes is a loss of 3.00.
+
+| Seed | Curvature, b0 | Curvature, b9 | Ratio | Loss, b0 | Loss, b9 |
+| --- | --- | --- | --- | --- | --- |
+| 0 | 0.025 | 2.784e10 | 1.11e12 | 74.86 | 5.819e13 |
+| 1 | 0.06752 | 4.02e11 | 5.95e12 | 276.4 | 9.392e14 |
+| 2 | 0.6707 | 3.628e10 | 5.41e10 | 1878 | 8.140e13 |
+| 3 | 248.7 | 1.126e12 | 4.53e9 | 6.632e5 | 3.520e15 |
+| 4 | 0.008776 | 5.730e5 | 6.53e7 | 26.72 | 1.390e9 |
+
+Every seed rises past its own floor, and the floors are far below the changes:
+the smallest change is 5.73e5 against a floor of 7.361e4. The three step sizes
+agree, with all five seeds rising at each of them.
+
+Table I2. Curvature at group 0's trained code on that group's own statistics.
+The floor is the usual 95 percent interval for a difference of two means, built
+from the spread across the 120 directions at each point.
+
+| Seed | Curvature, b4 | Curvature, b9 | Change | Floor | Verdict |
+| --- | --- | --- | --- | --- | --- |
+| 0 | 3.483e-6 | -2.202e-5 | -2.550e-5 | 6.299e-6 | fell |
+| 1 | 2.331e-5 | 2.701e-5 | 3.704e-6 | 1.207e-5 | flat |
+| 2 | -5.117e-7 | 2.421e-5 | 2.473e-5 | 7.546e-6 | rose |
+| 3 | 1.518e-5 | 9.395e-6 | -5.783e-6 | 2.603e-6 | fell |
+| 4 | 2.673e-5 | 5.516e-5 | 2.844e-5 | 1.212e-5 | rose |
+
+Four of the five clear their floor, but two rise and two fall, and the three
+step sizes do not agree: counting seeds that rise, they give 2, 3 and 3 out of
+five. This arm therefore reports movement without a direction, which is weaker
+than the flat reading an earlier design produced, and it is not a rise. The
+loss at these points runs from 1.827 to 2.600 at boundary 4 and from 2.200 to
+2.485 at boundary 9.
+
+Seed 2 reads a small negative value at boundary 4. A negative mean eigenvalue
+means that point is not a local minimum once averaged over directions. It is
+reported and not investigated.
+
+Table I3. Each curvature reading divided by the loss at the same point.
+
+| Seed | Fixed, b0 | Fixed, b9 | Ratio | Trained, b4 | Trained, b9 |
+| --- | --- | --- | --- | --- | --- |
+| 0 | 3.34e-4 | 4.78e-4 | 1.43 | 1.91e-6 | -9.28e-6 |
+| 1 | 2.44e-4 | 4.28e-4 | 1.75 | 1.18e-5 | 1.09e-5 |
+| 2 | 3.57e-4 | 4.46e-4 | 1.25 | -1.97e-7 | 1.04e-5 |
+| 3 | 3.75e-4 | 3.20e-4 | 0.85 | 7.71e-6 | 4.27e-6 |
+| 4 | 3.28e-4 | 4.12e-4 | 1.26 | 1.15e-5 | 2.35e-5 |
+
+The ten fixed-arm entries of Table I1 span fourteen factors of ten. Divided by
+the loss at the same point they lie between 2.44e-4 and 4.78e-4, a spread of
+less than two, and the ratio across the stream runs from 0.85 to 1.75. The rise
+in Table I1 is the loss scale and almost nothing else. The division does not
+make the two arms agree: the trained arm stays one to two factors of ten lower
+after it.
+
+This result was first obtained on a retired eight-task design with three seeds,
+where the fixed arm rose by 13.7, 6.5 and 5.5 times and the trained arm did not
+move at all. Those numbers are not used here, because they come from a design
+this paper's method section does not describe. The present run is five seeds of
+ordering A, 3,000 measurements, with no training.
+
+**Notebook.** `notebooks/53_curvature_on_the_revised_streams.ipynb`.

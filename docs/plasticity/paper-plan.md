@@ -85,9 +85,10 @@ starts on page 6.
 | 1 Introduction | The problem, the three measures, the four results. |
 | 2 Method | Model, stream, protocol, measures, probe, damaged model, control. |
 | 3.1 The reading protocol decides the direction | Table 1. |
-| 3.2 The indicators fall while measured learning rises | Table 2. |
-| 3.3 The size of the fall does not rank the runs | Table 3, Figure 1. |
-| 3.4 The indicators call a damaged model healthy | Table 4. |
+| 3.2 The same split on a measure that reads no features | Table 2. |
+| 3.3 The indicators fall while measured learning rises | Table 3. |
+| 3.4 The size of the fall does not rank the runs | Table 4, Figure 1. |
+| 3.5 The indicators call a damaged model healthy | Table 5. |
 | 4 Discussion, 5 Limitations, References | Short. |
 
 | Appendix | Was | Tables |
@@ -99,6 +100,7 @@ starts on page 6.
 | E The unlearning step | 5.5 | E1 |
 | F The contribution of weight scale | 5.6 | F1 |
 | G Learning speed | 5.9 | G1, G2 |
+| I Curvature | new on 19 November | I1, I2, I3 |
 | H Work not yet carried out | 8 | one table |
 
 Main-body Tables 1 and 3 are extracts of Tables B1 and D2. The appendices keep
@@ -298,12 +300,15 @@ are fully re-measured on the present design, two partly, one not at all.
 | 1. The diagnostics do not match direct measurement | 5.3, 5.4 | One of six arms repeated |
 | 2. The diagnostics call a damaged model healthy | 5.5 | Repeated, fifteen pairs |
 | 3. The mechanism | 5.6 | Rescaling arm repeated, random-direction arm not |
-| 4. Curvature depends on the measuring point | not in version 3 | Not repeated |
+| 4. Curvature depends on the measuring point | 3.2, Appendix I | Repeated, five seeds |
 | 5. Single-run comparisons manufacture effects | 5.7 | Repeated |
 
-Findings 3 and 4 are therefore thin. Section 8 lists what would close them.
-Whether to run those arms before submission is an open decision, not something
-this plan settles.
+Finding 4 was closed on 19 November by notebook 53, on five seeds of ordering
+A, and it came back stronger than on the retired design: the two reading points
+differ by at least ten factors of ten, and the whole rise at the protocol's
+point is the loss scale. Finding 3 is still thin, because the random-direction
+arm has not been re-run. Whether to run it before submission is an open
+decision, not something this plan settles.
 
 ## Files
 
