@@ -30,7 +30,7 @@ from torch.func import functional_call
 from torch.utils.data import DataLoader, TensorDataset
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from uncle.config import Config, random_stream
+from uncle.config import Config, random_stream  # noqa: F401  (used in exec namespaces)
 from uncle.hypernet import HyperNetwork, build_target
 
 NOTEBOOK = (Path(__file__).resolve().parents[1]
@@ -127,8 +127,8 @@ class FreshBuffersTests(unittest.TestCase):
                                                    torch.randint(0, 4, (32,)))}}
         self.fresh_buffers = function_from_notebook("fresh_buffers", {
             "torch": torch, "functional_call": functional_call,
-            "DataLoader": DataLoader, "tasks": self.tasks,
-            "BATCH_SIZE": 8, "BUFFER_BATCHES": 4,
+            "DataLoader": DataLoader, "random_stream": random_stream,
+            "tasks": self.tasks, "BATCH_SIZE": 8, "BUFFER_BATCHES": 4,
         })
 
     def test_the_statistics_are_updated(self):
@@ -157,6 +157,68 @@ class FreshBuffersTests(unittest.TestCase):
         self.target.eval()
         self.fresh_buffers(self.target, self.trainer, "0", self.weights)
         self.assertFalse(self.target.training)
+
+
+class Recorder(nn.Module):
+    """Passes images through and remembers which class each one carried."""
+
+    def __init__(self):
+        super().__init__()
+        self.seen = []
+
+    def forward(self, images):
+        self.seen += [round(float(v)) for v in images.flatten(1).mean(dim=1)]
+        return images
+
+
+class BufferPicturesTests(unittest.TestCase):
+    """The statistics have to come from the whole group, not its first classes.
+
+    A group's training images sit in the order their class folders were read,
+    so twenty batches taken in order are the first three classes of twenty.
+    Statistics built from three classes are not the group's statistics, and the
+    first run of this notebook moved the trained arm by 9.49 points on average
+    because of exactly that. This fails if the draw ever goes back to reading
+    the split in order.
+    """
+
+    def setUp(self):
+        torch.manual_seed(0)
+        # Twenty classes, fifty pictures each, stored one class after another.
+        # Every pixel of a picture holds its own class number, so what the
+        # network sees says which classes the draw reached.
+        labels = torch.arange(20).repeat_interleave(50)
+        images = labels.reshape(-1, 1, 1, 1).float().expand(-1, 1, 8, 8).clone()
+        self.recorder = Recorder()
+        self.target = nn.Sequential(self.recorder, nn.BatchNorm2d(1))
+        self.weights = {name: value.detach().clone()
+                        for name, value in self.target.named_parameters()}
+        template = {name: value.detach().clone()
+                    for name, value in self.target.named_buffers()}
+        self.trainer = StubTrainer(template, torch.device("cpu"))
+        self.tasks = {"0": {"train": TensorDataset(images, labels)}}
+        self.fresh_buffers = function_from_notebook("fresh_buffers", {
+            "torch": torch, "functional_call": functional_call,
+            "DataLoader": DataLoader, "random_stream": random_stream,
+            "tasks": self.tasks, "BATCH_SIZE": 8, "BUFFER_BATCHES": 20,
+        })
+
+    def test_the_draw_reaches_most_of_the_classes(self):
+        self.fresh_buffers(self.target, self.trainer, "0", self.weights)
+        reached = set(self.recorder.seen)
+        self.assertGreaterEqual(
+            len(reached), 15,
+            f"only {len(reached)} of 20 classes were used for the statistics")
+
+    def test_two_calls_use_the_same_pictures(self):
+        # Every arm of a group calls this separately. If the draw differed
+        # between calls, the arms would be scored through different statistics
+        # and the comparison would carry that difference as well as the code.
+        self.fresh_buffers(self.target, self.trainer, "0", self.weights)
+        first = list(self.recorder.seen)
+        self.recorder.seen.clear()
+        self.fresh_buffers(self.target, self.trainer, "0", self.weights)
+        self.assertEqual(first, self.recorder.seen)
 
 
 if __name__ == "__main__":

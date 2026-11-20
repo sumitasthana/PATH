@@ -169,3 +169,84 @@ whether Sections 3.3 to 3.5 hold.
 Whether to run one hypernetwork stream twice, to put the same number on the
 study's own side, is open. It costs about two hours and nothing else depends
 on it.
+
+## Does the generator still need a group's code once it has learned it?
+
+Notebook 48, test 4, froze the generator and trained only a fresh code, and
+every reading landed between 4.14 and 5.84 percent against 5 percent chance. A
+code cannot rescue a generator that never saw the group. The other direction
+had never been measured: once a group has been learned, does the code it was
+trained with still matter?
+
+Notebook 54 asks that. It reads the five boundary-9 models of ordering A and
+scores every learned group three ways, with the group's own trained code, with
+the code it started from before any training, and with another group's trained
+code. Nothing is trained. Each arm re-estimates its own BatchNorm statistics,
+because the saved statistics were collected while the trained code was in use
+and would favour that arm. The trained arm is also read through the saved
+statistics, as a check that the re-estimation changes nothing.
+
+### The check failed, so the result is provisional
+
+| reading | value |
+| --- | --- |
+| pairs compared | 45 |
+| largest gap between fresh and saved statistics | 28.10 points |
+| mean gap | 9.49 points |
+
+The notebook's own rule is that a gap over 2 points makes the arms
+incomparable, and it printed that warning.
+
+The cause is in the notebook and not in the model. The statistics were
+re-estimated from the first twenty batches of the group's training split, taken
+in order. A group's images sit in the order their class folders were read, so
+the first 1,280 pictures are 3 classes of 20. That was confirmed on the same
+split outside Colab. Statistics built from 3 classes are not the group's
+statistics. The draw is now random, seeded by the group so that all three arms
+of a group still see the same pictures, and a test fails if it ever reads the
+split in order again.
+
+### What the first run reported anyway
+
+All three arms were scored through the same wrong statistics, so the comparison
+between them is not obviously broken even though each number is.
+
+| group | position | trained | initial | other |
+| --- | --- | --- | --- | --- |
+| 0 | 1 | 40.04 | 39.88 | 6.38 |
+| 1 | 2 | 35.40 | 35.36 | 6.68 |
+| 2 | 3 | 36.94 | 36.76 | 5.02 |
+| 3 | 4 | 34.44 | 34.34 | 3.88 |
+| 4 | 5 | 42.08 | 41.80 | 3.88 |
+| 5 | 6 | 37.78 | 37.64 | 4.58 |
+| 6 | 7 | 43.36 | 43.48 | 5.28 |
+| 7 | 8 | 28.48 | 28.20 | 4.58 |
+| 8 | 9 | 37.54 | 37.50 | 4.26 |
+| all | | 37.34 | 37.22 | 4.95 |
+
+Chance is 5 percent. The spread between seeds on the trained arm is 6.63
+points.
+
+The starting code scores what the trained code scores, on every one of the nine
+groups, with the largest difference 0.28 points against a seed spread of 6.63.
+Another group's code scores chance.
+
+### What that does and does not say
+
+It does not yet say the generator ignores the code. The obvious dull
+explanation is that the code hardly moved while it was being learned, in which
+case the starting code scores the same because it is nearly the same code. That
+distance was never measured, and it is a norm on two vectors of 32 numbers, so
+it now rides along with the arms.
+
+If the code did move and the starting one still works, the generator is not
+reading where the code ended up, and the 32 numbers act as a fixed name tag:
+the right tag is needed, since another group's fails, but the tag's update buys
+nothing and all of the learning is in the generator.
+
+### Next decision
+
+Run notebook 54 again with the random draw and the code distance. If the check
+passes and the table holds, the finding is about the code's update rather than
+about the code, and which of the two statements above is the right one depends
+on the distance column.
