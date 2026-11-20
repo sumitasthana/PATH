@@ -1148,9 +1148,12 @@ same row is fully formed in the signal that arrives at the ReLU.
 **The ReLU is not idle either, so this is not a trivial answer.** The share of
 values it sets to zero is 0.331 at boundary 0 and 0.492 at boundary 9 under the
 fixed template. It cuts between a third and a half of everything and the rank
-still does not recover. So the collapse happens in the linear part of the
-network. Dividing by a running variance of 1 when the true variance is far from
-1 compounds through fifty layers, and by the last block a single direction
+still does not recover. So the last ReLU is not what collapses the rank.
+Corrected on 19 November: this reading is taken at the input of the last ReLU,
+and the signal there has already passed the forty-nine ReLUs before it, so it
+clears the final clipping and does not show that the collapse is linear.
+Dividing by a running variance of 1 when the true variance is far from 1
+compounds through fifty layers, and by the last block a single direction
 carries almost the whole signal.
 
 **A second result came with it, and it was not the one being looked for.** Under

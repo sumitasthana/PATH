@@ -26,12 +26,16 @@ divides by no norm, splits at the same two points and by a wider margin, so
 what the protocol selects is where a model is read and not which measure is
 used.
 
-Set the protocol aside and the measures still fail. Every indicator reports a
-loss while measured fit to an unseen task improves on all fifteen runs. The
-largest correlation between the two is 0.212 and carries the wrong sign. A
-model with one task destroyed to chance moves both rank measures in the
-direction they report as healthy. In this setting a reading of these measures
-is not evidence about the ability to learn.
+The rest of the paper stays with the fixed protocol, because it is the reading
+a hypernetwork gets by default. Under it every indicator reports a loss while
+measured fit to an unseen task improves on all fifteen runs. The largest
+correlation between the two is 0.212 and carries the wrong sign. A model with
+one task destroyed to chance moves both rank measures in the direction they
+report as healthy. Whether these three results survive matched statistics is
+not tested here, so they are consequences of the protocol and not independent
+of it. What they establish is narrower and still worth having: in this setting
+the reading a practitioner takes by default is not evidence about the ability
+to learn.
 
 # 1 Introduction
 
@@ -53,8 +57,9 @@ eleven times at every reading point. We report four results: a reading choice
 that nobody reports decides the sign of the indicator result, for a curvature
 measure as well as for the three; the reported fall
 reproduces more strongly on an ordinary ResNet50 that learns every group it is
-given; the indicators and the direct measurement disagree in direction and the
-size of the indicator change does not rank the runs; and repeating the direct
+given; read through that protocol the indicators and the direct measurement
+disagree in direction and the size of the indicator change does not rank the
+runs; and repeating the direct
 measurement gives each model a noise floor, which turns a reported change into
 a claim that can be checked.
 
@@ -80,15 +85,22 @@ second way, through statistics measured from their own weights over 2048
 training images from the nine learned groups.
 
 **Measures.** Effective rank and srank with delta = 0.01 are computed from the
-singular values of the 256 by 2048 feature matrix, and the dormant-unit
-fraction at cut-offs 0.01, 0.025 and 0.1.
+singular values of the 256 by 2048 feature matrix. The dormant-unit fraction,
+at cut-offs 0.01, 0.025 and 0.1, is not read there. It is scored at every ReLU
+call in the network, on the same 256 images, each unit against the mean of its
+own call site. Sites differ in scale by orders of magnitude, so one
+network-wide mean would mark every quiet layer dormant and every loud one
+healthy.
 
 **The direct probe.** A copy of the model is taken, a fresh task code is drawn
 for the held-out group, the generator and that code are trained together for
 250 steps, the accuracy is recorded, and the copy is discarded, so the
 measurement cannot change the model it measures. The probe runs eleven times at
-each point, and each run's noise floor is 1.96 s sqrt(1/11 + 1/11), where s is
-the standard deviation of its eleven boundary-0 repetitions.
+each point, and each repetition is run at three learning rates with the best
+kept on a validation split. Fifteen streams at two points, eleven repetitions
+each, three rates apiece, is 990 probe runs in all. Each run's noise floor is
+1.96 s sqrt(1/11 + 1/11), where s is the standard deviation of its eleven
+boundary-0 repetitions.
 
 **The damaged model and the control.** After the ninth group each stream
 destroys one group it has already learned; that group reads 5.00 percent
@@ -157,19 +169,22 @@ Table 2. Mean Hessian eigenvalue on five seeds of ordering A, read from two
 points, 40 random directions at each of three step sizes. Each entry is the
 range across the five seeds. The trained code is first in the ordering, and
 boundary 4 is the earliest boundary kept in storage at which its code exists.
-The last two rows divide each reading by the loss at the same point.
+The middle column repeats the fixed arm over boundary 4 to boundary 9, which is
+the span the trained arm covers, so the first and last columns can be read
+without a difference in span between them. The last two rows divide each
+reading by the loss at the same point.
 
-| Quantity | Fixed code, fixed statistics | Trained code, own statistics |
-| --- | --- | --- |
-| Boundaries read | 0 and 9 | 4 and 9 |
-| Curvature at the earlier boundary | 0.0088 to 248.7 | -5.12e-7 to 2.67e-5 |
-| Curvature at boundary 9 | 5.73e5 to 1.13e12 | -2.20e-5 to 5.52e-5 |
-| Ratio, boundary 9 over the earlier one | 6.53e7 to 5.95e12 | . |
-| Seeds that rise past their own floor | 5 of 5 | 2 of 5 |
-| Step sizes on which all five seeds agree | 3 of 3 | 0 of 3 |
-| Loss at boundary 9, where chance is 3.00 | 1.39e9 to 3.52e15 | 2.20 to 2.49 |
-| Curvature over that loss, earlier boundary | 2.44e-4 to 3.75e-4 | -2.0e-7 to 1.18e-5 |
-| Curvature over that loss, boundary 9 | 3.20e-4 to 4.78e-4 | -9.28e-6 to 2.35e-5 |
+| Quantity | Fixed code, fixed statistics | Fixed code, same span as the trained arm | Trained code, own statistics |
+| --- | --- | --- | --- |
+| Boundaries read | 0 and 9 | 4 and 9 | 4 and 9 |
+| Curvature at the earlier boundary | 0.0088 to 248.7 | 543.2 to 1.19e10 | -5.12e-7 to 2.67e-5 |
+| Curvature at boundary 9 | 5.73e5 to 1.13e12 | 5.73e5 to 1.13e12 | -2.20e-5 to 5.52e-5 |
+| Ratio, boundary 9 over the earlier one | 6.53e7 to 5.95e12 | 33.7 to 1.06e3 | . |
+| Seeds that rise past their own floor | 5 of 5 | 5 of 5 | 2 of 5 |
+| Step sizes on which all five seeds agree | 3 of 3 | 3 of 3 | 0 of 3 |
+| Loss at boundary 9, where chance is 3.00 | 1.39e9 to 3.52e15 | 1.39e9 to 3.52e15 | 2.20 to 2.49 |
+| Curvature over that loss, earlier boundary | 2.44e-4 to 3.75e-4 | 1.34e-4 to 3.14e-4 | -2.0e-7 to 1.18e-5 |
+| Curvature over that loss, boundary 9 | 3.20e-4 to 4.78e-4 | 3.20e-4 to 4.78e-4 | -9.28e-6 to 2.35e-5 |
 
 Read from the protocol's own point, curvature reports a sharpening of between
 seven and thirteen factors of ten, past each seed's own floor on 5 of 5 seeds,
@@ -177,6 +192,17 @@ and all three step sizes agree. Read from a code the stream trained, there is no
 rise to report: 2 of 5 seeds rise past their floor, two of the others fall past
 it, and the three step sizes agree on 0 of 3. The two readings of the same five
 models differ by at least ten factors of ten.
+
+The span of stream covered is not what separates them. Over boundary 4 to
+boundary 9, which is the trained arm's own span, the fixed arm still rises past
+its floor on 5 of 5 seeds and all three step sizes still agree, while the
+trained arm over that same span rises on 2. The sharpening it reports is
+smaller over the shorter span, 34 to about a thousand rather than seven to
+thirteen factors of ten, which is what a shorter span should do. The direction
+does not change. Three things still differ between the outer columns: the task
+code, the BatchNorm statistics and the group of pictures. Section 3.1 and
+Appendix B show that the statistics alone account for a gap of this kind on the
+rank measures, and no arm here separates the three.
 
 The loss says why. At the protocol's point it reaches 3.52e15 at boundary 9,
 where chance for a group of twenty classes is 3.00, so the network there is not
@@ -203,6 +229,15 @@ Read through the protocol, the stream produces the fall these measures were
 built to detect. Over the same stream the direct measurement moves the other
 way.
 
+Every indicator reading in this section and in the two that follow is taken
+through the fixed protocol of Section 3.1. That protocol is the one a
+hypernetwork gets unless someone intervenes, because the generator writes
+weights and no running statistics, so these sections report what a reader of
+these measures would actually see. They do not report what the measures would
+say under matched statistics, which is not measured on these fifteen streams.
+The probe is not affected either way: it trains a copy and counts the result,
+and no choice of BatchNorm statistics enters it.
+
 Table 3. Each indicator and the direct probe, averaged over the fifteen runs.
 The last column counts the runs that move in the stated direction.
 
@@ -219,26 +254,36 @@ learned nine tasks fits a new one better or worse than a freshly started model
 given the same budget. A loss of plasticity is the case where it does worse.
 Every run does better, by 17.87 points on average against a chance level of 5
 percent. The smallest gain is 15.90 points and the largest noise floor is 2.72,
-so no run comes close to its own floor.
+so no run comes close to its own floor. Two controls on the ordering A streams
+say what the gain is not. A probe on twenty CIFAR-100 classes, sharing no class
+and no source with the stream, gains +20.61 points against those streams'
++17.00, so the gain is not transfer confined to one dataset. The same probe
+with the generator frozen, leaving only the 32-number code to train, reads
+between 4.14 and 5.84 percent at both ends against a chance level of 5, so the
+ability being measured sits in the generator weights. Appendix C gives both in
+full.
 
 ## 3.4 The size of the fall does not rank the runs
 
-Both quantities vary widely across the fifteen runs. The effective-rank fall
-runs from 29.8 to 80.6 percent and the probe gain from 15.90 to 20.49 points.
-If the fall reports the ability to learn, the runs that fell furthest should be
-the runs that gained least.
+Both quantities vary widely across the fifteen runs, the indicator readings
+again through the fixed protocol. The effective-rank fall runs from 29.8 to
+80.6 percent and the probe gain from 15.90 to 20.49 points. If the fall
+reports the ability to learn, the runs that fell furthest should be the runs
+that gained least.
 
-Table 4. Correlation between each indicator's change and the probe's change,
-over the fifteen runs. The last column repeats the test on the boundary-9
-values themselves rather than on the changes.
+Table 4. Correlation between each indicator's change and the probe's change.
+Column r counts all fifteen runs. The three orderings of one seed share a
+starting network, so the five-seed columns average those three first and
+correlate the five averages. The end-value columns repeat both tests on the
+boundary-9 values rather than on the changes.
 
-| Measure | Predicted sign | r | r squared | r, end values |
-| --- | --- | --- | --- | --- |
-| Effective rank | positive | -0.054 | 0.3% | -0.165 |
-| srank | positive | -0.178 | 3.2% | -0.212 |
-| Dormant units, cut-off 0.01 | negative | +0.129 | 1.7% | +0.164 |
-| Dormant units, cut-off 0.025 | negative | +0.125 | 1.6% | +0.162 |
-| Dormant units, cut-off 0.1 | negative | +0.112 | 1.3% | +0.139 |
+| Measure | Predicted sign | r | r, five seeds | r, end values | r, end values, five seeds |
+| --- | --- | --- | --- | --- | --- |
+| Effective rank | positive | -0.054 | +0.327 | -0.165 | -0.350 |
+| srank | positive | -0.178 | +0.209 | -0.212 | -0.049 |
+| Dormant units, cut-off 0.01 | negative | +0.129 | +0.077 | +0.164 | +0.187 |
+| Dormant units, cut-off 0.025 | negative | +0.125 | +0.076 | +0.162 | +0.175 |
+| Dormant units, cut-off 0.1 | negative | +0.112 | +0.095 | +0.139 | +0.178 |
 
 ![](figures-v3/v3-fig3-rank-change-vs-probe-change.png)
 
@@ -246,23 +291,31 @@ Figure 1. Change in effective rank against change in probe accuracy, one point
 per run. Error bars are each run's own standard error on the probe change. The
 dashed line is the least-squares fit.
 
-Each measure predicts a sign, and all five come out with the wrong one. The
-last column sets the differences aside and asks whether, among the fifteen
-finished models, the one with the higher reading fits the unseen task better.
-It does not, in the same direction.
+Each measure predicts a sign. Counted over the fifteen runs all five come out
+with the wrong one. Counted over the five seeds the two rank measures turn over
+and read +0.327 and +0.209, which is the sign they predict, while the three
+dormant cut-offs stay the wrong way up. The failure on sign therefore depends
+on which count is used and the paper does not rest on it. The end-value columns
+set the differences aside and ask whether, among the finished models, the one
+with the higher reading fits the unseen task better. It does not, at either
+count, for effective rank.
 
-The eleven repetitions show this is not the outcome's fault. Of the spread in
-the gain across the fifteen runs, 46.2 percent by variance is real difference
-between models rather than measurement noise, which caps any predictor at a
-correlation of 0.680. The largest value in Table 4 is 0.212, and at fifteen
-runs a correlation needs 0.514 to be separable from zero at the 5 percent
-level.
+What does not depend on the count is size. The eleven repetitions show the
+outcome is not at fault: of the spread in the gain across the fifteen runs,
+46.2 percent by variance is real difference between models rather than
+measurement noise, which caps any predictor at a correlation of 0.680. The
+largest value in Table 4 is 0.350. At fifteen runs a correlation needs 0.514 to
+be separable from zero at the 5 percent level and at five seeds it needs 0.878.
+Nothing in the table reaches either. The five numbers are also closer to two:
+the three dormant cut-offs correlate between 0.993 and 0.999 with one another,
+and effective rank correlates 0.690 with srank.
 
 ## 3.5 The indicators call a damaged model healthy
 
 If the indicators report anything about the health of a model, a model with one
 group destroyed to chance should read worse than the same model one step
-earlier.
+earlier. Both readings here are taken through the fixed protocol, as in the two
+sections above. Boundary 10 was not read under matched statistics.
 
 Table 5. The unlearning step and the weight-scale controls, averaged over the
 fifteen streams. The ordinary learning step is the average absolute change from
@@ -293,8 +346,9 @@ so the weight scale does not explain the result away.
 
 # 4 Discussion
 
-The three measures respond to something, and on this evidence it is not the
-ability to learn. Two of the things they do respond to are identified here: the
+Read the way a hypernetwork delivers them, the three measures respond to
+something, and on this evidence it is not the ability to learn. Two of the
+things they do respond to are identified here: the
 reading protocol, which decides the sign of the result and is not usually
 reported, and the size of the generated weights, which reaches the reading
 along a path the measures' own normalisation does not cover.
@@ -312,16 +366,28 @@ dataset and one kind of learning.
 
 # 5 Limitations
 
-One model family, one hypernetwork, one dataset. The probe task is drawn from
-the same dataset as the stream and the probe trains the generator, so part of
-the measured gain is ordinary transfer; the frozen-generator arm that would
-isolate the code space reads chance at both boundaries. The indicators move
-almost entirely at the first task, so the endpoint comparison is largely
-untrained against trained, and the probe was not read at boundary 1. The fifteen
-runs share five starting points, and the three orderings of one seed, which
-begin from the same model, differ by up to about two points on the boundary-0
-probe reading for reasons not established here. No test for srank was stated
-before the measurements were taken. Appendix B is on ordering A alone, and the
+Sections 3.3 to 3.5 read the indicators through the fixed protocol alone.
+Matched statistics were measured on five models at two boundaries, which is
+Section 3.1, and not on the fifteen streams at every boundary or at boundary
+10. So those three sections say what the default reading does and not what the
+measures would do if the protocol were corrected first. The checkpoints that
+would answer it are kept, and the run needs forward passes only.
+
+One model family, one hypernetwork, one dataset. The probe trains the
+generator, so part of the measured gain is ordinary transfer. A probe on
+twenty CIFAR-100 classes keeps 121 percent of the gain (Table C3), which rules
+out transfer confined to the stream's own dataset and does not rule out general
+visual features, because boundary 0 is a randomly started network and general
+features would predict a gain of this size on any natural-image task. Both that
+control and the frozen-generator control of Table C4 are ordering A and five of
+the fifteen runs. The indicators move almost entirely at the first task, so the
+endpoint comparison is largely untrained against trained, and the probe was not
+read at boundary 1. The fifteen runs share five starting points. The three
+orderings of one seed begin from the same model and differ by up to about two
+points on the boundary-0 probe reading for reasons not established here, and
+because they are not independent the correlations of Table 4 are reported at
+both counts, where the sign of the change test turns over. No test for srank
+was stated before the measurements were taken. Appendix B is on ordering A alone, and the
 control has three seeds against the hypernetwork's five. The curvature reading
 is the mean eigenvalue of the Hessian and not the largest, which is what most of
 the sharpness literature reports; it covers one group, the first in ordering A,
@@ -527,9 +593,12 @@ before the ReLU against 2.79 after it, and the control reads 1.10 against 1.14.
 The mean row share is unchanged by the ReLU to three decimals on both networks
 at both boundaries. The ReLU is nevertheless doing work, removing between 0.331
 and 0.751 of all values, so this is not a case of a nonlinearity with nothing to
-remove. The collapse therefore occurs in the linear part of the network. Where in that
-part, and which half of the BatchNorm operation is responsible, are the two
-questions the rest of this section answers.
+remove. So the last ReLU is not what collapses the rank. That is as far as this reading
+reaches. The signal it measures has already passed every earlier ReLU in the
+network, so the result clears the final clipping and says nothing about
+nonlinearity in general. Where the fall happens, and which half of the
+BatchNorm operation is responsible, are the two questions the rest of this
+section answers.
 
 The error the protocol makes grows with depth. Each BatchNorm layer is told to
 divide by a spread of one. The measured spread at boundary 9 runs from 0.838 to
@@ -682,7 +751,14 @@ corrected it too. What survives is the reporting rule: a rank level published
 for a hypernetwork is a property of the model and the code together, so the
 code has to be stated for the number to be comparable with anyone else's.
 
-Table B6. Accuracy of the control network, to be read from the run log.
+Table B6 is not filled. The control network's per-group accuracy was computed
+during the run and printed, and the saved log holds only the indicator
+readings, so the numbers cannot be recovered from storage. The run takes about
+five minutes a seed and three seeds are needed. Until it is repeated, the claim
+that the control learned every group it was given rests on the run's printed
+output and not on a published record.
+
+Table B6. Accuracy of the control network. Pending a repeat of the run.
 
 # Appendix C The direct probe
 
@@ -708,7 +784,10 @@ the largest is 20.49. The spread between runs is small next to the gain
 itself.
 
 Table C1. Probe accuracy on the held-out group, averaged over the fifteen runs
-and over the eleven repetitions at each point.
+and over the eleven repetitions at each point. Inside each repetition the
+learning rate is the one with the best validation accuracy in that repetition,
+so every run contributes its best of three rates. Appendix G counts the same
+runs without selecting and reports a lower figure for the same point.
 
 | Point in the stream | Probe accuracy | Gain over chance |
 | --- | --- | --- |
@@ -754,19 +833,84 @@ One caveat belongs here. The three orderings of a seed start from the same
 model, so their three boundary-0 readings should agree, and they do not: for
 seed 0 they are 26.13%, 25.50% and 27.41%. The largest such gap is about two
 points, which is roughly the size of a noise floor and well under the gain, so
-it does not touch the result of this section. Appendix C reports the spread
-in full and states what is known about its cause.
+it does not touch the result of this section. Table C2 holds every boundary-0
+reading, and the cause of the spread is not established here.
+
+Two controls bound what the gain can mean, and both were measured on these
+same checkpoints.
+
+The first changes the dataset. If the gain were transfer between neighbouring
+classes of one dataset, a probe task from another source should show less of
+it. The same probe was run on twenty CIFAR-100 classes, on the five ordering A
+checkpoints, with every other setting held: 250 steps, eleven repetitions,
+three rates chosen per repetition, 4,800 training images, chance at 5 percent.
+
+Table C3. The direct probe on twenty CIFAR-100 classes, ordering A, five seeds.
+The floor is built the same way as in Table C2.
+
+| Run | Boundary 0 | Boundary 9 | Gain | Floor | Gain clears floor |
+| --- | --- | --- | --- | --- | --- |
+| A0 | 34.45% | 55.03% | +20.59 | 2.21 | yes |
+| A1 | 33.20% | 55.89% | +22.69 | 1.33 | yes |
+| A2 | 33.09% | 53.93% | +20.84 | 1.86 | yes |
+| A3 | 33.31% | 52.15% | +18.85 | 1.85 | yes |
+| A4 | 33.55% | 53.61% | +20.07 | 1.55 | yes |
+| mean | 33.52% | 54.12% | +20.61 | . | 5 of 5 |
+
+The gain is +20.61 points where the same five streams gain +17.00 on the Tiny
+ImageNet probe. A task that shares no class, no picture and no source with the
+stream keeps 121 percent of the gain rather than losing it, and every run
+clears its own floor. CIFAR-100 is simply the easier twenty-class task at this
+budget, higher at both ends, and what matters is that the distance between the
+ends survives the change of source. Read at boundary 4 as well, it has the same
+shape as the Tiny ImageNet probe: +20.17 points by task 4 and +0.44 after,
+which is 0.6 standard errors from zero on four degrees of freedom.
+
+This rules out the narrow explanation and not the broad one. Transfer between
+neighbouring classes of a single dataset does not survive a probe on another
+dataset. General visual features do: they help on any natural-image task, and
+boundary 0 is a randomly started network, so a gain of this size on an
+unrelated dataset is also what general features predict. The paper claims the
+narrow case is ruled out and claims no more than that.
+
+The second control removes the generator from the probe. In the full arm the
+generator and the fresh task code train together. In the frozen arm the
+generator is held and only the 32-number code trains, which asks whether the
+code alone can reach a held-out group.
+
+Table C4. The probe with the generator frozen beside the full arm. Ordering A,
+five seeds, same budget and same grid. Chance is 5 percent.
+
+| Run | Full, b0 | Full, b9 | Frozen, b0 | Frozen, b9 |
+| --- | --- | --- | --- | --- |
+| A0 | 26.13% | 43.72% | 5.04% | 4.72% |
+| A1 | 27.25% | 43.65% | 5.26% | 5.84% |
+| A2 | 26.06% | 43.75% | 4.52% | 4.14% |
+| A3 | 26.55% | 42.76% | 4.58% | 5.06% |
+| A4 | 26.78% | 43.90% | 5.02% | 5.18% |
+
+Every frozen reading sits between 4.14 and 5.84 percent. The frozen arm moves
+by +0.10 points over the stream where the full arm moves by +17.00, so it is at
+chance at both ends and has no change to report. Two things follow. The probe
+has to be read as the full arm, because the frozen arm measures nothing. And a
+32-number code cannot on its own steer this generator to a group of twenty
+unseen classes, so whatever lets the model fit a new task sits in the generator
+weights and not in the code space.
+
+Both controls are ordering A and five of the fifteen runs. Neither was measured
+on orderings B and C.
 
 This is the result the indicators have to be judged against. Over the nine
 tasks every indicator said the model was losing the ability to learn, and the
 direct measurement says it fits a new task better, in all fifteen runs, by
 more than ten times the largest floor. The probe trains the generator, so part
-of that gain is ordinary transfer between tasks drawn from one dataset, and
-Section 5 of the main body lists this among the limits. Transfer does not explain the
-disagreement, though: the indicators are read as a statement about the model
-itself, and the model they call least able is the one that learns best. Appendix D takes the weaker question: set
-the direction aside, and ask only whether the runs that fell furthest are the
-runs that gained least.
+of that gain is ordinary transfer; Table C3 shows it is not transfer confined
+to one dataset, and Section 5 of the main body lists what remains. Transfer
+does not explain the disagreement, though: the indicators are read as a
+statement about the model itself, and the model they call least able is the one
+that learns best. Appendix D takes the weaker question: set the direction
+aside, and ask only whether the runs that fell furthest are the runs that
+gained least.
 
 # Appendix D Correlations in full
 
@@ -797,24 +941,47 @@ to +0.129.
 
 Each measure also predicts a sign. A run whose rank fell less should have more
 ability left, so the rank measures predict a positive correlation; dormant
-units are read the other way and predict a negative one. All five come out
-with the wrong sign, and the largest of them accounts for 3.2% of the spread.
+units are read the other way and predict a negative one. Over the fifteen runs
+all five come out with the wrong sign, and the largest of them accounts for
+3.2% of the spread.
 
-Table D2. Correlation between each indicator's change and the probe's change,
-over the fifteen runs. The last column repeats the test on the boundary-9
-values themselves rather than on the changes.
+The fifteen runs are not fifteen independent draws. Orderings A, B and C at one
+seed are three streams written by the same starting network, so one seed gives
+three correlated points and not three separate ones. There are five starting
+points. Averaging the three orderings of each seed and correlating the five
+averages is the stricter count, and Table D2 reports both.
 
-| Measure | Predicted sign | r | r squared | r, end values |
-| --- | --- | --- | --- | --- |
-| Effective rank | positive | -0.054 | 0.3% | -0.165 |
-| srank | positive | -0.178 | 3.2% | -0.212 |
-| Dormant units, cut-off 0.01 | negative | +0.129 | 1.7% | +0.164 |
-| Dormant units, cut-off 0.025 | negative | +0.125 | 1.6% | +0.162 |
-| Dormant units, cut-off 0.1 | negative | +0.112 | 1.3% | +0.139 |
+Table D2. Correlation between each indicator's change and the probe's change.
+Column r counts all fifteen runs; the five-seed columns average the three
+orderings of each seed first. The end-value columns repeat both tests on the
+boundary-9 values themselves rather than on the changes.
+
+| Measure | Predicted sign | r | r squared | r, five seeds | r, end values | r, end values, five seeds |
+| --- | --- | --- | --- | --- | --- | --- |
+| Effective rank | positive | -0.054 | 0.3% | +0.327 | -0.165 | -0.350 |
+| srank | positive | -0.178 | 3.2% | +0.209 | -0.212 | -0.049 |
+| Dormant units, cut-off 0.01 | negative | +0.129 | 1.7% | +0.077 | +0.164 | +0.187 |
+| Dormant units, cut-off 0.025 | negative | +0.125 | 1.6% | +0.076 | +0.162 | +0.175 |
+| Dormant units, cut-off 0.1 | negative | +0.112 | 1.3% | +0.095 | +0.139 | +0.178 |
+
+The sign of the change test depends on which count is used. At five seeds the
+two rank measures turn over to +0.327 and +0.209, the sign they predict, while
+the three dormant cut-offs stay the wrong way up. The claim that all five fail
+on sign therefore holds at fifteen runs and not at five seeds, and the paper
+rests on the weaker statement instead: at no count is any of them large enough
+to use. The end-value test does not turn over for effective rank at either
+count.
+
+The five numbers are also not five independent tests. Across the fifteen runs
+the three dormant cut-offs correlate between 0.993 and 0.999 with one another,
+and effective rank correlates 0.690 with srank, so the table is nearer to two
+measurements reported five ways. `scripts/upgrade_suite/seed_clustered_correlations.py`
+computes every value above from the published logs and checks the fifteen-run
+column against the figures printed here.
 
 Both quantities in that test are differences, and a difference inherits the
-noise of both of its endpoints. The last column of Table D2 therefore sets the
-differences aside and asks the plainer question: among the fifteen finished
+noise of both of its endpoints. The end-value columns of Table D2 therefore set
+the differences aside and asks the plainer question: among the fifteen finished
 models, does the one with the higher indicator reading fit the unseen task
 better? It does not. Effective rank gives -0.165 and srank -0.212 where a
 positive value was predicted, and the three dormant-unit cut-offs give +0.139
@@ -827,11 +994,11 @@ separated. The gain's spread across the fifteen runs is 1.300 points. The
 repetitions account for 0.953 of that, leaving 0.883 as real difference
 between models, which is 46.2% of the spread by variance. An outcome measured
 that well caps any predictor at a correlation of 0.680, the square root of
-that share. That ceiling covers the change test only; the end-value test in
-the last column does not take a difference and so is not subject to it. It
-does not need to be: the largest value anywhere in Table D2 is 0.212, and at
-fifteen runs a correlation needs 0.514 to be separable from zero at the 5%
-level.
+that share. That ceiling covers the change test only; the end-value test does
+not take a difference and so is not subject to it. It does not need to be: the
+largest value anywhere in Table D2 is 0.350, which sits in the five-seed column
+where a correlation needs 0.878 to be separable from zero at the 5% level,
+while the largest at fifteen runs is 0.212 against a threshold of 0.514.
 
 Neither the size of an indicator's change nor its final value therefore says
 anything usable about how well the model fits an unseen task, and the little
@@ -989,6 +1156,16 @@ only. A star marks a gap larger than its own 95 percent interval.
 | gap, t = 4 minus t = 0 | +20.78* | +21.15* | +17.69* | +17.63* | 165 |
 | gap, t = 9 minus t = 0 | +23.07* | +21.89* | +19.78* | +18.29* | 495 |
 
+Table G1 reads lower at step 250 than Table C1 reads at the same point: 21.27
+against 26.20 at boundary 0, and 39.57 against 44.08 at boundary 9. The two
+tables count the same 990 runs by different rules. Table C1 keeps one learning
+rate per repetition, the one that did best on that repetition's validation
+split. Table G1 averages all three. A curve has to be built from runs that are
+comparable at every step, and choosing a rate by its result at step 250 would
+join three different curves into one. So the selected figure answers how well
+the model can fit the task, the averaged figure answers what shape the fitting
+takes, and neither corrects the other.
+
 The gap between the end of the stream and the start is widest at the first
 reading and narrows from there. It is +23.07 points at step 62 and +18.29 points
 at step 250. That is the shape of a difference in speed. A difference in ceiling
@@ -1119,6 +1296,30 @@ loss at these points runs from 1.827 to 2.600 at boundary 4 and from 2.200 to
 Seed 2 reads a small negative value at boundary 4. A negative mean eigenvalue
 means that point is not a local minimum once averaged over directions. It is
 reported and not investigated.
+
+Table I1 and Table I2 cover different spans of the stream, so the comparison
+between them carries that difference as well as the difference in reading
+point. The fixed arm was measured at boundary 4 too, 600 readings that the
+published log already holds, so the span can be matched and removed. Table I4
+is the fixed arm over the trained arm's own span.
+
+Table I4. Curvature at the fixed code on fixed statistics, read over boundary 4
+to boundary 9. Same models, same directions and same floor rule as Table I1.
+
+| Seed | Curvature, b4 | Curvature, b9 | Change | Floor | Verdict |
+| --- | --- | --- | --- | --- | --- |
+| 0 | 2.077e8 | 2.784e10 | 2.763e10 | 2.502e9 | rose |
+| 1 | 1.192e10 | 4.020e11 | 3.900e11 | 3.756e10 | rose |
+| 2 | 2.044e8 | 3.628e10 | 3.607e10 | 3.879e9 | rose |
+| 3 | 1.896e9 | 1.126e12 | 1.124e12 | 1.412e11 | rose |
+| 4 | 543.2 | 5.730e5 | 5.724e5 | 7.361e4 | rose |
+
+All five seeds rise past their own floor over this span, and all three step
+sizes agree, which is what Table I1 reports over the longer one. The ratio
+falls from between 6.53e7 and 5.95e12 to between 33.7 and 1.06e3, so most of
+the size of the published rise belongs to the first four tasks. Its direction
+does not depend on the span. Table I2 over the same span rises on 2 of 5 seeds
+and falls on 2, so the two arms still disagree once the span is held fixed.
 
 Table I3. Each curvature reading divided by the loss at the same point.
 
