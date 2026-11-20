@@ -250,3 +250,17 @@ Run notebook 54 again with the random draw and the code distance. If the check
 passes and the table holds, the finding is about the code's update rather than
 about the code, and which of the two statements above is the right one depends
 on the distance column.
+
+### The second attempt measured nothing
+
+Running the fixed notebook printed the same accuracies to the last digit, the
+same failed check, and an empty distance column. It had not re-measured
+anything. The notebook saves its readings to one key in R2 and skips any model
+already in that file, and the first run's readings were still there, so every
+model was treated as done. The accuracies came back unchanged because they were
+the first run's accuracies, and the distances were blank because the version
+that wrote those rows did not record distances.
+
+The notebook now drops any saved reading that has no distance on it, since that
+field is exactly what the old version never wrote, and says how many it
+dropped. Those models are then measured again.
