@@ -754,7 +754,8 @@ code has to be stated for the number to be comparable with anyone else's.
 Table B6 is not filled. The control network's per-group accuracy was computed
 during the run and printed, and the saved log holds only the indicator
 readings, so the numbers cannot be recovered from storage. The run takes about
-five minutes a seed and three seeds are needed. Until it is repeated, the claim
+five minutes a seed and is set to five seeds, which matches the hypernetwork's
+five on this ordering. Until it is repeated, the claim
 that the control learned every group it was given rests on the run's printed
 output and not on a published record.
 
