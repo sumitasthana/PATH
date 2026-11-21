@@ -513,3 +513,63 @@ table. The 14 November record found that the same unlearn moves effective rank
 about ten times further than an ordinary learning step. Those two readings sit
 oddly together and nobody has looked at them side by side. Noted here so it is
 not lost.
+
+### Orderings B and C: the same answer, and the check now passes
+
+Notebook 54 was run on all fifteen streams. The five ordering A models were
+already in the results file and were skipped, so ten new models were measured.
+
+| Ordering | Trained code | Starting code | Another group's code | Seed spread |
+| --- | --- | --- | --- | --- |
+| A | 43.18% | 43.08% | 4.98% | 8.29 |
+| B | 39.72% | 39.62% | 5.39% | 5.49 |
+| C | 40.73% | 40.57% | 4.80% | 5.28 |
+| All | 41.21% | 41.09% | 5.06% | 6.35 |
+
+Across the 27 group-and-ordering pairs the largest gap between the trained code
+and the starting one is 0.34 points, against a seed spread of 6.35. Another
+group's code reads 5.06 on average, with every reading between 3.50 and 7.86.
+
+Position in the stream makes no difference. Six groups hold the same position
+in all three orderings. Groups 0, 4 and 8 rotate through positions 1, 5 and 9,
+and the two codes agree at every one of those nine readings, by between 0.08
+and 0.22 points.
+
+### One thing the ordering A run was too small to see
+
+The trained code is not exactly equal to the starting one. It is ahead by 0.12
+points on average, ahead in 22 of the 27 pairs, behind in 4 and level in 1.
+
+That is a consistent direction. Training the code does something. It is also
+about fifty times smaller than the spread between seeds, so what it does does
+not matter. The paper now says this instead of saying the training does
+nothing, which is the stronger claim and not the one the numbers support.
+
+### The statistics check passes on fifteen runs
+
+| reading | ordering A alone | all fifteen runs |
+| --- | --- | --- |
+| pairs | 45 | 135 |
+| rebuilt statistics | 43.18 | 41.21 |
+| the runs' own | 40.17 | 40.54 |
+| mean difference | +3.01 | +0.67 |
+| largest single gap | 31.10 | 31.10 |
+
+The +3.01 on ordering A was itself noise. Over fifteen runs the rebuilt
+statistics sit 0.67 points above the runs' own, which is well inside the seed
+spread, so Table C5 can be read as this study's accuracies. One single pair is
+still 31.10 points out, so an individual group of an individual run can be far
+off. The average is what is close.
+
+The generator's own movement barely changed when B and C were added: 52.1
+degrees over the stream against ordering A's 52.4, and a smallest task of 0.098
+and 2.1 degrees against 0.101 and 2.2.
+
+### Where this now stands in the paper
+
+Version 3 carries it in three places. A paragraph in the Discussion, Tables C5
+and C6 in Appendix C with the full numbers, and one sentence in Section 3.3.
+Adhikari et al. is cited for the design and for the Discard ef baseline. Two
+limits remain in the text: the reading is at boundary 9 only, and why the code
+barely moves was not established. Appendix H keeps the middle of the stream as
+work not yet done.

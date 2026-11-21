@@ -271,8 +271,8 @@ with the generator frozen, leaving only the 32-number code to train, reads
 between 4.14 and 5.84 percent at both ends against a chance level of 5, so the
 ability being measured sits in the generator weights. The reverse question,
 whether a group that has been learned still needs the code it was trained with,
-is answered in the same place: it does not. Appendix C gives all three in
-full.
+is answered in the same place, on all fifteen streams: it does not. Appendix C
+gives all three in full.
 
 ## 3.4 The size of the fall does not rank the runs
 
@@ -473,9 +473,10 @@ Only one part of this model learns. The generator writes the weights, and a
 every task, so a reading taken through a code could in principle be reporting
 on either of them. Appendix C settles which. A group scores the same through
 the random code it started with as through the code it was trained with, on all
-nine groups, while another group's code leaves it at chance. The codes barely
-move while they are learned, 0.019 of their own length, where the generator
-moves at least five times that on its slowest task of the stream. The code is a
+nine groups of all fifteen streams, while another group's code leaves it at
+chance. The codes barely move while they are learned, 0.019 of their own
+length, where the generator moves at least five times that on its slowest task
+of the stream. The code is a
 name the generator learns to answer to, not a second place where learning is
 kept. This matters for Section 3.1. That an indicator reading changes with the
 code it is read through is a fact about the reading, not a sign that a trained
@@ -1053,57 +1054,78 @@ reach a group the generator has never seen. It says nothing about a group the
 generator has already learned, and the framework this study builds on trains
 the task code on every task, freezing only the chunk codes after the first one
 (Adhikari et al., 2025). So the code's training was measured directly. At
-boundary 9 of the five ordering A streams, each of the nine learned groups was
-scored three times on its own test images: through the code it was trained
-with, through the random code it started from, and through another learned
-group's trained code. Nothing was trained. Each arm was read through BatchNorm
+boundary 9 of all fifteen streams, each of the nine learned groups was scored
+three times on its own test images: through the code it was trained with,
+through the random code it started from, and through another learned group's
+trained code. Nothing was trained. Each arm was read through BatchNorm
 statistics rebuilt from 1,280 of that group's training images, because the
 saved statistics were collected while the trained code was in use and would
 favour that arm.
 
-Table C5. The three codes, ordering A, five seeds, boundary 9, mean over seeds.
-Distance is the move divided by the length of the starting code. Chance is 5
-percent.
+Table C5. The three codes, five seeds per ordering, boundary 9, averaged over
+the nine groups and the five seeds. The spread is between seeds on the trained
+arm, measured inside one ordering. Chance is 5 percent.
 
-| Group | Trained code | Starting code | Another group's code | Code distance | Code turn |
-| --- | --- | --- | --- | --- | --- |
-| 0 | 41.96% | 41.86% | 6.10% | 0.010 | 0.4 deg |
-| 1 | 48.38% | 48.42% | 7.42% | 0.015 | 0.7 deg |
-| 2 | 46.34% | 46.24% | 4.16% | 0.022 | 1.0 deg |
-| 3 | 40.22% | 40.06% | 4.24% | 0.020 | 0.9 deg |
-| 4 | 47.62% | 47.40% | 3.50% | 0.026 | 1.2 deg |
-| 5 | 41.38% | 41.50% | 5.02% | 0.019 | 0.8 deg |
-| 6 | 41.60% | 41.56% | 5.16% | 0.021 | 1.0 deg |
-| 7 | 37.30% | 37.02% | 5.08% | 0.019 | 0.8 deg |
-| 8 | 43.82% | 43.64% | 4.12% | 0.020 | 0.9 deg |
-| All | 43.18% | 43.08% | 4.98% | 0.019 | 0.9 deg |
+| Ordering | Trained code | Starting code | Another group's code | Seed spread |
+| --- | --- | --- | --- | --- |
+| A | 43.18% | 43.08% | 4.98% | 8.29 |
+| B | 39.72% | 39.62% | 5.39% | 5.49 |
+| C | 40.73% | 40.57% | 4.80% | 5.28 |
+| All | 41.21% | 41.09% | 5.06% | 6.35 |
 
-The starting code scores what the trained code scores on every group, the
-largest difference being 0.28 points where the spread between seeds is 8.29.
-Another group's code scores 4.98 percent, which is chance. The codes themselves
-barely move: 0.019 of their own length and under 1.2 degrees while their group
-is learned, against a generator that ends at least 0.101 further from its start
-and 2.2 degrees round on its smallest task of the stream, and 0.166 and 9.5
-degrees on its first. Both quantities are divided by the length of the thing
-that moved, which is what allows them to be compared; one is 32 numbers and the
-other about 25 million, so they say how much each part changed and not how much
-each part can hold.
+The starting code scores what the trained code scores. Across the 27
+group-and-ordering pairs the largest difference is 0.34 points, where the
+spread between seeds is 6.35. Another group's code reads 5.06 percent on
+average against a chance level of 5, with every reading between 3.50 and 7.86.
+
+The trained code is not exactly equal to the starting one. It is ahead by 0.12
+points on average, and ahead in 22 of the 27 pairs, behind in 4 and level in 1.
+That is a consistent direction, so training the code does something. It is also
+about fifty times smaller than the spread between seeds, so what it does is
+negligible.
+
+Where the group sits in the stream does not change this. Six of the nine groups
+hold the same position in all three orderings, and groups 0, 4 and 8 rotate
+through positions 1, 5 and 9.
+
+Table C6. The three rotating groups at each position they occupy, trained code
+against starting code, mean over the five seeds of that ordering.
+
+| Group | Position 1 | Position 5 | Position 9 |
+| --- | --- | --- | --- |
+| 0 | 41.96% / 41.86% | 38.56% / 38.44% | 36.44% / 36.40% |
+| 4 | 42.96% / 42.88% | 47.62% / 47.40% | 45.90% / 45.74% |
+| 8 | 39.48% / 39.38% | 36.46% / 36.36% | 43.82% / 43.64% |
+
+The two codes agree at every position, by between 0.08 and 0.22 points.
+
+The codes themselves barely move: 0.019 of their own length and no more than
+1.0 degrees while their group is learned, against a generator that ends at
+least 0.098 further from its start and 2.1 degrees round on its smallest task
+of the stream, and 0.161 and 9.2 degrees on its first. Both quantities are
+divided by the length of the thing that moved, which is what allows them to be
+compared; one is 32 numbers and the other about 25 million, so they say how
+much each part changed and not how much each part can hold.
 
 The code therefore acts as a fixed name that the generator learns to answer to.
 The right name is needed, since another group's fails completely. Training the
-name is not. Two things follow. The probe has to train the generator, which
-Table C4 shows from the other side, and the reason is that the code has nothing
-to learn. And discarding a forgotten group's code, the Discard ef baseline of
-Adhikari et al. (2025), removes the key rather than the knowledge.
+name has an effect too small to matter. Two things follow. The probe has to
+train the generator, which Table C4 shows from the other side, and the reason
+is that the code has almost nothing to learn. And discarding a forgotten
+group's code, the Discard ef baseline of Adhikari et al. (2025), removes the
+key rather than the knowledge.
 
-Three limits. The accuracies in Table C5 are read through rebuilt statistics,
-which sit 3.01 points above the accuracies the runs themselves report, so they
-are not this study's accuracies and should not be placed beside one; the
-comparison between arms is unaffected, because all three arms are rebuilt the
-same way. The measurement is ordering A at boundary 9 only. And why the code
-barely moves was not established: its length is about 5.7, and the gradient
-reaching 32 numbers may simply be small next to that, so this is a statement
-about the present design and not about hypernetworks in general.
+Two limits. The measurement is at boundary 9, the end of the stream, and no
+point inside the stream was read. And why the code barely moves was not
+established: its length is about 5.7, and the gradient reaching 32 numbers may
+simply be small next to that, so this is a statement about the present design
+and not about hypernetworks in general.
+
+The rebuilt statistics are not a third limit. Read across the 135 group and run
+pairs they sit 0.67 points above the accuracies the runs themselves report,
+which is inside the spread between seeds, so Table C5 can be read as this
+study's accuracies. One pair differs by 31.10 points, so a single group of a
+single run can still be far out; the average is what is close.
 
 This is the result the indicators have to be judged against. Over the nine
 tasks every indicator said the model was losing the ability to learn, and the
@@ -1473,7 +1495,6 @@ point where the accuracy endpoint stops, and not as a settled result.
 | Random-direction control | `39_random_direction_control.ipynb` | trains nothing |
 | Effective-rank convergence across seeds | stored records | no new run needed |
 | Probe at the middle of the stream | `47_probe_on_the_revised_streams.ipynb` | 495 probe runs |
-| The three codes on orderings B and C | `54_code_conditioning.ipynb` | trains nothing |
 | The three codes at the middle of the stream | `54_code_conditioning.ipynb` | trains nothing |
 
 # Appendix I Curvature
