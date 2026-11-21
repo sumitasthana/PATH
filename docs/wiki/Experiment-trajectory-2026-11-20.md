@@ -331,3 +331,55 @@ comparison is a size comparison and not a ratio.
 
 Whether this holds at boundary 4 as well as boundary 9 is open, and so is
 whether it holds on orderings B and C.
+
+### What the code's move is small against
+
+The generator's own distance and turn come from the indicator records the
+streams already wrote, averaged over the five seeds of ordering A. They count
+from the start of the stream, so each row covers everything up to that
+boundary.
+
+| boundary | distance | turn (deg) | distance since the last | turn since the last |
+| --- | --- | --- | --- | --- |
+| 0 | 0.000 | 0.0 | | |
+| 1 | 0.166 | 9.5 | 0.166 | 9.5 |
+| 2 | 0.377 | 20.7 | 0.211 | 11.2 |
+| 3 | 0.546 | 28.6 | 0.169 | 7.9 |
+| 4 | 0.698 | 34.8 | 0.152 | 6.2 |
+| 5 | 0.828 | 39.5 | 0.130 | 4.7 |
+| 6 | 0.959 | 43.6 | 0.131 | 4.1 |
+| 7 | 1.082 | 46.9 | 0.123 | 3.3 |
+| 8 | 1.193 | 49.6 | 0.111 | 2.7 |
+| 9 | 1.294 | 51.8 | 0.101 | 2.2 |
+| 10 | 1.297 | 52.4 | 0.003 | 0.6 |
+
+The last two columns are differences between rows, so they are how much further
+from the start the generator ended up, not the length of the path it took. The
+path cannot be shorter than that, so they are a floor on the per-task move and
+not an estimate of it.
+
+Against those, a code moves 0.019 of its own length and turns 0.9 degrees over
+its own task, and no group reads above 0.026 or 1.2 degrees.
+
+The comparison at its least favourable is the ninth task, where the generator
+has slowed to its smallest step of the stream: even there it ends 0.101 further
+out and 2.2 degrees round, which is about four times the largest code distance
+and about twice the largest code turn. At the first task it is 0.166 and 9.5
+degrees, roughly nine and eleven times a code's average.
+
+So "the code barely moved" is a fair way to say it. The generator moves several
+times further on every single task than a code moves on its own, and the gap is
+smallest at the end of the stream, where the generator itself has slowed down.
+
+Both numbers are scale free, which is what makes them comparable at all. They
+are still a 32-number vector and a 25-million-parameter one, so this says how
+much each thing changed and not how much each thing can hold.
+
+### An aside, not this experiment's question
+
+Boundary 10 is ordering A's unlearn of group 0. The generator ends it 0.003
+further from the start and 0.6 degrees round, the smallest move anywhere in the
+table. The 14 November record found that the same unlearn moves effective rank
+about ten times further than an ordinary learning step. Those two readings sit
+oddly together and nobody has looked at them side by side. Noted here so it is
+not lost.
