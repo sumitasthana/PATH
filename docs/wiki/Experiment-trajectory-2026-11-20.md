@@ -573,3 +573,76 @@ Adhikari et al. is cited for the design and for the Discard ef baseline. Two
 limits remain in the text: the reading is at boundary 9 only, and why the code
 barely moves was not established. Appendix H keeps the middle of the stream as
 work not yet done.
+
+## The same reading at boundary 4
+
+The reading above is taken at the end of the stream. A group learned early is
+read there after five more tasks have been written over it, and after the
+generator has moved a long way. If the generator only answers to a starting
+code while the group is recent, the boundary-9 reading would not show it.
+
+So notebook 54 was changed to read boundary 4 as well. Four groups have been
+learned by then, so each run gives four readings instead of nine, 60 new
+readings over the fifteen runs. The generator has moved 0.690 of its own length
+by boundary 4 against 1.282 by boundary 9, so this is about half way out. The
+fifteen boundary-9 models were already in the results file and were skipped.
+
+### The arms at boundary 4
+
+| ordering | trained code | starting code | another group's code | seed spread |
+| --- | --- | --- | --- | --- |
+| A | 45.22 | 45.11 | 5.29 | 7.35 |
+| B | 43.10 | 42.93 | 5.56 | 6.03 |
+| C | 44.87 | 44.75 | 4.79 | 4.94 |
+| all | 44.40 | 44.26 | 5.21 | 6.11 |
+
+The same answer. Over the 12 group and ordering pairs the trained code is ahead
+by 0.13 points on average, the largest single difference is 0.46, and the
+spread between seeds is 6.11. It is ahead in 8 pairs, level in 2 and behind in
+2, which is the same small lead the boundary-9 reading found. Another group's
+code reads 5.21 percent against 5 percent chance, every reading between 3.18
+and 7.86.
+
+So how far the generator has moved since a group was learned makes no
+difference to this. The result is not about recent groups or about old ones.
+
+The accuracies themselves are higher at boundary 4 than at boundary 9 for the
+same groups: order A group 0 reads 42.98 against 41.96, group 3 reads 41.22
+against 40.22. That is ordinary forgetting over the five later tasks, and it
+moves the trained and the starting arm together.
+
+### A check that only two boundaries make possible
+
+A group's code stops training the moment its own task ends, because the trainer
+makes only the current task's code trainable. So a code read at boundary 4 and
+again at boundary 9 has to report exactly the same distance from where it
+started. If it did not, something would be reading a code that is not the one
+it names, and none of the tables could be trusted.
+
+The notebook now prints this. For the 60 codes read at both boundaries the
+largest disagreement is 0.00e+00.
+
+### The statistics check on both boundaries
+
+| reading | boundary 9 alone | both boundaries |
+| --- | --- | --- |
+| pairs | 135 | 195 |
+| rebuilt statistics | 41.21 | 42.19 |
+| the runs' own | 40.54 | 41.92 |
+| mean difference | +0.67 | +0.27 |
+| largest single gap | 31.10 | 31.10 |
+
+The 60 boundary-4 pairs bring the mean difference down to +0.27. One pair is
+still 31.10 points out, which is the same pair as before.
+
+### What changed in the paper
+
+Table C7 was added to Appendix C with the boundary-4 arms, together with the
+zero-disagreement check and the note that the groups read at both boundaries
+score lower at boundary 9. The statistics-check paragraph now reads 195 pairs
+and +0.27. The first limit changed: it no longer says the reading is at
+boundary 9 only, and says instead that two boundaries were read and the five
+groups learned after boundary 4 are read at the end of the stream alone. The
+Discussion paragraph now says the reading is the same at the end of the stream
+and partway through. The Appendix H row for the middle of the stream was
+removed, since the work is done.

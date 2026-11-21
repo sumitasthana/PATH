@@ -474,7 +474,9 @@ every task, so a reading taken through a code could in principle be reporting
 on either of them. Appendix C settles which. A group scores the same through
 the random code it started with as through the code it was trained with, on all
 nine groups of all fifteen streams, while another group's code leaves it at
-chance. The codes barely move while they are learned, 0.019 of their own
+chance. The reading is the same at the end of the stream and partway through it,
+so it does not depend on how far the generator has moved since the group was
+learned. The codes barely move while they are learned, 0.019 of their own
 length, where the generator moves at least five times that on its slowest task
 of the stream. The code is a
 name the generator learns to answer to, not a second place where learning is
@@ -1099,6 +1101,34 @@ against starting code, mean over the five seeds of that ordering.
 
 The two codes agree at every position, by between 0.08 and 0.22 points.
 
+Neither does the point in the stream where the reading is taken. The same
+reading was taken at boundary 4, where only four groups have been learned and
+the generator has moved about half as far from its start, 0.690 against 1.282.
+At boundary 4 those groups are recent; at boundary 9 they were learned long
+before and five more tasks have been written over them.
+
+Table C7. The three codes at boundary 4, five seeds per ordering, averaged over
+the four groups learned by then and the five seeds. Chance is 5 percent.
+
+| Ordering | Trained code | Starting code | Another group's code | Seed spread |
+| --- | --- | --- | --- | --- |
+| A | 45.22% | 45.11% | 5.29% | 7.35 |
+| B | 43.10% | 42.93% | 5.56% | 6.03 |
+| C | 44.87% | 44.75% | 4.79% | 4.94 |
+| All | 44.40% | 44.26% | 5.21% | 6.11 |
+
+The answer is the same. Across the 12 group-and-ordering pairs the trained code
+is ahead by 0.13 points on average, the largest single difference is 0.46, and
+the spread between seeds is 6.11. Another group's code reads 5.21 percent, with
+every reading between 3.18 and 7.86. The same groups read lower at boundary 9
+than at boundary 4, which is the forgetting caused by the five later tasks, and
+it moves the trained and the starting arm together.
+
+The two boundaries also allow a check on the measurement itself. A group's code
+stops training when its own task ends, so a code read at boundary 4 and again
+at boundary 9 has to report the same distance from where it started. For the 60
+codes read at both, the disagreement is exactly zero.
+
 The codes themselves barely move: 0.019 of their own length and no more than
 1.0 degrees while their group is learned, against a generator that ends at
 least 0.098 further from its start and 2.1 degrees round on its smallest task
@@ -1115,16 +1145,16 @@ is that the code has almost nothing to learn. And discarding a forgotten
 group's code, the Discard ef baseline of Adhikari et al. (2025), removes the
 key rather than the knowledge.
 
-Two limits. The measurement is at boundary 9, the end of the stream, and no
-point inside the stream was read. And why the code barely moves was not
-established: its length is about 5.7, and the gradient reaching 32 numbers may
+Two limits. Two boundaries were read, 4 and 9, so the five groups learned after
+boundary 4 are read at the end of the stream only. And why the code barely
+moves was not established: its length is about 5.7, and the gradient reaching 32 numbers may
 simply be small next to that, so this is a statement about the present design
 and not about hypernetworks in general.
 
-The rebuilt statistics are not a third limit. Read across the 135 group and run
-pairs they sit 0.67 points above the accuracies the runs themselves report,
-which is inside the spread between seeds, so Table C5 can be read as this
-study's accuracies. One pair differs by 31.10 points, so a single group of a
+The rebuilt statistics are not a third limit. Read across the 195 group and run
+pairs they sit 0.27 points above the accuracies the runs themselves report,
+which is inside the spread between seeds, so Tables C5 and C7 can be read as
+this study's accuracies. One pair differs by 31.10 points, so a single group of a
 single run can still be far out; the average is what is close.
 
 This is the result the indicators have to be judged against. Over the nine
@@ -1495,7 +1525,6 @@ point where the accuracy endpoint stops, and not as a settled result.
 | Random-direction control | `39_random_direction_control.ipynb` | trains nothing |
 | Effective-rank convergence across seeds | stored records | no new run needed |
 | Probe at the middle of the stream | `47_probe_on_the_revised_streams.ipynb` | 495 probe runs |
-| The three codes at the middle of the stream | `54_code_conditioning.ipynb` | trains nothing |
 
 # Appendix I Curvature
 
