@@ -260,7 +260,9 @@ and no source with the stream, gains +20.61 points against those streams'
 +17.00, so the gain is not transfer confined to one dataset. The same probe
 with the generator frozen, leaving only the 32-number code to train, reads
 between 4.14 and 5.84 percent at both ends against a chance level of 5, so the
-ability being measured sits in the generator weights. Appendix C gives both in
+ability being measured sits in the generator weights. The reverse question,
+whether a group that has been learned still needs the code it was trained with,
+is answered in the same place: it does not. Appendix C gives all three in
 full.
 
 ## 3.4 The size of the fall does not rank the runs
@@ -401,6 +403,9 @@ and its trained-code arm begins at boundary 4 because boundary 1 was not kept.
 
 # References
 
+Adhikari, S., Kumaravelu, V., and Srijith, P. K. An unlearning framework for
+continual learning. 2025. arXiv:2509.17530.
+
 Kumar, A., Agarwal, R., Ghosh, D., and Levine, S. Implicit under-parameterization
 inhibits data-efficient deep reinforcement learning. In International Conference
 on Learning Representations (ICLR), 2021. arXiv:2010.14498.
@@ -414,7 +419,7 @@ phenomenon in deep reinforcement learning. In Proceedings of the 40th
 International Conference on Machine Learning (ICML), PMLR 202:32145-32168, 2023.
 arXiv:2302.12902.
 
-These are the three works cited in the body. The wider plasticity references
+These are the four works cited in the body and appendices. The wider plasticity references
 carried in version 1 return when the Introduction cites them.
 
 # Appendix A Indicator trajectories over the stream
@@ -926,6 +931,63 @@ weights and not in the code space.
 Both controls are ordering A and five of the fifteen runs. Neither was measured
 on orderings B and C.
 
+A third control asks the opposite question. Table C4 shows that a code cannot
+reach a group the generator has never seen. It says nothing about a group the
+generator has already learned, and the framework this study builds on trains
+the task code on every task, freezing only the chunk codes after the first one
+(Adhikari et al., 2025). So the code's training was measured directly. At
+boundary 9 of the five ordering A streams, each of the nine learned groups was
+scored three times on its own test images: through the code it was trained
+with, through the random code it started from, and through another learned
+group's trained code. Nothing was trained. Each arm was read through BatchNorm
+statistics rebuilt from 1,280 of that group's training images, because the
+saved statistics were collected while the trained code was in use and would
+favour that arm.
+
+Table C5. The three codes, ordering A, five seeds, boundary 9, mean over seeds.
+Distance is the move divided by the length of the starting code. Chance is 5
+percent.
+
+| Group | Trained code | Starting code | Another group's code | Code distance | Code turn |
+| --- | --- | --- | --- | --- | --- |
+| 0 | 41.96% | 41.86% | 6.10% | 0.010 | 0.4 deg |
+| 1 | 48.38% | 48.42% | 7.42% | 0.015 | 0.7 deg |
+| 2 | 46.34% | 46.24% | 4.16% | 0.022 | 1.0 deg |
+| 3 | 40.22% | 40.06% | 4.24% | 0.020 | 0.9 deg |
+| 4 | 47.62% | 47.40% | 3.50% | 0.026 | 1.2 deg |
+| 5 | 41.38% | 41.50% | 5.02% | 0.019 | 0.8 deg |
+| 6 | 41.60% | 41.56% | 5.16% | 0.021 | 1.0 deg |
+| 7 | 37.30% | 37.02% | 5.08% | 0.019 | 0.8 deg |
+| 8 | 43.82% | 43.64% | 4.12% | 0.020 | 0.9 deg |
+| All | 43.18% | 43.08% | 4.98% | 0.019 | 0.9 deg |
+
+The starting code scores what the trained code scores on every group, the
+largest difference being 0.28 points where the spread between seeds is 8.29.
+Another group's code scores 4.98 percent, which is chance. The codes themselves
+barely move: 0.019 of their own length and under 1.2 degrees while their group
+is learned, against a generator that ends at least 0.101 further from its start
+and 2.2 degrees round on its smallest task of the stream, and 0.166 and 9.5
+degrees on its first. Both quantities are divided by the length of the thing
+that moved, which is what allows them to be compared; one is 32 numbers and the
+other about 25 million, so they say how much each part changed and not how much
+each part can hold.
+
+The code therefore acts as a fixed name that the generator learns to answer to.
+The right name is needed, since another group's fails completely. Training the
+name is not. Two things follow. The probe has to train the generator, which
+Table C4 shows from the other side, and the reason is that the code has nothing
+to learn. And discarding a forgotten group's code, the Discard ef baseline of
+Adhikari et al. (2025), removes the key rather than the knowledge.
+
+Three limits. The accuracies in Table C5 are read through rebuilt statistics,
+which sit 3.01 points above the accuracies the runs themselves report, so they
+are not this study's accuracies and should not be placed beside one; the
+comparison between arms is unaffected, because all three arms are rebuilt the
+same way. The measurement is ordering A at boundary 9 only. And why the code
+barely moves was not established: its length is about 5.7, and the gradient
+reaching 32 numbers may simply be small next to that, so this is a statement
+about the present design and not about hypernetworks in general.
+
 This is the result the indicators have to be judged against. Over the nine
 tasks every indicator said the model was losing the ability to learn, and the
 direct measurement says it fits a new task better, in all fifteen runs, by
@@ -1256,6 +1318,8 @@ point where the accuracy endpoint stops, and not as a settled result.
 | Random-direction control | `39_random_direction_control.ipynb` | trains nothing |
 | Effective-rank convergence across seeds | stored records | no new run needed |
 | Probe at the middle of the stream | `47_probe_on_the_revised_streams.ipynb` | 495 probe runs |
+| The three codes on orderings B and C | `54_code_conditioning.ipynb` | trains nothing |
+| The three codes at the middle of the stream | `54_code_conditioning.ipynb` | trains nothing |
 
 # Appendix I Curvature
 
