@@ -236,8 +236,26 @@ def space_body(document):
     return changed
 
 
+def title_the_first_heading(document):
+    """Give the paper's title the Title style instead of Heading 1.
+
+    Pandoc turns the first `# ` line into a Heading 1 like any other, so the
+    title lands in the table of contents beside the sections. Word's Title
+    style is the one that stays out of it.
+    """
+    for para in document.paragraphs:
+        if not para.text.strip():
+            continue
+        if para.style.name == "Heading 1":
+            para.style = document.styles["Title"]
+            return True
+        return False
+    return False
+
+
 def main(path):
     document = docx.Document(path)
+    title_the_first_heading(document)
     for table in document.tables:
         style_table(table)
     # Strip pandoc's styles first. space_body leaves a styled paragraph alone,
