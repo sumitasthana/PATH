@@ -160,9 +160,136 @@ alike, and the readings settle as the stream goes on. A limitation sentence
 saying so is now in the paper, and it says no hypernetwork stream has been run
 twice, so the same spread is assumed there and not measured.
 
+## The matched-statistics pass finished on all fifteen streams
+
+Notebook 55 read every stream at boundaries 0, 9 and 10, twice: through the
+fixed statistics the study uses everywhere, and through statistics measured
+from each model's own weights. It also repeated the rescaling control through
+both routes. No training. The sanity gate passed on ordering A before the other
+ten streams started.
+
+This is the run that was supposed to decide whether sections 3.3 to 3.5
+survive the correction. It does decide it, and the answer has two halves that
+point different ways.
+
+### The direction of travel is a property of the route
+
+The probe improves over these streams. An indicator that tracked the ability to
+learn should improve with it: rank measures up, dormant units down.
+
+| Measure | Route | Mean change, b0 to b9 | Streams moving as predicted |
+| --- | --- | ---: | ---: |
+| Effective rank | fixed | -3.469 | 0 of 15 |
+| Effective rank | matched | +34.376 | 15 of 15 |
+| srank | fixed | -134.467 | 0 of 15 |
+| srank | matched | +0.000 | 6 of 15 |
+| Dormant 0.01 | fixed | +0.182 | 0 of 15 |
+| Dormant 0.01 | matched | +0.133 | 0 of 15 |
+| Dormant 0.025 | fixed | +0.184 | 0 of 15 |
+| Dormant 0.025 | matched | +0.159 | 0 of 15 |
+| Dormant 0.1 | fixed | +0.179 | 0 of 15 |
+| Dormant 0.1 | matched | +0.225 | 0 of 15 |
+
+Effective rank turns completely over. Read through the fixed protocol it falls
+on every one of the fifteen streams; read through measured statistics it rises
+on every one of the fifteen. The claim that it points the wrong way is a claim
+about the protocol and not about the measure.
+
+srank is saturated on the matched route, 248.2 at both ends against a ceiling
+of 256, so it reports nothing either way.
+
+The dormant fraction fails under both routes. It rises while the ability to
+learn improves, on all fifteen streams, whichever statistics it is read
+through. That one is not the protocol.
+
+### The absence of a relationship is not a property of the route
+
+`scripts/upgrade_suite/matched_correlations.py` runs the paper's own
+correlation test on the new readings. The probe side is untouched: the same
+selection rule, the same eleven repetitions, imported from the script that
+produced the published columns.
+
+Change test, indicator movement over the stream against probe gain:
+
+| Measure | fixed, N=15 | fixed, N=5 | matched, N=15 | matched, N=5 |
+| --- | ---: | ---: | ---: | ---: |
+| Effective rank | +0.097 | +0.340 | -0.154 | +0.148 |
+| srank | -0.189 | +0.269 | -0.121 | +0.118 |
+| Dormant 0.01 | +0.113 | +0.021 | +0.229 | +0.163 |
+| Dormant 0.025 | +0.110 | +0.021 | +0.257 | +0.186 |
+| Dormant 0.1 | +0.100 | +0.052 | +0.286 | +0.219 |
+
+End-value test, indicator at boundary 9 against probe at boundary 9:
+
+| Measure | fixed, N=15 | fixed, N=5 | matched, N=15 | matched, N=5 |
+| --- | ---: | ---: | ---: | ---: |
+| Effective rank | -0.165 | -0.352 | -0.618 | -0.362 |
+| srank | -0.212 | -0.049 | -0.571 | +0.022 |
+| Dormant 0.01 | +0.165 | +0.187 | +0.305 | +0.249 |
+| Dormant 0.025 | +0.160 | +0.172 | +0.334 | +0.267 |
+| Dormant 0.1 | +0.140 | +0.180 | +0.371 | +0.294 |
+
+Nothing in either table is separable from zero. Fifteen runs need 0.514 and
+five seeds need 0.878, and the largest value anywhere is 0.618 at a count that
+overstates the evidence. Correcting the reading does not make any of these
+measures predict how much a stream gains on the probe. Where the correction
+moves a number at all it usually moves it further from the predicted sign, not
+closer.
+
+So the paper's central claim survives the correction, and the claim it used to
+make about the sign does not. These indicators do not track the ability to
+learn, under either reading. What the fixed protocol added was a false story
+about direction.
+
+The script checks itself against the published log before it reports: the fixed
+route re-read from the checkpoints lands within 0.143 percent of the study's
+own numbers on the worst of the fifteen streams, and its percent-change column
+reproduces Table D2 to the third decimal.
+
+### The rescaling confound is entirely the protocol
+
+Notebook 46 found that about two thirds of the rank change at the unlearn came
+from the weights simply getting smaller. Across all fifteen streams, read both
+ways:
+
+| Route | b9 | b10 | Raw change | Change at fixed weight size | Share from size |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| fixed | 2.095 | 3.675 | +1.580 | +0.754 | 52.3% |
+| matched | 140.648 | 149.411 | +8.763 | +8.763 | 0.0% |
+
+The weights end the unlearn at 0.757 of their former size on average, between
+0.490 and 0.980 across streams, so there is a real scale change to find.
+
+On the fixed route, scaling the weights moves the reading by as much as 6.3
+rank points. On the matched route the largest shift anywhere in the thirty
+scaled readings is 0.0017, which is arithmetic noise. That is what BatchNorm
+is supposed to do: it divides by the spread the weights actually produce, so a
+constant factor on the weights divides straight back out. The two thirds figure
+is a measurement of the fixed protocol, not of the unlearn.
+
+### What this does to the paper
+
+Three things change and one gets stronger.
+
+Sections 3.3 to 3.5 no longer rest on a circular argument. The correlation
+result is the same under both readings, so it is evidence about the measures
+and not about the protocol. The limitation the paper currently declares can be
+removed and replaced with this run.
+
+The claim that the indicators point the wrong way has to be split. Effective
+rank points the wrong way only under the fixed protocol. The dormant fraction
+points the wrong way under both. srank reports nothing under either.
+
+Section 4.3's rescaling result has to be rewritten as a property of the
+protocol.
+
+Table 2's curvature split still has three confounded variables and this run
+does not touch it.
+
 ## Next decision
 
-Nothing is left in this block. The matched-statistics pass over all fifteen
+The paper edits above are the next piece of work. Nothing else is left in this
+block. The matched-statistics pass over all fifteen
 hypernetwork streams is the next piece of work, and it is the one that decides
 whether Sections 3.3 to 3.5 hold.
 
