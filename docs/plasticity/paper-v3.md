@@ -366,6 +366,20 @@ direct measurement has been run at least once on the same models. None of this
 shows the measures are meaningless everywhere: this is one architecture, one
 dataset and one kind of learning.
 
+Only one part of this model learns. The generator writes the weights, and a
+32-number code names the group it should write them for. Both are trained on
+every task, so a reading taken through a code could in principle be reporting
+on either of them. Appendix C settles which. A group scores the same through
+the random code it started with as through the code it was trained with, on all
+nine groups, while another group's code leaves it at chance. The codes barely
+move while they are learned, 0.019 of their own length, where the generator
+moves at least five times that on its slowest task of the stream. The code is a
+name the generator learns to answer to, not a second place where learning is
+kept. This matters for Section 3.1. That an indicator reading changes with the
+code it is read through is a fact about the reading, not a sign that a trained
+code holds something the fixed reference code misses. It also fixes what "the
+model" refers to in any measurement taken here: the generator.
+
 # 5 Limitations
 
 Sections 3.3 to 3.5 read the indicators through the fixed protocol alone.
