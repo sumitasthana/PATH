@@ -31,11 +31,20 @@ a hypernetwork gets by default. Under it every indicator reports a loss while
 measured fit to an unseen task improves on all fifteen runs. The largest
 correlation between the two is 0.212 and carries the wrong sign. A model with
 one task destroyed to chance moves both rank measures in the direction they
-report as healthy. Whether these three results survive matched statistics is
-not tested here, so they are consequences of the protocol and not independent
-of it. What they establish is narrower and still worth having: in this setting
-the reading a practitioner takes by default is not evidence about the ability
-to learn.
+report as healthy.
+
+All fifteen streams were then read a second time under matched statistics, at
+the start of the stream, the end, and after the damage. The direction is the
+protocol's: effective rank falls in 15 of 15 streams under the fixed reading
+and rises in 15 of 15 under the matched one. The absence of a relationship is
+not. No correlation between an indicator and the probe is separable from zero
+under either reading, and the dormant fraction moves against the probe in 15 of
+15 streams under both. The weight-scale contribution is the protocol as well:
+holding the weight norm fixed removes half the movement at the damage step
+under the fixed reading and none of it under the matched one. So the measures
+do not track the ability to learn in this setting, whichever statistics they
+are read through, and what the default protocol adds on top is a direction of
+travel that is not a property of the measure.
 
 # 1 Introduction
 
@@ -233,10 +242,10 @@ Every indicator reading in this section and in the two that follow is taken
 through the fixed protocol of Section 3.1. That protocol is the one a
 hypernetwork gets unless someone intervenes, because the generator writes
 weights and no running statistics, so these sections report what a reader of
-these measures would actually see. They do not report what the measures would
-say under matched statistics, which is not measured on these fifteen streams.
-The probe is not affected either way: it trains a copy and counts the result,
-and no choice of BatchNorm statistics enters it.
+these measures would actually see. Section 3.6 repeats all three under matched
+statistics on the same fifteen streams and says which of them the protocol
+produced. The probe is not affected either way: it trains a copy and counts the
+result, and no choice of BatchNorm statistics enters it.
 
 Table 3. Each indicator and the direct probe, averaged over the fifteen runs.
 The last column counts the runs that move in the stated direction.
@@ -297,7 +306,8 @@ Each measure predicts a sign. Counted over the fifteen runs all five come out
 with the wrong one. Counted over the five seeds the two rank measures turn over
 and read +0.327 and +0.209, which is the sign they predict, while the three
 dormant cut-offs stay the wrong way up. The failure on sign therefore depends
-on which count is used and the paper does not rest on it. The end-value columns
+on which count is used, and Section 3.6 shows it depends on the protocol as
+well, so the paper does not rest on it. The end-value columns
 set the differences aside and ask whether, among the finished models, the one
 with the higher reading fits the unseen task better. It does not, at either
 count, for effective rank.
@@ -317,7 +327,8 @@ and effective rank correlates 0.690 with srank.
 If the indicators report anything about the health of a model, a model with one
 group destroyed to chance should read worse than the same model one step
 earlier. Both readings here are taken through the fixed protocol, as in the two
-sections above. Boundary 10 was not read under matched statistics.
+sections above. Boundary 10 under matched statistics is in Section 3.6, where
+both rank measures rise at the damage step there too.
 
 Table 5. The unlearning step and the weight-scale controls, averaged over the
 fifteen streams. The ordinary learning step is the average absolute change from
@@ -346,14 +357,105 @@ so no single share is available. What survives the first control is +0.754 on
 effective rank, 4.7 times an ordinary learning step, in 14 of the 15 streams,
 so the weight scale does not explain the result away.
 
+## 3.6 What survives matched statistics
+
+Sections 3.3 to 3.5 are read through the protocol that Section 3.1 shows to
+decide the direction of travel, so on their own they cannot be independent
+evidence against the measures. All fifteen streams were therefore read a second
+time, at boundaries 0, 9 and 10, through statistics measured from each model's
+own weights on 2048 training images from the learned groups. Nothing is
+trained; the readings are forward passes over the saved checkpoints. The same
+256 images, the same reference code and the same arithmetic are used on both
+routes, so the only difference between them is which statistics are supplied.
+The fixed route re-read this way lands within 0.143 percent of the published
+values on the worst of the fifteen streams, and reproduces the correlations of
+Table 4 to three decimals, which is the check that the two routes are otherwise
+the same measurement.
+
+Table 6. Each measure at the three points, on the in-stream images, averaged
+over the fifteen streams with the standard deviation across streams in
+brackets. The last column counts the streams whose change from boundary 0 to
+boundary 9 goes in the direction the plasticity reading predicts, which is
+upward for the rank measures and downward for the dormant fraction.
+
+| Measure | Route | Boundary 0 | Boundary 9 | Boundary 10 | As predicted |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Effective rank | Fixed | 5.563 (1.496) | 2.095 (1.044) | 3.675 (1.836) | 0 of 15 |
+| Effective rank | Matched | 106.272 (14.864) | 140.648 (7.407) | 149.411 (4.463) | 15 of 15 |
+| srank | Fixed | 215.600 (12.905) | 81.133 (62.819) | 154.733 (52.540) | 0 of 15 |
+| srank | Matched | 248.200 (2.007) | 248.200 (0.676) | 249.200 (0.561) | 6 of 15 |
+| Dormant, 0.01 | Fixed | 0.160 (0.012) | 0.342 (0.047) | 0.341 (0.046) | 0 of 15 |
+| Dormant, 0.01 | Matched | 0.000 (0.000) | 0.133 (0.033) | 0.084 (0.051) | 0 of 15 |
+| Dormant, 0.1 | Fixed | 0.290 (0.017) | 0.468 (0.032) | 0.465 (0.035) | 0 of 15 |
+| Dormant, 0.1 | Matched | 0.000 (0.000) | 0.225 (0.044) | 0.153 (0.067) | 0 of 15 |
+
+Three results, and they do not all point the same way.
+
+**The direction belongs to the protocol, for effective rank alone.** Effective
+rank falls in all fifteen streams under the fixed reading and rises in all
+fifteen under the matched one. No stream is borderline and none disagrees with
+the rest. The claim of Section 3.3 that this measure reports a loss while the
+probe improves is therefore a claim about the protocol. srank reads 248.2 at
+both ends of the matched route against a ceiling of 256, which is a measure
+pressed against its own limit, and it reports nothing either way. The dormant
+fraction rises while the probe improves in all fifteen streams on both routes,
+so that failure is not the protocol.
+
+**The absence of a relationship does not belong to the protocol.** Table 7
+repeats the test of Table 4 on the new readings. The probe side is unchanged:
+the same selection rule over the same eleven repetitions. Change is reported
+here as an absolute difference rather than the percent change of Table 4,
+because the matched dormant fraction is exactly 0.000 at boundary 0 in all
+fifteen streams and a percent change has nothing to divide by.
+
+Table 7. Correlation between each indicator's change over the stream and the
+probe's gain over the same stream, on both routes and at both counts. Appendix
+J adds the end-value test and the two remaining dormant cut-offs.
+
+| Measure | Predicted | Fixed, r | Fixed, five seeds | Matched, r | Matched, five seeds |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Effective rank | positive | +0.097 | +0.340 | -0.154 | +0.148 |
+| srank | positive | -0.189 | +0.269 | -0.121 | +0.118 |
+| Dormant units, cut-off 0.01 | negative | +0.113 | +0.021 | +0.229 | +0.163 |
+| Dormant units, cut-off 0.1 | negative | +0.100 | +0.052 | +0.286 | +0.219 |
+
+Nothing in Table 7 is separable from zero. Fifteen runs need 0.514 and five
+seeds need 0.878, and the largest value anywhere in the full table of Appendix
+J is 0.618, which occurs at the count that overstates the evidence. Correcting
+the reading does not make any of these measures predict how much a stream
+gains, and on the dormant rows it moves the correlation further from the
+predicted sign rather than closer. This is the result Sections 3.3 to 3.5 rest
+on, and it is the same under both readings.
+
+**The weight-scale contribution belongs to the protocol.** Section 3.5 and
+Appendix F report that holding the weight norm fixed removes about half the
+rise at the damage step. Repeating both interventions under matched statistics
+removes none of it. The weights are genuinely scaled, by factors between 0.490
+and 1.110 across the thirty readings, and under the fixed route that moves the
+reading by as much as 6.3 rank points; under the matched route the largest
+movement anywhere is 0.0017. The reason is arithmetic rather than empirical. A
+BatchNorm layer divides by the spread it is given. Multiply every generated
+weight by a constant and the signal is multiplied by it too, so statistics
+measured from those same weights carry the same constant and divide it back
+out. Appendix F now reports the scale result as a property of the fixed
+protocol.
+
+Both rank measures still rise at boundary 10 under matched statistics, from
+140.648 to 149.411 on effective rank, so the result of Section 3.5 that the
+indicators call a damaged model healthier is not the protocol. What was the
+protocol is the explanation offered for part of it.
+
 # 4 Discussion
 
 Read the way a hypernetwork delivers them, the three measures respond to
-something, and on this evidence it is not the ability to learn. Two of the
-things they do respond to are identified here: the
-reading protocol, which decides the sign of the result and is not usually
-reported, and the size of the generated weights, which reaches the reading
-along a path the measures' own normalisation does not cover.
+something, and on this evidence it is not the ability to learn. They do not
+respond to it under the corrected reading either, which is the result of
+Section 3.6 and the one the argument rests on. Two of the things they do
+respond to are identified here, and both turn out to be the same thing. The
+reading protocol decides the sign of the result and is not usually reported.
+The size of the generated weights reaches the reading along a path the
+measures' own normalisation does not cover, but only while the statistics are
+fixed: measured statistics divide that path out exactly.
 
 The protocol result travels furthest, because it does not depend on the
 architecture or on the family of measure: curvature, which reads no features
@@ -382,12 +484,13 @@ model" refers to in any measurement taken here: the generator.
 
 # 5 Limitations
 
-Sections 3.3 to 3.5 read the indicators through the fixed protocol alone.
-Matched statistics were measured on five models at two boundaries, which is
-Section 3.1, and not on the fifteen streams at every boundary or at boundary
-10. So those three sections say what the default reading does and not what the
-measures would do if the protocol were corrected first. The checkpoints that
-would answer it are kept, and the run needs forward passes only.
+Section 3.6 reads all fifteen streams under matched statistics at boundaries 0,
+9 and 10 only. Boundaries 1 to 8 were not kept as checkpoints and cannot be
+read that way, so the claim that the indicators move almost entirely at the
+first task is a fixed-protocol claim recorded during training and is not
+checked under matched statistics. The matched readings use the fixed reference
+code alone, and the reading taken before the last ReLU in Appendix B was not
+repeated on the other ten streams.
 
 One model family, one hypernetwork, one dataset. The probe trains the
 generator, so part of the measured gain is ordinary transfer. A probe on
@@ -1228,6 +1331,44 @@ the contribution rather than measure it as training would. And the second
 intervention moves in the same direction in 11 of 15 streams against 14 of 15 for
 the first, so it is the less consistent of the two.
 
+## F.1 The whole of this appendix is a property of the fixed protocol
+
+Both interventions were repeated on all fifteen streams with the BatchNorm
+statistics measured from the scaled weights rather than taken from the fixed
+template. The contribution of the weight norm is then zero.
+
+Table F2. The first intervention on both routes, averaged over the fifteen
+streams, on the in-stream images.
+
+| Route | Boundary 9 | Boundary 10 | Change at the unlearn | Change with the norm held fixed | Share carried by the norm |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Fixed | 2.095 | 3.675 | +1.580 | +0.754 | 52.3 percent |
+| Matched | 140.648 | 149.411 | +8.763 | +8.763 | 0.0 percent |
+
+The scaling is applied in both rows and it is not small: the factors run from
+0.490 to 1.110 across the thirty scaled readings. Under the fixed route the
+scaling moves effective rank by as much as 6.3. Under the matched route the
+largest movement anywhere among the thirty is 0.0017, which is the arithmetic
+floor of the calculation rather than an effect.
+
+The reason is the operation itself. A BatchNorm layer subtracts a mean and
+divides by a spread. Supplied with statistics measured from the same weights
+that are being read, multiplying every generated weight by a constant
+multiplies the signal and the measured spread by that constant together, and
+the division removes it. The argument at the head of this appendix, that a
+residual block's input path carries no weights and so breaks the symmetry, is
+correct about the feature matrix and is not what the measurement finds, because
+the BatchNorm layers inside the branch restore the scale before the sum is
+taken.
+
+So the weight norm is not a second confound alongside the protocol. It is the
+protocol, measured a different way. A reader who corrects the statistics has
+corrected this too, and the shares of 52.3 and 83.2 percent above describe the
+fixed reading and should be quoted as such. What this does not do is remove the
+result of Appendix E: both rank measures still rise at the unlearning step
+under matched statistics, from 140.648 to 149.411 on effective rank. Only the
+explanation offered for part of that rise is withdrawn.
+
 # Appendix G Learning speed on the held-out group
 
 Appendix C reports one number per probe run: the accuracy reached after a fixed
@@ -1449,3 +1590,77 @@ this paper's method section does not describe. The present run is five seeds of
 ordering A, 3,000 measurements, with no training.
 
 **Notebook.** `notebooks/53_curvature_on_the_revised_streams.ipynb`.
+
+# Appendix J The matched reading on all fifteen streams
+
+Section 3.6 reports the parts of this run that change a claim. This appendix
+gives the rest of it.
+
+Every stream was read at boundaries 0, 9 and 10 through both routes. The fixed
+route supplies a mean of zero and a variance of one at every BatchNorm layer,
+which is the protocol used everywhere else in the paper. The matched route
+measures the mean and variance from the same generated weights, over 2048
+training images from the nine learned groups, with the layers in training mode
+and a cumulative average so the result does not depend on the order of the
+batches. Those 2048 images do not overlap the 256 the indicators are read on.
+Nothing is trained. Only the fixed reference code is read, and the reading
+taken before the last ReLU in Appendix B is not repeated here.
+
+Table J1. The change test. Each indicator's change from boundary 0 to boundary
+9 against the probe's gain over the same stream, as a Pearson correlation. The
+five-seed columns average the three orderings of a seed first, because they
+share a starting network. Change is an absolute difference on both routes, so
+that the two are compared like with like; the matched dormant fraction is
+exactly 0.000 at boundary 0 and admits no percent change.
+
+| Measure | Predicted | Fixed, r | Fixed, five seeds | Matched, r | Matched, five seeds |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Effective rank | positive | +0.097 | +0.340 | -0.154 | +0.148 |
+| srank | positive | -0.189 | +0.269 | -0.121 | +0.118 |
+| Dormant units, cut-off 0.01 | negative | +0.113 | +0.021 | +0.229 | +0.163 |
+| Dormant units, cut-off 0.025 | negative | +0.110 | +0.021 | +0.257 | +0.186 |
+| Dormant units, cut-off 0.1 | negative | +0.100 | +0.052 | +0.286 | +0.219 |
+
+Table J2. The end-value test. The boundary-9 indicator reading against the
+boundary-9 probe accuracy, which asks whether the finished model with the
+higher reading fits the unseen task better.
+
+| Measure | Predicted | Fixed, r | Fixed, five seeds | Matched, r | Matched, five seeds |
+| --- | --- | --- | ---: | ---: | ---: |
+| Effective rank | positive | -0.165 | -0.352 | -0.618 | -0.362 |
+| srank | positive | -0.212 | -0.049 | -0.571 | +0.022 |
+| Dormant units, cut-off 0.01 | negative | +0.165 | +0.187 | +0.305 | +0.249 |
+| Dormant units, cut-off 0.025 | negative | +0.160 | +0.172 | +0.334 | +0.267 |
+| Dormant units, cut-off 0.1 | negative | +0.140 | +0.180 | +0.371 | +0.294 |
+
+Of the twenty correlations in the two tables, the largest is 0.618 and it
+carries the wrong sign. Separability from zero at the 5 percent level needs
+0.514 at fifteen runs and 0.878 at five seeds, so nothing here is separable at
+the honest count. The matched route does not move any measure closer to the
+sign it predicts in the end-value test, and moves all three dormant cut-offs
+further from it in both tests.
+
+Table J3. The mean row share, the quantity Appendix D uses to show how much of
+the feature matrix is the single direction every image has in common.
+
+| Route | Boundary 0 | Boundary 9 | Boundary 10 |
+| --- | ---: | ---: | ---: |
+| Fixed | 0.981 (0.002) | 0.980 (0.020) | 0.984 (0.007) |
+| Matched | 0.805 (0.082) | 0.855 (0.028) | 0.872 (0.026) |
+
+The fixed route reads about 0.98 at every point, which is the shared-direction
+result of Appendix D and is what drives the uncentred effective rank towards 1
+whatever else the model does. The matched route reads 0.805 rising to 0.872, so
+the shared direction is still the largest part of the matrix but not nearly all
+of it.
+
+**Checks.** The fixed route here is a second reading of the same checkpoints
+the study already published. Across the fifteen streams the worst disagreement
+on boundary-9 effective rank is 0.143 percent. Computing the fixed column of
+Table J1 as a percent change, which is how Table 4 reports it, returns -0.054,
+-0.178, +0.129, +0.123 and +0.112 against Table 4's -0.054, -0.178, +0.129,
++0.125 and +0.112. The sanity gate on ordering A, four readings against their
+published means, passed before the other ten streams were started.
+
+**Notebook.** `notebooks/55_matched_statistics_on_every_stream.ipynb`.
+**Analysis.** `scripts/upgrade_suite/matched_correlations.py`.
