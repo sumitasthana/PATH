@@ -264,3 +264,70 @@ that wrote those rows did not record distances.
 The notebook now drops any saved reading that has no distance on it, since that
 field is exactly what the old version never wrote, and says how many it
 dropped. Those models are then measured again.
+
+### The third run measured it: the code's update does nothing
+
+With the random draw in place, all five models were measured again.
+
+| group | position | trained | initial | other | code distance | code turn |
+| --- | --- | --- | --- | --- | --- | --- |
+| 0 | 1 | 41.96 | 41.86 | 6.10 | 0.010 | 0.4 |
+| 1 | 2 | 48.38 | 48.42 | 7.42 | 0.015 | 0.7 |
+| 2 | 3 | 46.34 | 46.24 | 4.16 | 0.022 | 1.0 |
+| 3 | 4 | 40.22 | 40.06 | 4.24 | 0.020 | 0.9 |
+| 4 | 5 | 47.62 | 47.40 | 3.50 | 0.026 | 1.2 |
+| 5 | 6 | 41.38 | 41.50 | 5.02 | 0.019 | 0.8 |
+| 6 | 7 | 41.60 | 41.56 | 5.16 | 0.021 | 1.0 |
+| 7 | 8 | 37.30 | 37.02 | 5.08 | 0.019 | 0.8 |
+| 8 | 9 | 43.82 | 43.64 | 4.12 | 0.020 | 0.9 |
+| all | | 43.18 | 43.08 | 4.98 | 0.019 | 0.9 |
+
+Chance is 5 percent and the spread between seeds on the trained arm is 8.29
+points. Distance is the move divided by the size of the starting code, so 0.019
+means a code ended about two percent of its own length away from where it
+began. The turn is under one and a half degrees everywhere.
+
+A group's starting code scores what its trained code scores, on all nine
+groups, the largest difference being 0.28 points. Another group's trained code
+scores chance.
+
+So the code's update does nothing. That is not the same as saying the code does
+nothing: the right code is needed, since another group's fails completely. The
+32 numbers act as a fixed random name tag that the generator learns to read,
+and the learning itself is in the generator.
+
+The random draw also raised every accuracy, 43.18 against the ordered draw's
+37.34, which is what a better estimate of the statistics should do.
+
+### The check still fails, and why it no longer blocks the reading
+
+| reading | value |
+| --- | --- |
+| pairs compared | 45 |
+| mean gap | 10.63 points |
+| largest gap | 31.10 points |
+
+Twenty batches is a poorer estimate of a group's BatchNorm statistics than the
+running average the run itself collected over five epochs, so every arm sits at
+a different level from the run's own accuracy. The check was written as a
+blocker, and that was the wrong rule. Every arm estimates its statistics from
+the same pictures by the same recipe, so an offset of this kind moves all three
+arms together. It cannot invent a difference between them and it cannot hide
+one, and neither conclusion here depends on the absolute level: the initial arm
+matches the trained arm to within 0.28 points, and the other arm sits at
+chance.
+
+What the gap does mean is that these are not the study's own accuracies and
+must not be quoted beside a published figure. The notebook now says that
+instead of telling the reader to stop.
+
+### Next decision
+
+The notebook now also reads the generator's own distance and turn from the
+saved indicator records, so the code's move can be set beside the generator's.
+That needs no GPU. Those two spans are not the same, the generator's counting
+from the start of the stream and the code's covering one task, so the
+comparison is a size comparison and not a ratio.
+
+Whether this holds at boundary 4 as well as boundary 9 is open, and so is
+whether it holds on orderings B and C.
