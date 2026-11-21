@@ -307,18 +307,19 @@ The random draw also raised every accuracy, 43.18 against the ordered draw's
 | mean gap | 10.63 points |
 | largest gap | 31.10 points |
 
-Twenty batches is a poorer estimate of a group's BatchNorm statistics than the
-running average the run itself collected over five epochs, so every arm sits at
-a different level from the run's own accuracy. The check was written as a
-blocker, and that was the wrong rule. Every arm estimates its statistics from
-the same pictures by the same recipe, so an offset of this kind moves all three
-arms together. It cannot invent a difference between them and it cannot hide
-one, and neither conclusion here depends on the absolute level: the initial arm
-matches the trained arm to within 0.28 points, and the other arm sits at
-chance.
+The run collected its BatchNorm statistics over five epochs. This notebook
+rebuilds them from twenty batches. Twenty batches is a rougher estimate, so
+every arm sits at a different level from the accuracy the run itself reported.
 
-What the gap does mean is that these are not the study's own accuracies and
-must not be quoted beside a published figure. The notebook now says that
+The check was written to stop the reader here, and that was the wrong rule.
+All three arms build their statistics from the same pictures in the same way.
+So this kind of error pushes all three arms up or down together. It cannot
+create a difference between them, and it cannot hide one. Neither thing we
+conclude depends on the level: the starting code is within 0.28 points of the
+trained one, and another group's code sits at chance.
+
+What the gap does mean is that these are not the study's own accuracies. They
+must not be printed next to a published number. The notebook now says that,
 instead of telling the reader to stop.
 
 ### Next decision
@@ -353,27 +354,29 @@ boundary.
 | 9 | 1.294 | 51.8 | 0.101 | 2.2 |
 | 10 | 1.297 | 52.4 | 0.003 | 0.6 |
 
-The last two columns are differences between rows, so they are how much further
-from the start the generator ended up, not the length of the path it took. The
-path cannot be shorter than that, so they are a floor on the per-task move and
-not an estimate of it.
+The last two columns are the difference between one row and the row above it.
+They say how much further from the start the generator ended up after that
+task. They do not say how long a path it walked to get there. A path is never
+shorter than the straight line, so these are the smallest the move can have
+been.
 
-Against those, a code moves 0.019 of its own length and turns 0.9 degrees over
-its own task, and no group reads above 0.026 or 1.2 degrees.
+Now compare. A code moves 0.019 of its own length and turns 0.9 degrees while
+its group is being learned. No group goes above 0.026 or 1.2 degrees.
 
-The comparison at its least favourable is the ninth task, where the generator
-has slowed to its smallest step of the stream: even there it ends 0.101 further
-out and 2.2 degrees round, which is about four times the largest code distance
-and about twice the largest code turn. At the first task it is 0.166 and 9.5
-degrees, roughly nine and eleven times a code's average.
+The generator moves more than that on every task. Its smallest task is the
+ninth, at the end of the stream, where it ends 0.101 further out and 2.2
+degrees round. That is still about four times the largest code distance and
+about twice the largest code turn. On the first task it is 0.166 and 9.5
+degrees, about nine and eleven times what a code does.
 
-So "the code barely moved" is a fair way to say it. The generator moves several
-times further on every single task than a code moves on its own, and the gap is
-smallest at the end of the stream, where the generator itself has slowed down.
+So it is fair to say the code barely moved. The generator moves much more, on
+every task.
 
-Both numbers are scale free, which is what makes them comparable at all. They
-are still a 32-number vector and a 25-million-parameter one, so this says how
-much each thing changed and not how much each thing can hold.
+One caution. Both numbers are divided by the size of the thing that moved, so
+neither depends on how big that thing is, and that is what lets them be
+compared. But a code is 32 numbers and the generator is about 25 million. These
+numbers say how much each one changed. They do not say how much each one can
+hold.
 
 ### An aside, not this experiment's question
 
