@@ -82,6 +82,8 @@ curvature split still has three variables differing at once.
 
 ## Block E is built and not yet run
 
+It ran on 22 November and the result is in the [22 November record](Experiment-trajectory-2026-11-22). The settings below are what it ran with.
+
 Notebook 56 moves random-label fitting onto the revised streams. It is the last
 direct measurement still sitting on `indicator_stream_v1`, the retired
 eight-task design whose model files the current class split cannot load, so the
