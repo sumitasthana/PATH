@@ -80,9 +80,40 @@ and this repair. It has to be regenerated before it is used again.
 Figure 1 still plots the fixed route alone and was not regenerated. Table 2's
 curvature split still has three variables differing at once.
 
+## Block E is built and not yet run
+
+Notebook 56 moves random-label fitting onto the revised streams. It is the last
+direct measurement still sitting on `indicator_stream_v1`, the retired
+eight-task design whose model files the current class split cannot load, so the
+row in the paper still carries a different-training-run caveat.
+
+Intended settings, held at notebook 41's values: the same label seed 1020,
+2,000 images, 600 steps, the three rates 1e-4, 3e-4 and 1e-3, and the same rule
+for choosing among them, which keeps the run with the lowest final training
+loss. Five repetitions at each of the two points.
+
+What changes is the study. Ordering A of `plasticity_revised_v1`, five seeds,
+boundaries 0 and 9. The random-label task is group 9, the held-out group, so it
+is unseen by design rather than by accident. Twenty classes instead of ten, so
+chance is a loss of ln(20) = 2.996 rather than ln(10) = 2.303, and twenty wrong
+labels are harder to memorise on the same budget.
+
+That last point is the risk in this run. If 600 steps cannot memorise 2,000
+images at twenty labels, the fit lands at chance and measures the step budget
+rather than the model. The notebook checks this after the first stream finishes
+both points and stops the session if the fit is not at least 0.20 below chance,
+rather than spending three and a half hours on a result that cannot be read.
+
+Lower loss means more capacity to change, which is the opposite direction from
+every other measurement in the study. `scripts/upgrade_suite/check_notebook_56_logic.py`
+runs the gate, the rate choice and the decision rule against invented runs and
+checks that direction, since the notebook itself needs a GPU.
+
+150 runs, about three and a half hours. Adding orderings B and C triples it and
+repeats nothing already done.
+
 ## Next decision
 
-Blocks A, B and D of the staged plan are closed and block C dissolved. Blocks E
-and F are the remaining experiments: the random-label probe, about three hours
-of GPU and new code, and the induced plasticity-loss stress test, fourteen
-hours or more.
+Run notebook 56. Blocks A, B and D of the staged plan are closed and block C
+dissolved. Block F, the induced plasticity-loss stress test at fourteen hours
+or more, is what remains after this.
