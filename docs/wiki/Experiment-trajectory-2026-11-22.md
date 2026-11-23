@@ -93,4 +93,5 @@ and the different-training-run caveat.
 
 Block F, the induced plasticity-loss stress test, is what remains of the staged
 plan, at fourteen hours or more of GPU time. Before that, the paper needs this
-result written in, and the LaTeX draft regenerated from the Markdown.
+result written in. The LaTeX draft was regenerated from the Markdown on
+23 November, so the two copies are no longer apart.

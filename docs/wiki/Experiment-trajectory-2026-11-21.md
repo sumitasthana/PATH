@@ -74,8 +74,11 @@ Comment 5, the structure of Appendix H, is only half closed. The three rows
 that duplicated reported work are gone, but the appendix still cites a reading
 the paper does not otherwise carry.
 
-The LaTeX draft is now behind the Markdown by both the matched-statistics work
-and this repair. It has to be regenerated before it is used again.
+The LaTeX draft was behind the Markdown by both the matched-statistics work
+and this repair. It was regenerated on 23 November and now carries both:
+Section 3.6, Appendix J and the matched readings are in it, and `refs.bib`
+holds all seven references including the three added here. The version 3 docx
+was rebuilt from the same source on the same day and saved as version 4.
 
 Figure 1 still plots the fixed route alone and was not regenerated. Table 2's
 curvature split still has three variables differing at once.
