@@ -557,12 +557,15 @@ checkpoints, probe logs and per-run indicator values are kept with the runs.
 
 # References
 
-Adhikari, S., Kumaravelu, V., and Srijith, P. K. An unlearning framework for
-continual learning. 2025. arXiv:2509.17530.
+Adhikari, S., Kumaravelu, V., and Srijith, P. K. A hypernetwork framework
+for data-free unlearning and continual learning. Machine Learning, 115:219,
+2026. doi:10.1007/s10994-026-07125-8. Preprint: arXiv:2509.17530, titled An
+unlearning framework for continual learning.
 
-Dohare, S., Hernandez-Garcia, J. F., Rahman, P., Mahmood, A. R., and
-Sutton, R. S. Maintaining plasticity in deep continual learning. 2024.
-arXiv:2306.13812.
+Dohare, S., Hernandez-Garcia, J. F., Lan, Q., Rahman, P., Mahmood, A. R.,
+and Sutton, R. S. Loss of plasticity in deep continual learning. Nature,
+632:768-774, 2024. doi:10.1038/s41586-024-07711-7. Preprint: arXiv:2306.13812,
+titled Maintaining plasticity in deep continual learning.
 
 Kumar, A., Agarwal, R., Ghosh, D., and Levine, S. Implicit under-parameterization
 inhibits data-efficient deep reinforcement learning. In International Conference
@@ -1103,7 +1106,7 @@ A third control asks the opposite question. Table C4 shows that a code cannot
 reach a group the generator has never seen. It says nothing about a group the
 generator has already learned, and the framework this study builds on trains
 the task code on every task, freezing only the chunk codes after the first one
-(Adhikari et al., 2025). So the code's training was measured directly. At
+(Adhikari et al., 2026). So the code's training was measured directly. At
 boundary 9 of all fifteen streams, each of the nine learned groups was scored
 three times on its own test images: through the code it was trained with,
 through the random code it started from, and through another learned group's
@@ -1190,7 +1193,7 @@ The right name is needed, since another group's fails completely. Training the
 name has an effect too small to matter. Two things follow. The probe has to
 train the generator, which Table C4 shows from the other side, and the reason
 is that the code has almost nothing to learn. And discarding a forgotten
-group's code, the Discard ef baseline of Adhikari et al. (2025), removes the
+group's code, the Discard ef baseline of Adhikari et al. (2026), removes the
 key rather than the knowledge.
 
 Two limits. Two boundaries were read, 4 and 9, so the five groups learned after

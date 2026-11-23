@@ -69,8 +69,13 @@ cite, and its author list adds Qingfeng Lan, who is missing from the current
 entry.
 
 Adhikari et al. now has a journal version: Machine Learning 115:219, 2026, DOI
-10.1007/s10994-026-07125-8, published 15 September 2026. The paper cites the
-2025 preprint.
+10.1007/s10994-026-07125-8, published 15 September 2026.
+
+Both entries are now corrected in the Markdown, with the preprint kept as a
+note on each so the arXiv identifier is still findable, and the two in-text
+years for Adhikari moved from 2025 to 2026. `refs.bib` carries the same two
+changes, under the same citation keys, so the LaTeX needs no edit. The docx was
+rebuilt from the corrected source.
 
 ### One sentence has to come out or be backed
 
@@ -98,6 +103,8 @@ is cited.
 
 ## Next decision
 
-Write the Related Work section, or do the reference-list corrections first.
-Both searches are kept at `ops-docs/related-work/` and the reading of them at
-`ops-docs/related-work-reading-2026-11-23.html`.
+The reference corrections are done. What is left from the searches is the
+Related Work section itself, the sentence about the reading protocol being
+almost never reported, and reading the 2026 preprints before any of them is
+cited. Both searches are kept at `ops-docs/related-work/` and the reading of
+them at `ops-docs/related-work-reading-2026-11-23.html`.
