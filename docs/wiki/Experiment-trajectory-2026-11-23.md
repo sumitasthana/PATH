@@ -114,6 +114,23 @@ retired is our word for a study, not a reader's.
 Both notebooks named there, 53 and 55, are still in the repository. Nothing was
 removed.
 
+### The paper left the repository
+
+The draft is now local only. The Markdown and the Word file live in
+`ops-docs/paper/aaai-draft/`, which git ignores, and they are the only two
+copies that get read or edited from here on. The tracked copy at
+`docs/plasticity/paper-v3.md` was identical when it was removed, so nothing was
+lost, and git history still holds every version up to tonight.
+
+The three figures were copied into that folder as well, because the paper
+reaches them by a relative path and could not otherwise build its own Word
+file. The Word file was rebuilt there and checked: it carries the journal
+references, the 2026 years, the new code availability wording and all three
+figures.
+
+This means the paper no longer has version history or a backup. That is the
+trade the move makes.
+
 ## Next decision
 
 The reference corrections are done. What is left from the searches is the
