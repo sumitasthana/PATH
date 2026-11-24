@@ -90,7 +90,20 @@ The decision not yet taken is where it goes. It is a sixth direct measurement
 agreeing with the five already reported, so it adds weight rather than a new
 claim, and the saturation limit has to be stated wherever it appears.
 
+## It is now in the paper
+
+As Appendix K, with the fifteen-stream table, the per-ordering means, the
+chance check and both limits stated. Section 3.3 points at it in one short
+paragraph, placed after the probe's two controls, because it answers the same
+objection they answer and answers it more plainly: the labels are noise, so
+there is nothing to transfer.
+
+The row came out of Appendix H, which lists work not yet carried out, and
+notebook 56 joins the other two notebooks named in the code availability
+statement.
+
 ## Next decision
 
-Write the result into the paper, as a short subsection in the Results or as an
-appendix, and take the row out of Appendix H.
+Nothing is waiting on this result. What is open on the paper is the sentence
+saying the reading protocol is almost never reported, which still has no
+support, and the two Related work sentences that rest on second-hand reading.
