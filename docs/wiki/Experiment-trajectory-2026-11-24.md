@@ -102,8 +102,23 @@ The row came out of Appendix H, which lists work not yet carried out, and
 notebook 56 joins the other two notebooks named in the code availability
 statement.
 
+## The unsupported claim about other papers came out
+
+The paper said in two places that which BatchNorm statistics a reading used is
+almost never reported, or not usually reported. No audit of other papers' method
+sections was ever carried out, so there was nothing behind it.
+
+Both sentences now say only what the paper can show. The abstract says the value
+itself does not record which set of statistics it was read through, and the
+discussion says an indicator value carries no record of which protocol produced
+it. That is a fact about the measure, not a claim about what other authors
+write, and the argument does not need the stronger version.
+
+One nearby sentence in the introduction still says the direct measurement is
+usually run once, reported without an error bar, and rarely repeated. It was
+left as it is.
+
 ## Next decision
 
-Nothing is waiting on this result. What is open on the paper is the sentence
-saying the reading protocol is almost never reported, which still has no
-support, and the two Related work sentences that rest on second-hand reading.
+Nothing is waiting on this result. What is open on the paper is the two Related
+work sentences that rest on second-hand reading.
