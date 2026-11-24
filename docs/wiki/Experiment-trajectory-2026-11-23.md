@@ -137,6 +137,30 @@ tracked edits, and was kept: it moved in beside the paper as
 `paper-v3-with-scispace-review.docx`. It is a 20 November snapshot, so its
 comments sit on older text and several of its open items are still open.
 
+### The SciSpace comments were worked through
+
+Eleven items were open. Nine turn out to have been closed already by the edits
+of the last few days: the leaked draft note, the uncited curvature claim, the
+Table B5 per-layer arithmetic, the undefined mean row share and curvature
+floor, the Table I4 cross-reference, the srank precision, the source of the
+per-run values, the scope of the factor-of-two claim, and the Limitations
+section, which is five paragraphs and not one block.
+
+One was real. The paper used the word "replay" once, in Appendix C, for the
+mechanism that stops the hypernetwork forgetting, and never described it. The
+code has no replay. What it has is a preservation term: each step trains on the
+current group's images only, and a second term pushes the generator to keep the
+weights it writes for earlier task codes close to a snapshot taken before the
+current group began. No earlier images are stored. The Method now says this,
+and the word "replay" is gone.
+
+One is still open: the Related Work section, which is the larger item the two
+literature searches were run for.
+
+Appendix H is now stale in one row. It lists random-label fitting as work not
+yet carried out, and it was carried out on ordering A on 22 November. That row
+should change when the result goes into the paper, not before.
+
 ## Next decision
 
 The reference corrections are done. What is left from the searches is the
