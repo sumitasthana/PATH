@@ -131,6 +131,12 @@ figures.
 This means the paper no longer has version history or a backup. That is the
 trade the move makes.
 
+Two older Word builds were cleared out of `ops-docs/`. One was a plain rebuild
+and was deleted. The other carries the SciSpace review, 6 comments and 60
+tracked edits, and was kept: it moved in beside the paper as
+`paper-v3-with-scispace-review.docx`. It is a 20 November snapshot, so its
+comments sit on older text and several of its open items are still open.
+
 ## Next decision
 
 The reference corrections are done. What is left from the searches is the
