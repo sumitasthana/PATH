@@ -161,6 +161,33 @@ Appendix H is now stale in one row. It lists random-label fitting as work not
 yet carried out, and it was carried out on ordering A on 22 November. That row
 should change when the result goes into the paper, not before.
 
+### The Related work section is written
+
+It sits after the Discussion as Section 5, so Limitations became Section 6 and
+one cross-reference moved with it. Placing it there avoided renumbering every
+"Section 3.x" reference in the paper. It runs about 800 words in four parts:
+the phenomenon, where the three no-training measures came from, whether those
+measures track what they stand for, and reading protocols with generated
+weights.
+
+Fourteen references were added, taking the list from seven to twenty-one. Every
+one was checked against OpenAlex or the arXiv API before it went in, with the
+authors, year and venue read off the record rather than from the two search
+reports. Where a venue could not be confirmed the entry gives the arXiv
+identifier and no venue: this covers Li et al., Nado et al., Pham et al., Wu
+and Johnson, Ha et al., and Kumar, Marklund and Van Roy, whose year the two
+sources disagree about.
+
+None of the 2026 preprints went in. They are still unread.
+
+Two claims in the new section rest on second-hand reading and should be checked
+against the papers before submission. The Lyle et al. 2023 sentence is built
+from the abstract and introduction, which support the falsification framework
+and the finding that no single property accounts for the loss, but the Section 5
+detail reported by one search was not verified. The Gulcehre et al. sentence
+says only what that paper studies, not what it found, because the finding was
+not read.
+
 ## Next decision
 
 The reference corrections are done. What is left from the searches is the
