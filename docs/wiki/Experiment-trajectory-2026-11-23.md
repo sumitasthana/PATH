@@ -101,6 +101,19 @@ single-author, and both tools read only their abstracts. They are also the
 items that most support the paper's position, so each needs reading before it
 is cited.
 
+### The code availability section now says where the paths point
+
+The SciSpace review asked for the script and notebook names scattered through
+Appendices A, D, E and I to be collected into one statement. That was already
+done. What was missing is the repository itself: the section listed six paths
+and never said what they were paths into. It now says the repository is
+withheld for review and will be linked in the published version, so the names
+are not dangling. The word "retired" in Appendix I became "earlier", because
+retired is our word for a study, not a reader's.
+
+Both notebooks named there, 53 and 55, are still in the repository. Nothing was
+removed.
+
 ## Next decision
 
 The reference corrections are done. What is left from the searches is the

@@ -544,7 +544,9 @@ and its trained-code arm begins at boundary 4 because boundary 1 was not kept.
 
 # Code and data availability
 
-The code that produces the results in this paper is in the project repository.
+The code that produces the results in this paper is in the project
+repository, which is withheld here for review and will be linked in the
+published version. The file names below are the paths inside it.
 The correlations of Appendix D are computed from the published logs by
 `scripts/upgrade_suite/seed_clustered_correlations.py`, which also checks its
 fifteen-run column against the figures printed here, and the matched readings
@@ -1679,7 +1681,7 @@ in Table I1 is the loss scale and almost nothing else. The division does not
 make the two arms agree: the trained arm stays one to two factors of ten lower
 after it.
 
-This result was first obtained on a retired eight-task design with three seeds,
+This result was first obtained on an earlier eight-task design with three seeds,
 where the fixed arm rose by 13.7, 6.5 and 5.5 times and the trained arm did not
 move at all. Those numbers are not used here, because they come from a design
 this paper's method section does not describe. The present run is five seeds of
