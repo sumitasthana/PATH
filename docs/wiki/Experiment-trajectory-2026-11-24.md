@@ -186,13 +186,25 @@ Nothing else went. The body is byte for byte unchanged, every appendix table
 has the same number of rows as before, no citation was dropped, and the
 headings are identical.
 
-## What is left
+## Appendix H and the code statement were settled
 
-Appendix H still lists four measurements as work not yet carried out while
-other appendices report some of them. Which rows are now done is a judgement
-about the results rather than a cut, so it was left for a decision. The code
-and data statement still lists six file paths into a repository withheld for
-review; shortening it to two sentences was proposed and not decided.
+Appendix H was the one table in the paper with no caption and no prose around
+it, so the Word build left it unstyled. It now has both. Its title said the
+measurements had not been carried out, which had stopped being true of the
+first row: Appendix G probes at boundary 4 as well as 0 and 9. That row now
+asks for a probe at every boundary rather than at five. The row named
+"Effective-rank convergence across seeds" was too vague to act on and now says
+what it means, which is reading effective rank on more than the 256 images used
+throughout.
+
+The code and data statement listed six paths into a repository that is withheld
+for review, so a reader cannot follow any of them. The paths are gone. The
+statement keeps the pointer to the repository and says that the script or
+notebook behind every appendix, the checkpoints, the probe logs and the per-run
+indicator values are in it.
+
+The paper is 19,420 words. Both builds were remade and checked: 30 citations,
+21 keys, none unresolved, 38 tables styled in the Word copy.
 
 ## Next decision
 
