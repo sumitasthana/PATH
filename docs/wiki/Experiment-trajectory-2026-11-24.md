@@ -118,7 +118,53 @@ One nearby sentence in the introduction still says the direct measurement is
 usually run once, reported without an error bar, and rarely repeated. It was
 left as it is.
 
+## The body was shortened and wired up for LaTeX
+
+The paper body, meaning everything before the appendices, went from 6,922 words
+to 6,156, a cut of 766. Every cut was a place where the paper said something
+twice. No number, margin, noise floor, citation or table row was removed, and
+the counts were checked after the pass rather than trusted.
+
+The abstract was five paragraphs and is now one. All six of its numbers
+appeared again in Section 3. Related work lost its four subsection headings and
+the topic sentence under each, which restated the heading it sat under; every
+citation and every claim survives. Sections 3.2, 3.3 and 3.6 lost passages that
+Appendices I, J and F already carry in full, and each now states the result and
+points at the appendix. The discussion lost its opening summary of the
+abstract.
+
+Nothing structural changed. No table was merged, no section reordered, nothing
+moved into an appendix. An earlier plan proposed merging Table 1 into Table 6
+and Table 4 into Table 7; both were dropped, because the appendices quote body
+numbers in about thirty places and Appendix J checks itself against Table 4 by
+name.
+
+The same pass prepared the file for the move to AAAI two-column LaTeX.
+`refs.bib` held 7 of the 21 works the paper cites and the citation map in
+`build_main.py` knew 8 of the 25 prose forms, so a rebuild produced plain-text
+citations and a third of a bibliography. All 21 entries are in, taken from the
+paper's own reference list, and the map now covers every form and uses natbib's
+`\citep` and `\citet` instead of `\cite`. The rebuilt `main.tex` has 30
+citation commands, every key resolves, and no citation is left in plain text.
+`main.tex` was also stale: it had no Related work section and no Appendix K.
+
+Five body tables carry a comment marking them to be set across both columns,
+since they have six columns or long headers and will not fit one AAAI column.
+Pandoc drops the comment, so it reaches neither the tex nor the docx. Table 2's
+headers lost up to 40 characters each, its row labels use the b0 and b9
+shorthand the paper already used in Table 1, and its caption now says the cells
+use e notation. The two pieces of maths in the Method are written as maths.
+
+## What is still over
+
+For a seven page AAAI body, 6,160 words with seven tables and one figure is
+roughly half a page to a page too long. The prose has no slack left that does
+not cost a result. Closing the rest needs either results moved into appendices
+or tables merged, and both change the structure, so both wait for a decision.
+
 ## Next decision
 
-Nothing is waiting on this result. What is open on the paper is the two Related
-work sentences that rest on second-hand reading.
+The appendices, 13,300 words, have not been touched. Appendix B at 3,263 words
+and Appendix C at 2,724 are more than half of that between them. Also still
+open on the paper are the two Related work sentences that rest on second-hand
+reading.
