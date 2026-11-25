@@ -162,9 +162,38 @@ roughly half a page to a page too long. The prose has no slack left that does
 not cost a result. Closing the rest needs either results moved into appendices
 or tables merged, and both change the structure, so both wait for a decision.
 
+## The appendices were shortened too, in a new file
+
+The paper now has two files. `paper-v4.md` is the master copy and carries the
+appendix cuts. `paper-v3.md` is frozen as it stood before them and is the
+backup. The LaTeX build and the Word build both read v4 now.
+
+The appendices went from 13,411 words to 12,549, a cut of 862. The pattern was
+the same everywhere: each appendix opened by describing a setup the Method
+already defines, then repeated the body paragraph that pointed at it.
+Appendix B described the protocol and the control a second time, Appendix C the
+probe, Appendix J the matched route a third time after the Method and
+Appendix B. Appendices D and E restated the results of Sections 3.4 and 3.5
+before giving their own tables.
+
+Appendix I also lost the remark that the curvature result was first obtained on
+an earlier eight-task design, with the numbers 13.7, 6.5 and 5.5. The appendix
+itself said those numbers are not used here, because that design is not
+described in the Method, so they were carrying a comparison a reader cannot
+check. They are the only three numbers the whole pass removed.
+
+Nothing else went. The body is byte for byte unchanged, every appendix table
+has the same number of rows as before, no citation was dropped, and the
+headings are identical.
+
+## What is left
+
+Appendix H still lists four measurements as work not yet carried out while
+other appendices report some of them. Which rows are now done is a judgement
+about the results rather than a cut, so it was left for a decision. The code
+and data statement still lists six file paths into a repository withheld for
+review; shortening it to two sentences was proposed and not decided.
+
 ## Next decision
 
-The appendices, 13,300 words, have not been touched. Appendix B at 3,263 words
-and Appendix C at 2,724 are more than half of that between them. Also still
-open on the paper are the two Related work sentences that rest on second-hand
-reading.
+The two Related work sentences that rest on second-hand reading are still open.
