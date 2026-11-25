@@ -206,6 +206,31 @@ indicator values are in it.
 The paper is 19,420 words. Both builds were remade and checked: 30 citations,
 21 keys, none unresolved, 38 tables styled in the Word copy.
 
+## Seven more compressions in the body
+
+A pass over the body looked for passages that say something the paper already
+says in the abstract, in a caption, in an appendix or in an earlier paragraph.
+Seven were found and compressed: the introduction's list of four results, the
+opening and the table lead-in of Section 3.2, the caption of Table 2, the
+weight-scale paragraph of Section 3.6, the task-code paragraph of the
+discussion, the "two things are new here" passage of the related work, and the
+repeated first-task point in the limitations.
+
+That cut 166 words, from 6,155 to 5,989. The estimate beforehand was 350 to
+400, which was wrong: it came from the size of the paragraphs rather than from
+how much of each was actually a repeat. Most of those paragraphs turned out to
+be carrying their own content.
+
+Two facts left the body and stay where they were already given in full: the
+0.019 that the task codes move, and the generator comparison beside it, which
+Appendix C reports; and the reason the trained-code arm of Table 2 starts at
+boundary 4, which the limitations give. No table row, no citation and no other
+number moved.
+
+The body is still over a seven page AAAI limit by roughly half a page. Closing
+that needs a structural change, either moving the curvature of Section 3.2 into
+Appendix I or dropping Table 4 in favour of Table 7, and neither has been done.
+
 ## Next decision
 
 The two Related work sentences that rest on second-hand reading are still open.
